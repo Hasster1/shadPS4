@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "common/div_ceil.h"
@@ -58,6 +59,7 @@ static constexpr u32 NumVertices(AmdGpu::PrimitiveType type) {
 
 template <typename... Args>
 void Name(EmitContext& ctx, Id object, std::string_view format_str, Args&&... args) {
+    EMULATOR_TRACE;
     ctx.Name(object, fmt::format(fmt::runtime(format_str), StageName(ctx.stage),
                                  std::forward<Args>(args)...)
                          .c_str());
@@ -120,6 +122,7 @@ void EmitContext::DefineArithmeticTypes() {
     U64 = Name(TypeUInt(64), "u64_id");
 
     for (u32 i = 2; i <= 4; i++) {
+    EMULATOR_TRACE;
         if (info.uses_fp16) {
             F16[i] = Name(TypeVector(F16[1], i), fmt::format("f16vec{}_id", i));
         }
@@ -193,6 +196,7 @@ EmitContext::SpirvAttribute EmitContext::GetAttributeInfo(AmdGpu::NumberFormat f
 
 void EmitContext::DefineBufferOffsets() {
     for (BufferDefinition& buffer : buffers) {
+    EMULATOR_TRACE;
         const u32 binding = buffer.binding;
         const u32 half = PushData::BufOffsetIndex + (binding >> 4);
         const u32 comp = (binding & 0xf) >> 2;
@@ -214,6 +218,7 @@ void EmitContext::DefineInterpolatedAttribs() {
     // Iterate all input attributes, load them and manually interpolate with barycentric
     // coordinates.
     for (s32 i = 0; i < runtime_info.fs_info.num_inputs; i++) {
+    EMULATOR_TRACE;
         const auto& input = runtime_info.fs_info.inputs[i];
         const u32 semantic = input.param_index;
         auto& params = input_params[semantic];
@@ -269,6 +274,7 @@ void EmitContext::DefineInputs() {
             break;
         }
         for (const auto& attrib : fetch_shader->attributes) {
+    EMULATOR_TRACE;
             ASSERT(attrib.semantic < IR::NumParams);
             const auto sharp = attrib.GetSharp(info);
             const Id type{GetAttributeType(*this, sharp.GetNumberFmt())[4]};
@@ -295,8 +301,10 @@ void EmitContext::DefineInputs() {
                 Id id{DefineInput(type, attrib.semantic)};
                 if (attrib.GetStepRate() == Gcn::VertexAttribute::InstanceIdType::Plain) {
                     Name(id, fmt::format("vs_instance_attr{}", attrib.semantic));
+    EMULATOR_TRACE;
                 } else {
                     Name(id, fmt::format("vs_in_attr{}", attrib.semantic));
+    EMULATOR_TRACE;
                 }
                 input_params[attrib.semantic] =
                     GetAttributeInfo(sharp.GetNumberFmt(), id, 4, false);
@@ -313,6 +321,7 @@ void EmitContext::DefineInputs() {
                 DefineVariable(F32[3], spv::BuiltIn::BaryCoordKHR, spv::StorageClass::Input);
         }
         for (s32 i = 0; i < runtime_info.fs_info.num_inputs; i++) {
+    EMULATOR_TRACE;
             const auto& input = runtime_info.fs_info.inputs[i];
             const u32 semantic = input.param_index;
             ASSERT(semantic < IR::NumParams);
@@ -368,6 +377,7 @@ void EmitContext::DefineInputs() {
 
         const auto num_params = runtime_info.gs_info.in_vertex_data_size / 4 - 1u;
         for (int param_id = 0; param_id < num_params; ++param_id) {
+    EMULATOR_TRACE;
             const Id type{TypeArray(F32[4], ConstU32(num_verts_in))};
             const Id id{DefineInput(type, param_id)};
             Name(id, fmt::format("gs_in_attr{}", param_id));
@@ -407,6 +417,7 @@ void EmitContext::DefineInputs() {
 
         const u32 patch_base_location = num_attrs;
         for (size_t index = 0; index < 30; ++index) {
+    EMULATOR_TRACE;
             if (!(info.uses_patches & (1U << index))) {
                 continue;
             }
@@ -448,6 +459,7 @@ void EmitContext::DefineOutputs() {
             }
         } else {
             for (u32 i = 0; i < IR::NumParams; i++) {
+    EMULATOR_TRACE;
                 const IR::Attribute param{IR::Attribute::Param0 + i};
                 if (!info.stores.GetAny(param)) {
                     continue;
@@ -487,6 +499,7 @@ void EmitContext::DefineOutputs() {
 
         const u32 patch_base_location = num_attrs;
         for (size_t index = 0; index < 30; ++index) {
+    EMULATOR_TRACE;
             if (!(info.uses_patches & (1U << index))) {
                 continue;
             }
@@ -510,6 +523,7 @@ void EmitContext::DefineOutputs() {
                 DefineVariable(type, spv::BuiltIn::CullDistance, spv::StorageClass::Output);
         }
         for (u32 i = 0; i < IR::NumParams; i++) {
+    EMULATOR_TRACE;
             const IR::Attribute param{IR::Attribute::Param0 + i};
             if (!info.stores.GetAny(param)) {
                 continue;
@@ -524,6 +538,7 @@ void EmitContext::DefineOutputs() {
     }
     case LogicalStage::Fragment:
         for (u32 i = 0; i < IR::NumRenderTargets; i++) {
+    EMULATOR_TRACE;
             const IR::Attribute mrt{IR::Attribute::RenderTarget0 + i};
             if (!info.stores.GetAny(mrt)) {
                 continue;
@@ -540,6 +555,7 @@ void EmitContext::DefineOutputs() {
         output_position = DefineVariable(F32[4], spv::BuiltIn::Position, spv::StorageClass::Output);
 
         for (u32 attr_id = 0; attr_id < info.gs_copy_data.num_attrs; attr_id++) {
+    EMULATOR_TRACE;
             const Id id{DefineOutput(F32[4], attr_id)};
             Name(id, fmt::format("out_attr{}", attr_id));
             output_params[attr_id] = {id, output_f32, F32[1], 4u};
@@ -632,6 +648,7 @@ void EmitContext::DefineBuffers() {
     }
 
     for (const auto& desc : info.buffers) {
+    EMULATOR_TRACE;
         const auto sharp = desc.GetSharp(info);
         const bool is_storage = desc.IsStorage(sharp, profile);
         const u32 array_size = profile.max_ubo_size >> 2;
@@ -762,10 +779,12 @@ Id ImageType(EmitContext& ctx, const ImageResource& desc, Id sampled_type) {
         break;
     }
     throw InvalidArgument("Invalid texture type {}", type);
+    EMULATOR_TRACE;
 }
 
 void EmitContext::DefineImagesAndSamplers() {
     for (const auto& image_desc : info.images) {
+    EMULATOR_TRACE;
         const auto sharp = image_desc.GetSharp(info);
         const auto nfmt = sharp.GetNumberFmt();
         const bool is_integer = AmdGpu::IsInteger(nfmt);
@@ -799,6 +818,7 @@ void EmitContext::DefineImagesAndSamplers() {
     sampler_type = TypeSampler();
     sampler_pointer_type = TypePointer(spv::StorageClass::UniformConstant, sampler_type);
     for (const auto& samp_desc : info.samplers) {
+    EMULATOR_TRACE;
         const Id id{AddGlobalVariable(sampler_pointer_type, spv::StorageClass::UniformConstant)};
         Decorate(id, spv::Decoration::Binding, binding.unified++);
         Decorate(id, spv::Decoration::DescriptorSet, 0U);
@@ -859,6 +879,7 @@ void EmitContext::DefineSharedMemory() {
 Id EmitContext::DefineFloat32ToUfloatM5(u32 mantissa_bits, const std::string_view name) {
     // https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/util/format_r11g11b10f.h
     const auto func_type{TypeFunction(U32[1], F32[1])};
+    EMULATOR_TRACE;
     const auto func{OpFunction(U32[1], spv::FunctionControlMask::MaskNone, func_type)};
     const auto value{OpFunctionParameter(F32[1])};
     Name(func, name);
@@ -918,6 +939,7 @@ Id EmitContext::DefineFloat32ToUfloatM5(u32 mantissa_bits, const std::string_vie
 Id EmitContext::DefineUfloatM5ToFloat32(u32 mantissa_bits, const std::string_view name) {
     // https://gitlab.freedesktop.org/mesa/mesa/-/blob/main/src/util/format_r11g11b10f.h
     const auto func_type{TypeFunction(F32[1], U32[1])};
+    EMULATOR_TRACE;
     const auto func{OpFunction(F32[1], spv::FunctionControlMask::MaskNone, func_type)};
     const auto value{OpFunctionParameter(U32[1])};
     Name(func, name);

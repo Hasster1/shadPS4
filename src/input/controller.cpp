@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <SDL3/SDL.h>
 #include "common/config.h"
@@ -87,6 +88,7 @@ int GameController::ReadStates(State* states, int states_num, bool* isConnected,
             states[0] = m_last_state;
         } else {
             for (uint32_t i = 0; i < m_states_num; i++) {
+    EMULATOR_TRACE;
                 if (ret_num >= states_num) {
                     break;
                 }

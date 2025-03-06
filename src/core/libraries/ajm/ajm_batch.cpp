@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/alignment.h"
 #include "core/libraries/ajm/ajm_batch.h"
@@ -272,6 +273,7 @@ AjmJob AjmJobFromBatchBuffer(u32 instance_id, AjmBatchBuffer batch_buffer) {
             job.input.format = input_batch.Consume<AjmSidebandFormat>();
         }
         if (True(sideband_flags & AjmJobSidebandFlags::GaplessDecode) && !input_batch.IsEmpty()) {
+    EMULATOR_TRACE;
             job.input.gapless_decode = input_batch.Consume<AjmSidebandGaplessDecode>();
         }
 
@@ -300,6 +302,7 @@ AjmJob AjmJobFromBatchBuffer(u32 instance_id, AjmBatchBuffer batch_buffer) {
         if (True(sideband_flags & AjmJobSidebandFlags::Format) && !output_batch.IsEmpty()) {
             job.output.p_format = &output_batch.Consume<AjmSidebandFormat>();
             *job.output.p_format = AjmSidebandFormat{};
+    EMULATOR_TRACE;
         }
         if (True(sideband_flags & AjmJobSidebandFlags::GaplessDecode) && !output_batch.IsEmpty()) {
             job.output.p_gapless_decode = &output_batch.Consume<AjmSidebandGaplessDecode>();
@@ -507,6 +510,7 @@ void* BatchJobRunSplitBufferRa(void* p_buffer, u32 instance_id, u64 flags,
     }
 
     for (s32 i = 0; i < num_data_input_buffers; i++) {
+    EMULATOR_TRACE;
         auto& chunk_input = job_buffer.Consume<AjmChunkBuffer>();
         chunk_input.header.ident = AjmIdentInputRunBuf;
         chunk_input.header.payload = 0;
@@ -527,6 +531,7 @@ void* BatchJobRunSplitBufferRa(void* p_buffer, u32 instance_id, u64 flags,
     }
 
     for (s32 i = 0; i < num_data_output_buffers; i++) {
+    EMULATOR_TRACE;
         auto& chunk_output = job_buffer.Consume<AjmChunkBuffer>();
         chunk_output.header.ident = AjmIdentOutputRunBuf;
         chunk_output.header.payload = 0;

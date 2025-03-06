@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright (C) 2001-2024 Free Software Foundation, Inc.
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "common/logging/log.h"
@@ -106,6 +107,7 @@ bool DecodeEHHdr(uintptr_t ehHdrStart, uintptr_t ehHdrEnd, EHHeaderInfo& ehHdrIn
         // Don't print a message for an empty .eh_frame_hdr (this can happen if
         // the linker script defines symbols for it even in the empty case).
         if (ehHdrEnd == ehHdrStart) {
+    EMULATOR_TRACE;
             return false;
         }
         LOG_ERROR(Core_Linker,

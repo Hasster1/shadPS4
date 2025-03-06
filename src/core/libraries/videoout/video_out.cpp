@@ -1,9 +1,11 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "common/config.h"
 #include "common/elf_info.h"
+#include "common/debug.h"
 #include "common/logging/log.h"
 #include "core/libraries/libs.h"
 #include "core/libraries/system/userservice.h"
@@ -22,6 +24,7 @@ static std::unique_ptr<VideoOutDriver> driver;
 void PS4_SYSV_ABI sceVideoOutSetBufferAttribute(BufferAttribute* attribute, PixelFormat pixelFormat,
                                                 u32 tilingMode, u32 aspectRatio, u32 width,
                                                 u32 height, u32 pitchInPixel) {
+    EMULATOR_TRACE;
     LOG_INFO(Lib_VideoOut,
              "pixelFormat = {}, tilingMode = {}, aspectRatio = {}, width = {}, height = {}, "
              "pitchInPixel = {}",
@@ -39,6 +42,7 @@ void PS4_SYSV_ABI sceVideoOutSetBufferAttribute(BufferAttribute* attribute, Pixe
 }
 
 s32 PS4_SYSV_ABI sceVideoOutAddFlipEvent(Kernel::SceKernelEqueue eq, s32 handle, void* udata) {
+    EMULATOR_TRACE;
     LOG_INFO(Lib_VideoOut, "handle = {}", handle);
 
     auto* port = driver->GetPort(handle);
@@ -65,6 +69,7 @@ s32 PS4_SYSV_ABI sceVideoOutAddFlipEvent(Kernel::SceKernelEqueue eq, s32 handle,
 }
 
 s32 PS4_SYSV_ABI sceVideoOutDeleteFlipEvent(Kernel::SceKernelEqueue eq, s32 handle) {
+    EMULATOR_TRACE;
     auto* port = driver->GetPort(handle);
     if (port == nullptr) {
         return ORBIS_VIDEO_OUT_ERROR_INVALID_HANDLE;
@@ -79,6 +84,7 @@ s32 PS4_SYSV_ABI sceVideoOutDeleteFlipEvent(Kernel::SceKernelEqueue eq, s32 hand
 }
 
 s32 PS4_SYSV_ABI sceVideoOutAddVblankEvent(Kernel::SceKernelEqueue eq, s32 handle, void* udata) {
+    EMULATOR_TRACE;
     LOG_INFO(Lib_VideoOut, "handle = {}", handle);
 
     auto* port = driver->GetPort(handle);
@@ -106,6 +112,7 @@ s32 PS4_SYSV_ABI sceVideoOutAddVblankEvent(Kernel::SceKernelEqueue eq, s32 handl
 
 s32 PS4_SYSV_ABI sceVideoOutRegisterBuffers(s32 handle, s32 startIndex, void* const* addresses,
                                             s32 bufferNum, const BufferAttribute* attribute) {
+    EMULATOR_TRACE;
     if (!addresses || !attribute) {
         LOG_ERROR(Lib_VideoOut, "Addresses are null");
         return ORBIS_VIDEO_OUT_ERROR_INVALID_ADDRESS;
@@ -121,12 +128,14 @@ s32 PS4_SYSV_ABI sceVideoOutRegisterBuffers(s32 handle, s32 startIndex, void* co
 }
 
 s32 PS4_SYSV_ABI sceVideoOutSetFlipRate(s32 handle, s32 rate) {
+    EMULATOR_TRACE;
     LOG_TRACE(Lib_VideoOut, "called");
     driver->GetPort(handle)->flip_rate = rate;
     return ORBIS_OK;
 }
 
 s32 PS4_SYSV_ABI sceVideoOutIsFlipPending(s32 handle) {
+    EMULATOR_TRACE;
     LOG_TRACE(Lib_VideoOut, "called");
     auto* port = driver->GetPort(handle);
     std::unique_lock lock{port->port_mutex};
@@ -135,6 +144,7 @@ s32 PS4_SYSV_ABI sceVideoOutIsFlipPending(s32 handle) {
 }
 
 s32 PS4_SYSV_ABI sceVideoOutSubmitFlip(s32 handle, s32 bufferIndex, s32 flipMode, s64 flipArg) {
+    EMULATOR_TRACE;
     auto* port = driver->GetPort(handle);
     if (!port) {
         LOG_ERROR(Lib_VideoOut, "Invalid handle = {}", handle);
@@ -159,6 +169,7 @@ s32 PS4_SYSV_ABI sceVideoOutSubmitFlip(s32 handle, s32 bufferIndex, s32 flipMode
               flipArg);
 
     if (!driver->SubmitFlip(port, bufferIndex, flipArg)) {
+
         LOG_ERROR(Lib_VideoOut, "Flip queue is full");
         return ORBIS_VIDEO_OUT_ERROR_FLIP_QUEUE_FULL;
     }
@@ -167,6 +178,7 @@ s32 PS4_SYSV_ABI sceVideoOutSubmitFlip(s32 handle, s32 bufferIndex, s32 flipMode
 }
 
 int PS4_SYSV_ABI sceVideoOutGetEventId(const Kernel::SceKernelEvent* ev) {
+    EMULATOR_TRACE;
     if (ev == nullptr) {
         return ORBIS_VIDEO_OUT_ERROR_INVALID_ADDRESS;
     }
@@ -192,9 +204,11 @@ int PS4_SYSV_ABI sceVideoOutGetEventId(const Kernel::SceKernelEvent* ev) {
         return ORBIS_VIDEO_OUT_ERROR_INVALID_EVENT;
     }
     }
+    LOG_TRACE(Lib_VideoOut, "GetEventID");
 }
 
 int PS4_SYSV_ABI sceVideoOutGetEventData(const Kernel::SceKernelEvent* ev, int64_t* data) {
+    EMULATOR_TRACE;
     if (ev == nullptr || data == nullptr) {
         return ORBIS_VIDEO_OUT_ERROR_INVALID_ADDRESS;
     }
@@ -212,6 +226,7 @@ int PS4_SYSV_ABI sceVideoOutGetEventData(const Kernel::SceKernelEvent* ev, int64
 }
 
 s32 PS4_SYSV_ABI sceVideoOutGetFlipStatus(s32 handle, FlipStatus* status) {
+    EMULATOR_TRACE;
     if (!status) {
         LOG_ERROR(Lib_VideoOut, "Flip status is null");
         return ORBIS_VIDEO_OUT_ERROR_INVALID_ADDRESS;
@@ -227,6 +242,7 @@ s32 PS4_SYSV_ABI sceVideoOutGetFlipStatus(s32 handle, FlipStatus* status) {
         std::unique_lock lock{port->port_mutex};
         *status = port->flip_status;
     }
+    status->count = 0;
 
     LOG_TRACE(Lib_VideoOut,
               "count = {}, processTime = {}, tsc = {}, submitTsc = {}, flipArg = {}, gcQueueNum = "
@@ -239,6 +255,7 @@ s32 PS4_SYSV_ABI sceVideoOutGetFlipStatus(s32 handle, FlipStatus* status) {
 }
 
 s32 PS4_SYSV_ABI sceVideoOutGetVblankStatus(int handle, SceVideoOutVblankStatus* status) {
+    EMULATOR_TRACE;
     if (status == nullptr) {
         return ORBIS_VIDEO_OUT_ERROR_INVALID_ADDRESS;
     }
@@ -251,10 +268,12 @@ s32 PS4_SYSV_ABI sceVideoOutGetVblankStatus(int handle, SceVideoOutVblankStatus*
 
     std::unique_lock lock{port->vo_mutex};
     *status = port->vblank_status;
+    LOG_TRACE(Lib_VideoOut, "Vblank Status");
     return ORBIS_OK;
 }
 
 s32 PS4_SYSV_ABI sceVideoOutGetResolutionStatus(s32 handle, SceVideoOutResolutionStatus* status) {
+    EMULATOR_TRACE;
     LOG_INFO(Lib_VideoOut, "called");
     *status = driver->GetPort(handle)->resolution;
     return ORBIS_OK;
@@ -262,6 +281,7 @@ s32 PS4_SYSV_ABI sceVideoOutGetResolutionStatus(s32 handle, SceVideoOutResolutio
 
 s32 PS4_SYSV_ABI sceVideoOutOpen(SceUserServiceUserId userId, s32 busType, s32 index,
                                  const void* param) {
+    EMULATOR_TRACE;
     LOG_INFO(Lib_VideoOut, "called");
     ASSERT(busType == SCE_VIDEO_OUT_BUS_TYPE_MAIN);
 
@@ -282,11 +302,13 @@ s32 PS4_SYSV_ABI sceVideoOutOpen(SceUserServiceUserId userId, s32 busType, s32 i
 }
 
 s32 PS4_SYSV_ABI sceVideoOutClose(s32 handle) {
+    EMULATOR_TRACE;
     driver->Close(handle);
     return ORBIS_OK;
 }
 
 s32 PS4_SYSV_ABI sceVideoOutUnregisterBuffers(s32 handle, s32 attributeIndex) {
+    EMULATOR_TRACE;
     auto* port = driver->GetPort(handle);
     if (!port || !port->is_open) {
         return ORBIS_VIDEO_OUT_ERROR_INVALID_HANDLE;
@@ -296,12 +318,14 @@ s32 PS4_SYSV_ABI sceVideoOutUnregisterBuffers(s32 handle, s32 attributeIndex) {
 }
 
 void sceVideoOutGetBufferLabelAddress(s32 handle, uintptr_t* label_addr) {
+    EMULATOR_TRACE;
     auto* port = driver->GetPort(handle);
     ASSERT(port);
     *label_addr = reinterpret_cast<uintptr_t>(port->buffer_labels.data());
 }
 
 s32 sceVideoOutSubmitEopFlip(s32 handle, u32 buf_id, u32 mode, u32 arg, void** unk) {
+    EMULATOR_TRACE;
     auto* port = driver->GetPort(handle);
     if (!port) {
         return ORBIS_VIDEO_OUT_ERROR_INVALID_HANDLE;
@@ -309,6 +333,7 @@ s32 sceVideoOutSubmitEopFlip(s32 handle, u32 buf_id, u32 mode, u32 arg, void** u
 
     Platform::IrqC::Instance()->RegisterOnce(
         Platform::InterruptId::GfxFlip, [=](Platform::InterruptId irq) {
+    EMULATOR_TRACE;
             ASSERT_MSG(irq == Platform::InterruptId::GfxFlip, "An unexpected IRQ occured");
             ASSERT_MSG(port->buffer_labels[buf_id] == 1, "Out of order flip IRQ");
             const auto result = driver->SubmitFlip(port, buf_id, arg, true);
@@ -320,6 +345,7 @@ s32 sceVideoOutSubmitEopFlip(s32 handle, u32 buf_id, u32 mode, u32 arg, void** u
 
 s32 PS4_SYSV_ABI sceVideoOutGetDeviceCapabilityInfo(
     s32 handle, SceVideoOutDeviceCapabilityInfo* pDeviceCapabilityInfo) {
+    EMULATOR_TRACE;
     pDeviceCapabilityInfo->capability = 0;
     if (presenter->IsHDRSupported()) {
         auto& game_info = Common::ElfInfo::Instance();
@@ -331,6 +357,7 @@ s32 PS4_SYSV_ABI sceVideoOutGetDeviceCapabilityInfo(
 }
 
 s32 PS4_SYSV_ABI sceVideoOutWaitVblank(s32 handle) {
+    EMULATOR_TRACE;
     auto* port = driver->GetPort(handle);
     if (!port) {
         return ORBIS_VIDEO_OUT_ERROR_INVALID_HANDLE;
@@ -343,6 +370,7 @@ s32 PS4_SYSV_ABI sceVideoOutWaitVblank(s32 handle) {
 }
 
 s32 PS4_SYSV_ABI sceVideoOutColorSettingsSetGamma(SceVideoOutColorSettings* settings, float gamma) {
+    EMULATOR_TRACE;
     if (gamma < 0.1f || gamma > 2.0f) {
         return ORBIS_VIDEO_OUT_ERROR_INVALID_VALUE;
     }
@@ -351,6 +379,7 @@ s32 PS4_SYSV_ABI sceVideoOutColorSettingsSetGamma(SceVideoOutColorSettings* sett
 }
 
 s32 PS4_SYSV_ABI sceVideoOutAdjustColor(s32 handle, const SceVideoOutColorSettings* settings) {
+    EMULATOR_TRACE;
     if (settings == nullptr) {
         return ORBIS_VIDEO_OUT_ERROR_INVALID_ADDRESS;
     }
@@ -376,6 +405,7 @@ struct Mode {
 };
 
 void PS4_SYSV_ABI sceVideoOutModeSetAny_(Mode* mode, u32 size) {
+    EMULATOR_TRACE;
     std::memset(mode, 0xff, size);
     mode->size = size;
 }
@@ -383,6 +413,7 @@ void PS4_SYSV_ABI sceVideoOutModeSetAny_(Mode* mode, u32 size) {
 s32 PS4_SYSV_ABI sceVideoOutConfigureOutputMode_(s32 handle, u32 reserved, const Mode* mode,
                                                  const void* options, u32 size_mode,
                                                  u32 size_options) {
+    EMULATOR_TRACE;
     auto* port = driver->GetPort(handle);
     if (!port) {
         return ORBIS_VIDEO_OUT_ERROR_INVALID_HANDLE;

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include "common/assert.h"
@@ -130,6 +131,7 @@ GcnInst GcnDecodeContext::decodeInstruction(GcnCodeSlice& code) {
     // Detect literal constant. Only 32 bits instructions may have literal constant.
     // Note: Literal constant decode must be performed after meta info updated.
     if (encodingLen == sizeof(u32)) {
+    EMULATOR_TRACE;
         decodeLiteralConstant(encoding, code);
     }
 
@@ -229,6 +231,7 @@ uint32_t GcnDecodeContext::mapEncodingOp(InstEncoding encoding, Opcode opcode) {
     // Map from uniform opcode to encoding specific opcode.
     uint32_t encodingOp = 0;
     if (encoding == InstEncoding::VOP3) {
+    EMULATOR_TRACE;
         if (opcode >= Opcode::V_CMP_F_F32 && opcode <= Opcode::V_CMPX_T_U64) {
             uint32_t op =
                 static_cast<uint32_t>(opcode) - static_cast<uint32_t>(OpcodeMap::OP_MAP_VOPC);
@@ -530,6 +533,7 @@ void GcnDecodeContext::decodeInstructionVOPC(u32 hexInstruction) {
 }
 
 void GcnDecodeContext::decodeInstructionVOP2(u32 hexInstruction) {
+    EMULATOR_TRACE;
     u32 src0 = bit::extract(hexInstruction, 8, 0);
     u32 vsrc1 = bit::extract(hexInstruction, 16, 9);
     u32 vdst = bit::extract(hexInstruction, 24, 17);
@@ -554,6 +558,7 @@ void GcnDecodeContext::decodeInstructionVOP2(u32 hexInstruction) {
         m_instruction.dst[0].field = getOperandField(vdst);
         m_instruction.dst[0].type = ScalarType::Uint32;
     } else if (vop2Op == OpcodeVOP2::V_WRITELANE_B32) {
+    EMULATOR_TRACE;
         m_instruction.src[1].field = getOperandField(vsrc1);
         // dst is vgpr, as normal
     } else if (IsVop3BEncoding(m_instruction.opcode)) {
@@ -683,6 +688,7 @@ void GcnDecodeContext::decodeInstructionVOP3(uint64_t hexInstruction) {
     // update input modifier
     auto& control = m_instruction.control.vop3;
     for (u32 i = 0; i != 3; ++i) {
+    EMULATOR_TRACE;
         if (control.abs & (1u << i)) {
             m_instruction.src[i].input_modifier.abs = true;
         }

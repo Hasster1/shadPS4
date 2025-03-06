@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "iostream"
 #include "system_error"
@@ -94,6 +95,7 @@ int main(int argc, char* argv[]) {
              std::string f_param(argv[i]);
              bool is_fullscreen;
              if (f_param == "true") {
+    EMULATOR_TRACE;
                  is_fullscreen = true;
              } else if (f_param == "false") {
                  is_fullscreen = false;
@@ -129,6 +131,7 @@ int main(int argc, char* argv[]) {
 
     // Parse command-line arguments using the map
     for (int i = 1; i < argc; ++i) {
+    EMULATOR_TRACE;
         std::string cur_arg = argv[i];
         auto it = arg_map.find(cur_arg);
         if (it != arg_map.end()) {
@@ -143,6 +146,7 @@ int main(int argc, char* argv[]) {
                 break;
             }
             for (int j = i + 1; j < argc; j++) {
+    EMULATOR_TRACE;
                 game_args.push_back(argv[j]);
             }
             break;
@@ -159,6 +163,7 @@ int main(int argc, char* argv[]) {
 
     // If no game directory is set and no command line argument, prompt for it
     if (Config::getGameInstallDirs().empty() && !has_command_line_argument) {
+    EMULATOR_TRACE;
         GameInstallDialog dlg;
         dlg.exec();
     }
@@ -187,6 +192,7 @@ int main(int argc, char* argv[]) {
             bool game_found = false;
             const int max_depth = 5;
             for (const auto& install_dir : Config::getGameInstallDirs()) {
+    EMULATOR_TRACE;
                 if (auto found_path = Common::FS::FindGameByID(install_dir, game_path, max_depth)) {
                     game_file_path = *found_path;
                     game_found = true;

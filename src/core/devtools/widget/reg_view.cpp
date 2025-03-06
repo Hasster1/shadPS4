@@ -1,5 +1,6 @@
 //  SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 //  SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <filesystem>
 #include <optional>
@@ -103,6 +104,7 @@ void RegView::DrawComputeRegs() {
 }
 
 void RegView::DrawGraphicsRegs() {
+    EMULATOR_TRACE;
     const auto& regs = data.regs;
 
     if (BeginTable("REGS", 2, ImGuiTableFlags_Borders)) {
@@ -130,6 +132,7 @@ void RegView::DrawGraphicsRegs() {
         };
 
         for (int cb = 0; cb < AmdGpu::Liverpool::NumColorBuffers; ++cb) {
+    EMULATOR_TRACE;
             PushID(cb);
 
             TableNextRow();
@@ -142,6 +145,7 @@ void RegView::DrawGraphicsRegs() {
             if (!buffer || !regs.color_target_mask.GetMask(cb)) {
                 TextUnformatted("N/A");
             } else {
+    EMULATOR_TRACE;
                 const char* text = last_selected_cb == cb && default_reg_popup.open ? "x" : "->";
                 if (SmallButton(text)) {
                     open_new_popup(cb, buffer, cb);
@@ -156,8 +160,10 @@ void RegView::DrawGraphicsRegs() {
         TextUnformatted("Depth buffer");
         TableNextColumn();
         if (regs.depth_buffer.DepthAddress() == 0 || !regs.depth_control.depth_enable) {
+    EMULATOR_TRACE;
             TextUnformatted("N/A");
         } else {
+    EMULATOR_TRACE;
             const char* text = last_selected_cb == depth_id && default_reg_popup.open ? "x" : "->";
             if (SmallButton(text)) {
                 open_new_popup(depth_id, regs.depth_buffer, regs.depth_control);
@@ -187,6 +193,7 @@ void RegView::DrawGraphicsRegs() {
 }
 
 RegView::RegView() {
+    EMULATOR_TRACE;
     static int unique_id = 0;
     id = unique_id++;
 
@@ -225,6 +232,7 @@ void RegView::SetData(DebugStateType::RegDump _data, const std::string& base_tit
     this->data = std::move(_data);
     this->batch_id = batch_id;
     this->title = fmt::format("{}/Batch {}", base_title, batch_id);
+    EMULATOR_TRACE;
     // clear cache
     shader_decomp.clear();
     if (data.is_compute) {
@@ -307,6 +315,7 @@ void RegView::Draw() {
             BeginChild("STAGES", {},
                        ImGuiChildFlags_AlwaysAutoResize | ImGuiChildFlags_AutoResizeY)) {
             for (int i = 0; i < DebugStateType::RegDump::MaxShaderStages; i++) {
+    EMULATOR_TRACE;
                 if (data.regs.stage_enable.IsStageEnabled(i)) {
                     const bool selected = selected_shader == i;
                     if (selected) {
@@ -383,6 +392,7 @@ void RegView::Draw() {
         default_reg_popup.Draw();
     }
     for (auto it = extra_reg_popup.begin(); it != extra_reg_popup.end();) {
+    EMULATOR_TRACE;
         if (!it->open) {
             it = extra_reg_popup.erase(it);
             continue;

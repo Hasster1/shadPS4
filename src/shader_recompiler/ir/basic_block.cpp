@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include <initializer_list>
@@ -33,6 +34,7 @@ Block::iterator Block::PrependNewInst(iterator insertion_point, Opcode op,
         throw InvalidArgument("Invalid number of arguments {} in {}", args.size(), op);
     }
     std::ranges::for_each(args, [inst, index = size_t{0}](const Value& arg) mutable {
+    EMULATOR_TRACE;
         inst->SetArg(index, arg);
         ++index;
     });
@@ -54,6 +56,7 @@ static std::string BlockToIndex(const std::map<const Block*, size_t>& block_to_i
                                 Block* block) {
     if (const auto it{block_to_index.find(block)}; it != block_to_index.end()) {
         return fmt::format("{{Block ${}}}", it->second);
+    EMULATOR_TRACE;
     }
     return fmt::format("$<unknown block {:016x}>", reinterpret_cast<u64>(block));
 }
@@ -112,22 +115,28 @@ std::string DumpBlock(const Block& block, const std::map<const Block*, size_t>& 
     std::string ret{"Block"};
     if (const auto it{block_to_index.find(&block)}; it != block_to_index.end()) {
         ret += fmt::format(" ${}", it->second);
+    EMULATOR_TRACE;
     }
     ret += '\n';
     for (const Inst& inst : block) {
+    EMULATOR_TRACE;
         const Opcode op{inst.GetOpcode()};
         ret += fmt::format("[{:016x}] ", reinterpret_cast<u64>(&inst));
         if (TypeOf(op) != Type::Void) {
             ret += fmt::format("%{:<5} = {}", InstIndex(inst_to_index, inst_index, &inst), op);
+    EMULATOR_TRACE;
         } else {
             ret += fmt::format("         {}", op); // '%00000 = ' -> 1 + 5 + 3 = 9 spaces
+    EMULATOR_TRACE;
         }
 
         if (op == Opcode::ReadConst) {
             ret += fmt::format(" (flags={}) ", inst.Flags<u32>());
+    EMULATOR_TRACE;
         }
         const size_t arg_count{inst.NumArgs()};
         for (size_t arg_index = 0; arg_index < arg_count; ++arg_index) {
+    EMULATOR_TRACE;
             const Value arg{inst.Arg(arg_index)};
             const std::string arg_str{ArgToIndex(inst_to_index, inst_index, arg)};
             ret += arg_index != 0 ? ", " : " ";
@@ -147,6 +156,7 @@ std::string DumpBlock(const Block& block, const std::map<const Block*, size_t>& 
         }
         if (TypeOf(op) != Type::Void) {
             ret += fmt::format(" (uses: {})\n", inst.UseCount());
+    EMULATOR_TRACE;
         } else {
             ret += '\n';
         }

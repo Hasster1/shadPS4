@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/arch.h"
 #include "common/assert.h"
@@ -42,6 +43,7 @@ static LONG WINAPI SignalHandler(EXCEPTION_POINTERS* pExp) noexcept {
 #else
 
 static std::string GetThreadName() {
+    EMULATOR_TRACE;
     char name[256];
     if (pthread_getname_np(pthread_self(), name, sizeof(name)) != 0) {
         return "<unknown name>";
@@ -70,6 +72,7 @@ static std::string DisassembleInstruction(void* code_address) {
 }
 
 static void SignalHandler(int sig, siginfo_t* info, void* raw_context) {
+    EMULATOR_TRACE;
     const auto* signals = Signals::Instance();
 
     auto* code_address = Common::GetRip(raw_context);
@@ -145,6 +148,7 @@ SignalDispatch::~SignalDispatch() {
 
 bool SignalDispatch::DispatchAccessViolation(void* context, void* fault_address) const {
     for (const auto& [handler, _] : access_violation_handlers) {
+    EMULATOR_TRACE;
         if (handler(context, fault_address)) {
             return true;
         }
@@ -154,6 +158,7 @@ bool SignalDispatch::DispatchAccessViolation(void* context, void* fault_address)
 
 bool SignalDispatch::DispatchIllegalInstruction(void* context) const {
     for (const auto& [handler, _] : illegal_instruction_handlers) {
+    EMULATOR_TRACE;
         if (handler(context)) {
             return true;
         }

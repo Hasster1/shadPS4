@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <SDL3/SDL_events.h>
 #include <imgui.h>
@@ -41,6 +42,7 @@ namespace Core {
 void Initialize(const ::Vulkan::Instance& instance, const Frontend::WindowSDL& window,
                 const u32 image_count, vk::Format surface_format,
                 const vk::AllocationCallbacks* allocator) {
+    EMULATOR_TRACE;
 
     const auto config_path = GetUserPath(Common::FS::PathType::UserDir) / "imgui.ini";
     const auto log_path = GetUserPath(Common::FS::PathType::LogDir) / "imgui_log.txt";
@@ -110,6 +112,7 @@ void Initialize(const ::Vulkan::Instance& instance, const Frontend::WindowSDL& w
     dock_id = ImHashStr(label);
 
     if (const auto dpi = SDL_GetWindowDisplayScale(window.GetSDLWindow()); dpi > 0.0f) {
+    EMULATOR_TRACE;
         GetIO().FontGlobalScale = dpi;
     }
 }
@@ -119,10 +122,12 @@ void OnResize() {
 }
 
 void OnSurfaceFormatChange(vk::Format surface_format) {
+    EMULATOR_TRACE;
     Vulkan::OnSurfaceFormatChange(surface_format);
 }
 
 void Shutdown(const vk::Device& device) {
+    EMULATOR_TRACE;
     auto result = device.waitIdle();
     if (result != vk::Result::eSuccess) {
         LOG_WARNING(ImGui, "Failed to wait for Vulkan device idle on shutdown: {}",
@@ -198,6 +203,7 @@ ImGuiID NewFrame(bool is_reusing_frame) {
     ImGuiID dockId = DockSpaceOverViewport(0, GetMainViewport(), flags);
 
     for (auto* layer : layers) {
+    EMULATOR_TRACE;
         layer->Draw();
     }
 

@@ -1,5 +1,6 @@
 ﻿// SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <QComboBox>
 #include <QDir>
@@ -43,6 +44,7 @@ CheatsPatches::CheatsPatches(const QString& gameName, const QString& gameSerial,
 }
 
 CheatsPatches::~CheatsPatches() {}
+    EMULATOR_TRACE;
 
 void CheatsPatches::setupUI() {
 
@@ -71,6 +73,7 @@ void CheatsPatches::setupUI() {
 
     QLabel* gameImageLabel = new QLabel();
     if (!m_gameImage.isNull()) {
+    EMULATOR_TRACE;
         gameImageLabel->setPixmap(m_gameImage.scaled(275, 275, Qt::KeepAspectRatio));
     } else {
         gameImageLabel->setText(tr("No Image Available"));
@@ -155,6 +158,7 @@ void CheatsPatches::setupUI() {
 
     QPushButton* downloadButton = new QPushButton(tr("Download Cheats"));
     connect(downloadButton, &QPushButton::clicked, [this, downloadComboBox]() {
+    EMULATOR_TRACE;
         QString source = downloadComboBox->currentData().toString();
         downloadCheats(source, m_gameSerial, m_gameVersion, true);
     });
@@ -343,6 +347,7 @@ void CheatsPatches::onSaveButtonClicked() {
     QString serial = m_gameSerial;
 
     for (auto it = jsonObject.constBegin(); it != jsonObject.constEnd(); ++it) {
+    EMULATOR_TRACE;
         QString filePath = it.key();
         QJsonArray idsArray = it.value().toArray();
 
@@ -360,6 +365,7 @@ void CheatsPatches::onSaveButtonClicked() {
     QString filePath = patchDir + "/" + selectedFileName;
     QFile file(filePath);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    EMULATOR_TRACE;
         QMessageBox::critical(this, tr("Error"), tr("Unable to open the file for reading."));
         return;
     }
@@ -376,6 +382,7 @@ void CheatsPatches::onSaveButtonClicked() {
     bool insideMetadata = false;
 
     while (!xmlReader.atEnd()) {
+    EMULATOR_TRACE;
         xmlReader.readNext();
 
         if (xmlReader.isStartElement()) {
@@ -390,6 +397,7 @@ void CheatsPatches::onSaveButtonClicked() {
 
                 // Check and update the isEnabled attribute
                 for (const QXmlStreamAttribute& attr : xmlReader.attributes()) {
+    EMULATOR_TRACE;
                     if (attr.name() == QStringLiteral("isEnabled")) {
                         hasIsEnabled = true;
                         auto it = m_patchInfos.find(name);
@@ -443,6 +451,7 @@ void CheatsPatches::onSaveButtonClicked() {
             } else {
                 xmlWriter.writeStartElement(xmlReader.name().toString());
                 for (const QXmlStreamAttribute& attr : xmlReader.attributes()) {
+    EMULATOR_TRACE;
                     xmlWriter.writeAttribute(attr.name().toString(), attr.value().toString());
                 }
             }
@@ -468,6 +477,7 @@ void CheatsPatches::onSaveButtonClicked() {
     file.close();
 
     if (xmlReader.hasError()) {
+    EMULATOR_TRACE;
         QMessageBox::critical(this, tr("Error"),
                               tr("Failed to parse XML: ") + "\n" + xmlReader.errorString());
     } else {
@@ -478,7 +488,9 @@ void CheatsPatches::onSaveButtonClicked() {
 }
 
 QCheckBox* CheatsPatches::findCheckBoxByName(const QString& name) {
+    EMULATOR_TRACE;
     for (int i = 0; i < patchesGroupBoxLayout->count(); ++i) {
+    EMULATOR_TRACE;
         QLayoutItem* item = patchesGroupBoxLayout->itemAt(i);
         if (item) {
             QWidget* widget = item->widget();
@@ -528,6 +540,7 @@ void CheatsPatches::downloadCheats(const QString& source, const QString& gameSer
                 QJsonArray gamesArray = jsonDoc.object().value("games").toArray();
 
                 foreach (const QJsonValue& value, gamesArray) {
+    EMULATOR_TRACE;
                     QJsonObject gameObject = value.toObject();
                     QString title = gameObject.value("title").toString();
                     QString version = gameObject.value("version").toString();
@@ -670,6 +683,7 @@ void CheatsPatches::downloadCheats(const QString& source, const QString& gameSer
             }
 
         } else {
+    EMULATOR_TRACE;
             if (showMessageBox) {
                 QMessageBox::warning(this, tr("Cheats Not Found"), CheatsNotFound_MSG);
             }
@@ -702,6 +716,7 @@ void CheatsPatches::populateFileListPatches() {
     QStringList matchingFiles;
 
     foreach (const QString& folder, folders) {
+    EMULATOR_TRACE;
         QString folderPath = dir.filePath(folder);
         QDir subDir(folderPath);
 
@@ -716,6 +731,7 @@ void CheatsPatches::populateFileListPatches() {
             QJsonObject jsonObj = jsonDoc.object();
 
             for (auto it = jsonObj.constBegin(); it != jsonObj.constEnd(); ++it) {
+    EMULATOR_TRACE;
                 QString fileName = it.key();
                 QJsonArray serials = it.value().toArray();
 
@@ -785,6 +801,7 @@ void CheatsPatches::downloadPatches(const QString repository, const bool showMes
             dir.setPath(fullPath);
 
             foreach (const QJsonValue& value, itemsArray) {
+    EMULATOR_TRACE;
                 QJsonObject fileObj = value.toObject();
                 QString fileName = fileObj["name"].toString();
                 QString filePath = fileObj["path"].toString();
@@ -828,6 +845,7 @@ void CheatsPatches::downloadPatches(const QString repository, const bool showMes
             populateFileListPatches();
             compatibleVersionNotice(repository);
         } else {
+    EMULATOR_TRACE;
             if (showMessageBox) {
                 QMessageBox::warning(this, tr("Error"),
                                      QString(tr("Failed to retrieve HTML page.") + "\n%1")
@@ -846,6 +864,7 @@ void CheatsPatches::compatibleVersionNotice(const QString repository) {
     QSet<QString> appVersionsSet;
 
     foreach (const QString& xmlFile, xmlFiles) {
+    EMULATOR_TRACE;
         QFile file(dir.filePath(xmlFile));
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             QMessageBox::warning(this, tr("Error"),
@@ -885,6 +904,7 @@ void CheatsPatches::compatibleVersionNotice(const QString repository) {
             bool hasMatchingVersion = false;
 
             foreach (const QString& appVer, appVersionsSet) {
+    EMULATOR_TRACE;
                 if (appVer != m_gameVersion) {
                     incompatibleVersions.append(appVer);
                 } else {
@@ -917,6 +937,7 @@ void CheatsPatches::compatibleVersionNotice(const QString repository) {
 }
 
 void CheatsPatches::createFilesJson(const QString& repository) {
+    EMULATOR_TRACE;
 
     QDir dir(Common::FS::GetUserPath(Common::FS::PathType::PatchesDir));
     QString fullPath = dir.filePath(repository);
@@ -929,6 +950,7 @@ void CheatsPatches::createFilesJson(const QString& repository) {
     QStringList xmlFiles = dir.entryList(QStringList() << "*.xml", QDir::Files);
 
     foreach (const QString& xmlFile, xmlFiles) {
+    EMULATOR_TRACE;
         QFile file(dir.filePath(xmlFile));
         if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
             QMessageBox::warning(this, tr("Error"),
@@ -967,6 +989,7 @@ void CheatsPatches::createFilesJson(const QString& repository) {
 }
 
 void CheatsPatches::clearListCheats() {
+    EMULATOR_TRACE;
     QLayoutItem* item;
     while ((item = rightLayout->takeAt(0)) != nullptr) {
         QWidget* widget = item->widget();
@@ -996,6 +1019,7 @@ void CheatsPatches::addCheatsToLayout(const QJsonArray& modsArray, const QJsonAr
     int maxWidthButton = 0;
 
     for (const QJsonValue& modValue : modsArray) {
+    EMULATOR_TRACE;
         QJsonObject modObject = modValue.toObject();
         QString modName = modObject["name"].toString();
         QString modType = modObject["type"].toString();
@@ -1006,6 +1030,7 @@ void CheatsPatches::addCheatsToLayout(const QJsonArray& modsArray, const QJsonAr
 
         QJsonArray memoryArray = modObject["memory"].toArray();
         for (const QJsonValue& memoryValue : memoryArray) {
+    EMULATOR_TRACE;
             QJsonObject memoryObject = memoryValue.toObject();
             MemoryMod memoryMod;
             memoryMod.offset = memoryObject["offset"].toString();
@@ -1020,6 +1045,7 @@ void CheatsPatches::addCheatsToLayout(const QJsonArray& modsArray, const QJsonAr
         m_cheats[modName] = cheat;
 
         if (modType == "checkbox") {
+    EMULATOR_TRACE;
             QCheckBox* cheatCheckBox = new QCheckBox(modName);
             rightLayout->addWidget(cheatCheckBox);
             m_cheatCheckBoxes.append(cheatCheckBox);
@@ -1042,11 +1068,13 @@ void CheatsPatches::addCheatsToLayout(const QJsonArray& modsArray, const QJsonAr
             rightLayout->addLayout(buttonLayout);
             connect(cheatButton, &QPushButton::clicked,
                     [this, modName]() { applyCheat(modName, true); });
+    EMULATOR_TRACE;
         }
     }
 
     // Set minimum and fixed size for all buttons + 20
     for (int i = 0; i < rightLayout->count(); ++i) {
+    EMULATOR_TRACE;
         QLayoutItem* layoutItem = rightLayout->itemAt(i);
         QWidget* widget = layoutItem->widget();
         if (widget) {
@@ -1059,6 +1087,7 @@ void CheatsPatches::addCheatsToLayout(const QJsonArray& modsArray, const QJsonAr
             QLayout* layout = layoutItem->layout();
             if (layout) {
                 for (int j = 0; j < layout->count(); ++j) {
+    EMULATOR_TRACE;
                     QLayoutItem* innerItem = layout->itemAt(j);
                     QWidget* innerWidget = innerItem->widget();
                     if (innerWidget) {
@@ -1105,6 +1134,7 @@ void CheatsPatches::populateFileListCheats() {
     QStringList fileNames;
 
     for (const QFileInfo& fileInfo : fileList) {
+    EMULATOR_TRACE;
         fileNames << fileInfo.fileName();
     }
 
@@ -1184,6 +1214,7 @@ void CheatsPatches::addPatchesToLayout(const QString& filePath) {
 
     // Iterate over each entry in the JSON file
     for (auto it = jsonObject.constBegin(); it != jsonObject.constEnd(); ++it) {
+    EMULATOR_TRACE;
         QString xmlFileName = it.key();
         QJsonArray idsArray = it.value().toArray();
 
@@ -1279,6 +1310,7 @@ void CheatsPatches::addPatchesToLayout(const QString& filePath) {
     // Remove the item from the list view if no patches were added
     // (the game has patches, but not for the current version)
     if (!patchAdded) {
+    EMULATOR_TRACE;
         QStringListModel* model = qobject_cast<QStringListModel*>(patchesListView->model());
         if (model) {
             QStringList items = model->stringList();
@@ -1300,6 +1332,7 @@ void CheatsPatches::updateNoteTextEdit(const QString& patchName) {
                            .arg(patchInfo.note);
 
         foreach (const QJsonValue& value, patchInfo.linesArray) {
+    EMULATOR_TRACE;
             QJsonObject lineObject = value.toObject();
             QString type = lineObject["Type"].toString();
             QString address = lineObject["Address"].toString();
@@ -1313,6 +1346,7 @@ void CheatsPatches::updateNoteTextEdit(const QString& patchName) {
 bool showErrorMessage = true;
 void CheatsPatches::uncheckAllCheatCheckBoxes() {
     for (auto& cheatCheckBox : m_cheatCheckBoxes) {
+    EMULATOR_TRACE;
         cheatCheckBox->setChecked(false);
     }
     showErrorMessage = true;
@@ -1332,6 +1366,7 @@ void CheatsPatches::applyCheat(const QString& modName, bool enabled) {
     Cheat cheat = m_cheats[modName];
 
     for (const MemoryMod& memoryMod : cheat.memoryMods) {
+    EMULATOR_TRACE;
         QString value = enabled ? memoryMod.on : memoryMod.off;
 
         std::string modNameStr = modName.toStdString();
@@ -1354,6 +1389,7 @@ void CheatsPatches::applyPatch(const QString& patchName, bool enabled) {
         const PatchInfo& patchInfo = m_patchInfos[patchName];
 
         foreach (const QJsonValue& value, patchInfo.linesArray) {
+    EMULATOR_TRACE;
             QJsonObject lineObject = value.toObject();
             QString type = lineObject["Type"].toString();
             QString address = lineObject["Address"].toString();

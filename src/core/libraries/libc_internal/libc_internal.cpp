@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <cmath>
 #include <csetjmp>
@@ -2905,11 +2906,13 @@ s32 PS4_SYSV_ABI internal__rtld_addr_phdr() {
 }
 
 s32 PS4_SYSV_ABI internal__rtld_atfork_post() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
 
 s32 PS4_SYSV_ABI internal__rtld_atfork_pre() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -4132,11 +4135,13 @@ s32 PS4_SYSV_ABI internal__ZNKSt7_MpunctIcE11do_groupingEv() {
 }
 
 s32 PS4_SYSV_ABI internal__ZNKSt7_MpunctIcE13do_neg_formatEv() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
 
 s32 PS4_SYSV_ABI internal__ZNKSt7_MpunctIcE13do_pos_formatEv() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -4177,11 +4182,13 @@ s32 PS4_SYSV_ABI internal__ZNKSt7_MpunctIwE11do_groupingEv() {
 }
 
 s32 PS4_SYSV_ABI internal__ZNKSt7_MpunctIwE13do_neg_formatEv() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
 
 s32 PS4_SYSV_ABI internal__ZNKSt7_MpunctIwE13do_pos_formatEv() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -4372,6 +4379,7 @@ s32 PS4_SYSV_ABI internal__ZNKSt7collateIcE10do_compareEPKcS2_S2_S2_() {
 }
 
 s32 PS4_SYSV_ABI internal__ZNKSt7collateIcE12do_transformEPKcS2_() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -4392,6 +4400,7 @@ s32 PS4_SYSV_ABI internal__ZNKSt7collateIcE7do_hashEPKcS2_() {
 }
 
 s32 PS4_SYSV_ABI internal__ZNKSt7collateIcE9transformEPKcS2_() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -4402,6 +4411,7 @@ s32 PS4_SYSV_ABI internal__ZNKSt7collateIwE10do_compareEPKwS2_S2_S2_() {
 }
 
 s32 PS4_SYSV_ABI internal__ZNKSt7collateIwE12do_transformEPKwS2_() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -4422,6 +4432,7 @@ s32 PS4_SYSV_ABI internal__ZNKSt7collateIwE7do_hashEPKwS2_() {
 }
 
 s32 PS4_SYSV_ABI internal__ZNKSt7collateIwE9transformEPKwS2_() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -5616,6 +5627,7 @@ s32 PS4_SYSV_ABI internal__ZNSt14_Num_ldbl_base15has_denorm_lossE() {
 }
 
 s32 PS4_SYSV_ABI internal__ZNSt14_Num_ldbl_base15tinyness_beforeE() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -6051,6 +6063,7 @@ s32 PS4_SYSV_ABI internal__ZNSt15_Num_float_base15has_denorm_lossE() {
 }
 
 s32 PS4_SYSV_ABI internal__ZNSt15_Num_float_base15tinyness_beforeE() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -7221,6 +7234,7 @@ s32 PS4_SYSV_ABI internal__ZNSt9_Num_base15has_denorm_lossE() {
 }
 
 s32 PS4_SYSV_ABI internal__ZNSt9_Num_base15tinyness_beforeE() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }

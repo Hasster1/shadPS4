@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "common/logging/log.h"
@@ -68,6 +69,7 @@ void AjmContext::WorkerThread(std::stop_token stop) {
 void AjmContext::ProcessBatch(u32 id, std::span<AjmJob> jobs) {
     // Perform operation requested by control flags.
     for (auto& job : jobs) {
+    EMULATOR_TRACE;
         LOG_TRACE(Lib_Ajm, "Processing job {} for instance {}. flags = {:#x}", id, job.instance_id,
                   job.flags.raw);
 
@@ -106,6 +108,7 @@ s32 AjmContext::BatchWait(const u32 batch_id, const u32 timeout, AjmBatchError* 
     if (timeout == ORBIS_AJM_WAIT_INFINITE) {
         batch->finished.acquire();
     } else if (!batch->finished.try_acquire_for(std::chrono::milliseconds(timeout))) {
+    EMULATOR_TRACE;
         batch->waiting = false;
         return ORBIS_AJM_ERROR_IN_PROGRESS;
     }

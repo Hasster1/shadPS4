@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "shader_recompiler/backend/spirv/emit_spirv_instructions.h"
 #include "shader_recompiler/backend/spirv/spirv_emit_context.h"
@@ -51,6 +52,7 @@ static std::array<Id, num_components> ExtractComposite(EmitContext& ctx, const V
                                                        const Id value) {
     std::array<Id, num_components> result{};
     for (u32 i = 0; i < num_components; i++) {
+    EMULATOR_TRACE;
         result[i] = ctx.OpCompositeExtract(type[1], value, i);
     }
     return result;

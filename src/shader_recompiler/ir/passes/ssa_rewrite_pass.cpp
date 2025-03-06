@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2021 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 // This file implements the SSA rewriting algorithm proposed in
 //
@@ -264,6 +265,7 @@ public:
         const auto it{incomplete_phis.find(block)};
         if (it != incomplete_phis.end()) {
             for (auto& [variant, phi] : it->second) {
+    EMULATOR_TRACE;
                 std::visit([&](auto& variable) { AddPhiOperands(variable, *phi, block); }, variant);
             }
         }
@@ -274,6 +276,7 @@ private:
     template <typename Type>
     IR::Value AddPhiOperands(Type variable, IR::Inst& phi, IR::Block* block) {
         for (IR::Block* const imm_pred : block->ImmPredecessors()) {
+    EMULATOR_TRACE;
             phi.AddPhiOperand(imm_pred, ReadVariable(variable, imm_pred));
         }
         return TryRemoveTrivialPhi(phi, block, UndefOpcode(variable));
@@ -283,6 +286,7 @@ private:
         IR::Value same;
         const size_t num_args{phi.NumArgs()};
         for (size_t arg_index = 0; arg_index < num_args; ++arg_index) {
+    EMULATOR_TRACE;
             const IR::Value& op{phi.Arg(arg_index)};
             if (op.Resolve() == same.Resolve() || op.Resolve() == IR::Value{&phi}) {
                 // Unique value or self-reference
@@ -314,6 +318,7 @@ private:
         phi.ReplaceUsesWith(same);
         // Try to recursively remove all phi users, which might have become trivial
         for (const auto& [user, arg_index] : users) {
+    EMULATOR_TRACE;
             if (user->GetOpcode() == IR::Opcode::Phi) {
                 TryRemoveTrivialPhi(*user, user->GetParent(), undef_opcode);
             }
@@ -410,6 +415,7 @@ void VisitInst(Pass& pass, IR::Block* block, IR::Inst& inst) {
 
 void VisitBlock(Pass& pass, IR::Block* block) {
     for (IR::Inst& inst : block->Instructions()) {
+    EMULATOR_TRACE;
         VisitInst(pass, block, inst);
     }
     pass.SealBlock(block);
@@ -421,6 +427,7 @@ void SsaRewritePass(IR::BlockList& program) {
     Pass pass;
     const auto end{program.rend()};
     for (auto block = program.rbegin(); block != end; ++block) {
+    EMULATOR_TRACE;
         VisitBlock(pass, *block);
     }
 }

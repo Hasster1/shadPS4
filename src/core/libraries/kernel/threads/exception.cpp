@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "core/libraries/kernel/threads/exception.h"
@@ -98,6 +99,7 @@ void ExceptionHandler(void* arg1, void* arg2, void* arg3, PCONTEXT context) {
 int PS4_SYSV_ABI sceKernelInstallExceptionHandler(s32 signum, SceKernelExceptionHandler handler) {
     if (signum != POSIX_SIGUSR1) {
         LOG_ERROR(Lib_Kernel, "Installing non-supported exception handler for signal {}", signum);
+    EMULATOR_TRACE;
         return 0;
     }
     ASSERT_MSG(!Handlers[POSIX_SIGUSR1], "Invalid parameters");
@@ -114,6 +116,7 @@ int PS4_SYSV_ABI sceKernelInstallExceptionHandler(s32 signum, SceKernelException
 int PS4_SYSV_ABI sceKernelRemoveExceptionHandler(s32 signum) {
     if (signum != POSIX_SIGUSR1) {
         LOG_ERROR(Lib_Kernel, "Installing non-supported exception handler for signal {}", signum);
+    EMULATOR_TRACE;
         return 0;
     }
     ASSERT_MSG(Handlers[POSIX_SIGUSR1], "Invalid parameters");

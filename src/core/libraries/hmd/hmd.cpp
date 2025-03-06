@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/logging/log.h"
 #include "core/libraries/error_codes.h"
@@ -79,11 +80,13 @@ s32 PS4_SYSV_ABI sceHmdGetAssyError() {
 }
 
 s32 PS4_SYSV_ABI sceHmdGetDeviceInformation() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Hmd, "(STUBBED) called");
     return ORBIS_OK;
 }
 
 s32 PS4_SYSV_ABI sceHmdGetDeviceInformationByHandle() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Hmd, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -324,11 +327,13 @@ s32 PS4_SYSV_ABI sceHmdInternalGetDemoMode() {
 }
 
 s32 PS4_SYSV_ABI sceHmdInternalGetDeviceInformation() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Hmd, "(STUBBED) called");
     return ORBIS_OK;
 }
 
 s32 PS4_SYSV_ABI sceHmdInternalGetDeviceInformationByHandle() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Hmd, "(STUBBED) called");
     return ORBIS_OK;
 }

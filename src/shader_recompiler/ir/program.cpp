@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2021 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <map>
 #include <string>
@@ -18,11 +19,13 @@ std::string DumpProgram(const Program& program) {
     std::map<const IR::Block*, size_t> block_to_index;
 
     for (const IR::Block* const block : program.blocks) {
+    EMULATOR_TRACE;
         block_to_index.emplace(block, index);
         ++index;
     }
     std::string ret;
     for (const auto& block : program.blocks) {
+    EMULATOR_TRACE;
         ret += IR::DumpBlock(*block, block_to_index, inst_to_index, index) + '\n';
     }
     return ret;

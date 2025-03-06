@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <memory>
 #include <mutex>
@@ -24,6 +25,7 @@ std::array<PortOut, SCE_AUDIO_OUT_NUM_PORTS> ports_out{};
 static std::unique_ptr<AudioOutBackend> audio;
 
 static AudioFormatInfo GetFormatInfo(const OrbisAudioOutParamFormat format) {
+    EMULATOR_TRACE;
     static constexpr std::array<AudioFormatInfo, 8> format_infos = {{
         // S16Mono
         {false, 2, 1, {0}},
@@ -48,6 +50,7 @@ static AudioFormatInfo GetFormatInfo(const OrbisAudioOutParamFormat format) {
 }
 
 int PS4_SYSV_ABI sceAudioOutDeviceIdOpen() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_AudioOut, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -213,6 +216,7 @@ int PS4_SYSV_ABI sceAudioOutGetPortState(s32 handle, OrbisAudioOutPortState* sta
 }
 
 int PS4_SYSV_ABI sceAudioOutGetSimulatedBusUsableStatusByBusType() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_AudioOut, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -279,6 +283,7 @@ int PS4_SYSV_ABI sceAudioOutMbusInit() {
 static void AudioOutputThread(PortOut* port, const std::stop_token& stop) {
     {
         const auto thread_name = fmt::format("shadPS4:AudioOutputThread:{}", fmt::ptr(port));
+    EMULATOR_TRACE;
         Common::SetCurrentThreadName(thread_name.c_str());
     }
 
@@ -305,6 +310,7 @@ s32 PS4_SYSV_ABI sceAudioOutOpen(UserService::OrbisUserServiceUserId user_id,
                                  OrbisAudioOutPort port_type, s32 index, u32 length,
                                  u32 sample_rate,
                                  OrbisAudioOutParamExtendedInformation param_type) {
+    EMULATOR_TRACE;
     LOG_INFO(Lib_AudioOut,
              "id = {} port_type = {} index = {} length = {} sample_rate = {} "
              "param_type = {} attr = {}",
@@ -312,6 +318,7 @@ s32 PS4_SYSV_ABI sceAudioOutOpen(UserService::OrbisUserServiceUserId user_id,
              magic_enum::enum_name(param_type.data_format.Value()),
              magic_enum::enum_name(param_type.attributes.Value()));
     if (audio == nullptr) {
+    EMULATOR_TRACE;
         LOG_ERROR(Lib_AudioOut, "Audio out not initialized");
         return ORBIS_AUDIO_OUT_ERROR_NOT_INIT;
     }
@@ -335,11 +342,13 @@ s32 PS4_SYSV_ABI sceAudioOutOpen(UserService::OrbisUserServiceUserId user_id,
     const auto format = param_type.data_format.Value();
     if (format < OrbisAudioOutParamFormat::S16Mono ||
         format > OrbisAudioOutParamFormat::Float_8CH_Std) {
+    EMULATOR_TRACE;
         LOG_ERROR(Lib_AudioOut, "Invalid format");
         return ORBIS_AUDIO_OUT_ERROR_INVALID_FORMAT;
     }
     const auto attr = param_type.attributes;
     if (attr < OrbisAudioOutParamAttr::None || attr > OrbisAudioOutParamAttr::MixToMain) {
+    EMULATOR_TRACE;
         // TODO Handle attributes in output audio device
         LOG_ERROR(Lib_AudioOut, "Invalid format attribute");
         return ORBIS_AUDIO_OUT_ERROR_INVALID_FORMAT;
@@ -403,6 +412,7 @@ s32 PS4_SYSV_ABI sceAudioOutOutput(s32 handle, void* ptr) {
 
 int PS4_SYSV_ABI sceAudioOutOutputs(OrbisAudioOutOutputParam* param, u32 num) {
     for (u32 i = 0; i < num; i++) {
+    EMULATOR_TRACE;
         const auto [handle, ptr] = param[i];
         if (const auto ret = sceAudioOutOutput(handle, ptr); ret != ORBIS_OK) {
             return ret;
@@ -516,6 +526,7 @@ s32 PS4_SYSV_ABI sceAudioOutSetVolume(s32 handle, s32 flag, s32* vol) {
             return ORBIS_AUDIO_OUT_ERROR_INVALID_PORT;
         }
         for (int i = 0; i < port.format_info.num_channels; i++, flag >>= 1u) {
+    EMULATOR_TRACE;
             if (flag & 0x1u) {
                 port.volume[i] = vol[i];
             }

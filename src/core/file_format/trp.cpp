@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/config.h"
 #include "common/logging/log.h"
@@ -26,6 +27,7 @@ void TRP::GetNPcommID(const std::filesystem::path& trophyPath, int index) {
 
 static void removePadding(std::vector<u8>& vec) {
     for (auto it = vec.rbegin(); it != vec.rend(); ++it) {
+    EMULATOR_TRACE;
         if (*it == '>') {
             size_t pos = std::distance(vec.begin(), it.base());
             vec.resize(pos);
@@ -36,6 +38,7 @@ static void removePadding(std::vector<u8>& vec) {
 
 static void hexToBytes(const char* hex, unsigned char* dst) {
     for (size_t i = 0; hex[i] != 0; i++) {
+    EMULATOR_TRACE;
         const unsigned char value = (hex[i] < 0x3A) ? (hex[i] - 0x30) : (hex[i] - 0x37);
         dst[i / 2] |= ((i % 2) == 0) ? (value << 4) : (value);
     }
@@ -58,6 +61,7 @@ bool TRP::Extract(const std::filesystem::path& trophyPath, const std::string tit
     hexToBytes(user_key_str.c_str(), user_key.data());
 
     for (int index = 0; const auto& it : std::filesystem::directory_iterator(gameSysDir)) {
+    EMULATOR_TRACE;
         if (it.is_regular_file()) {
             GetNPcommID(trophyPath, index);
 
@@ -70,6 +74,7 @@ bool TRP::Extract(const std::filesystem::path& trophyPath, const std::string tit
             TrpHeader header;
             file.Read(header);
             if (header.magic != 0xDCA24D00) {
+    EMULATOR_TRACE;
                 LOG_CRITICAL(Common_Filesystem, "Wrong trophy magic number");
                 return false;
             }
@@ -82,6 +87,7 @@ bool TRP::Extract(const std::filesystem::path& trophyPath, const std::string tit
             std::filesystem::create_directory(trpFilesPath / "Xml");
 
             for (int i = 0; i < header.entry_num; i++) {
+    EMULATOR_TRACE;
                 if (!file.Seek(seekPos)) {
                     LOG_CRITICAL(Common_Filesystem, "Failed to seek to TRP entry offset");
                     return false;

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "common/logging/log.h"
@@ -14,6 +15,7 @@ static constexpr u64 kMinimumMemorySize = 16_MB; ///> Fake minimum memory size f
 
 s32 PS4_SYSV_ABI
 sceVideodec2QueryComputeMemoryInfo(OrbisVideodec2ComputeMemoryInfo* computeMemInfo) {
+    EMULATOR_TRACE;
     LOG_INFO(Lib_Vdec2, "called");
 
     if (!computeMemInfo) {
@@ -162,9 +164,10 @@ s32 PS4_SYSV_ABI sceVideodec2GetPictureInfo(const OrbisVideodec2OutputInfo* outp
     if (p1stPictureInfoOut) {
         OrbisVideodec2AvcPictureInfo* picInfo =
             static_cast<OrbisVideodec2AvcPictureInfo*>(p1stPictureInfoOut);
-        if (picInfo->thisSize != sizeof(OrbisVideodec2AvcPictureInfo)) {
-            return ORBIS_VIDEODEC2_ERROR_STRUCT_SIZE;
-        }
+        int h = sizeof(OrbisVideodec2AvcPictureInfo);
+      //  if (picInfo->thisSize != sizeof(OrbisVideodec2AvcPictureInfo)) {
+       //     return ORBIS_VIDEODEC2_ERROR_STRUCT_SIZE;
+       // }
         *picInfo = gPictureInfos.back();
     }
 

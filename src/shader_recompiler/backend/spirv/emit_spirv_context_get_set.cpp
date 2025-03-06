@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "shader_recompiler/backend/spirv/emit_spirv_instructions.h"
@@ -125,6 +126,7 @@ Id EmitGetUserData(EmitContext& ctx, IR::ScalarReg reg) {
                                       ctx.ConstU32(index & 3))};
     const Id ud_reg{ctx.OpLoad(ctx.U32[1], ud_ptr)};
     ctx.Name(ud_reg, fmt::format("ud_{}", u32(reg)));
+    EMULATOR_TRACE;
     return ud_reg;
 }
 
@@ -308,12 +310,14 @@ Id EmitGetAttributeU32(EmitContext& ctx, IR::Attribute attr, u32 comp) {
         // [8:12]: output control point id
         // But 0:8 should be treated as 0 for attribute addressing purposes
         if (ctx.runtime_info.hs_info.IsPassthrough()) {
+    EMULATOR_TRACE;
             // Gcn shader would run with 1 thread, but we need to run a thread for
             // each output control point.
             // If Gcn shader uses this value, we should make sure all threads in the
             // Vulkan shader use 0
             return ctx.ConstU32(0u);
         } else {
+    EMULATOR_TRACE;
             const Id invocation_id = ctx.OpLoad(ctx.U32[1], ctx.invocation_id);
             return ctx.OpShiftLeftLogical(ctx.U32[1], invocation_id, ctx.ConstU32(8u));
         }
@@ -407,6 +411,7 @@ static Id EmitLoadBufferU32xN(EmitContext& ctx, u32 handle, Id address) {
     } else {
         boost::container::static_vector<Id, N> ids;
         for (u32 i = 0; i < N; i++) {
+    EMULATOR_TRACE;
             const Id index_i = ctx.OpIAdd(ctx.U32[1], index, ctx.ConstU32(i));
             const Id ptr{
                 ctx.OpAccessChain(buffer.pointer_type, buffer.id, ctx.u32_zero_value, index_i)};
@@ -476,6 +481,7 @@ static void EmitStoreBufferU32xN(EmitContext& ctx, u32 handle, Id address, Id va
         ctx.OpStore(ptr, value);
     } else {
         for (u32 i = 0; i < N; i++) {
+    EMULATOR_TRACE;
             const Id index_i = ctx.OpIAdd(ctx.U32[1], index, ctx.ConstU32(i));
             const Id ptr =
                 ctx.OpAccessChain(buffer.pointer_type, buffer.id, ctx.u32_zero_value, index_i);

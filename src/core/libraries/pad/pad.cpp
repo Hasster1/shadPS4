@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/config.h"
 #include "common/logging/log.h"
@@ -25,9 +26,11 @@ int PS4_SYSV_ABI scePadConnectPort() {
 
 int PS4_SYSV_ABI scePadDeviceClassGetExtendedInformation(
     s32 handle, OrbisPadDeviceClassExtendedInformation* pExtInfo) {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Pad, "(STUBBED) called");
     std::memset(pExtInfo, 0, sizeof(OrbisPadDeviceClassExtendedInformation));
     if (Config::getUseSpecialPad()) {
+    EMULATOR_TRACE;
         pExtInfo->deviceClass = (OrbisPadDeviceClass)Config::getSpecialPadClass();
     }
     return ORBIS_OK;
@@ -90,6 +93,7 @@ int PS4_SYSV_ABI scePadGetCapability() {
 }
 
 int PS4_SYSV_ABI scePadGetControllerInformation(s32 handle, OrbisPadControllerInformation* pInfo) {
+    EMULATOR_TRACE;
     LOG_DEBUG(Lib_Pad, "called handle = {}", handle);
     if (handle < 0) {
         pInfo->touchPadInfo.pixelDensity = 1;
@@ -136,6 +140,7 @@ int PS4_SYSV_ABI scePadGetDeviceInfo() {
 
 int PS4_SYSV_ABI scePadGetExtControllerInformation(s32 handle,
                                                    OrbisPadExtendedControllerInformation* pInfo) {
+    EMULATOR_TRACE;
     LOG_INFO(Lib_Pad, "called handle = {}", handle);
 
     pInfo->padType1 = 0;
@@ -147,6 +152,7 @@ int PS4_SYSV_ABI scePadGetExtControllerInformation(s32 handle,
 }
 
 int PS4_SYSV_ABI scePadGetExtensionUnitInfo() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Pad, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -180,6 +186,7 @@ int PS4_SYSV_ABI scePadGetInfoByPortType() {
 }
 
 int PS4_SYSV_ABI scePadGetLicenseControllerInformation() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Pad, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -302,6 +309,7 @@ int PS4_SYSV_ABI scePadRead(s32 handle, OrbisPadData* pData, s32 num) {
     }
 
     for (int i = 0; i < ret_num; i++) {
+    EMULATOR_TRACE;
         pData[i].buttons = states[i].buttonsState;
         pData[i].leftStick.x = states[i].axes[static_cast<int>(Input::Axis::LeftX)];
         pData[i].leftStick.y = states[i].axes[static_cast<int>(Input::Axis::LeftY)];

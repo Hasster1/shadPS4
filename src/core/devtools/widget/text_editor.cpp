@@ -1,5 +1,6 @@
 //  SPDX-FileCopyrightText: Copyright (c) 2017 BalazsJako
 //  SPDX-License-Identifier: MIT
+#include "common/debug.h"
 
 // source: https://github.com/BalazsJako/ImGuiColorTextEdit
 
@@ -22,6 +23,7 @@ namespace Core::Devtools::Widget {
 template <class InputIt1, class InputIt2, class BinaryPredicate>
 bool equals(InputIt1 first1, InputIt1 last1, InputIt2 first2, InputIt2 last2, BinaryPredicate p) {
     for (; first1 != last1 && first2 != last2; ++first1, ++first2) {
+    EMULATOR_TRACE;
         if (!p(*first1, *first2))
             return false;
     }
@@ -56,6 +58,7 @@ void TextEditor::SetLanguageDefinition(const LanguageDefinition& aLanguageDef) {
 }
 
 void TextEditor::SetPalette(const Palette& aValue) {
+    EMULATOR_TRACE;
     mPaletteBase = aValue;
 }
 
@@ -74,6 +77,7 @@ std::string TextEditor::GetText(const Coordinates& aStart, const Coordinates& aE
     result.reserve(s + s / 8);
 
     while (istart < iend || lstart < lend) {
+    EMULATOR_TRACE;
         if (lstart >= (int)mLines.size())
             break;
 
@@ -274,6 +278,7 @@ void TextEditor::AddUndo(UndoRecord& aValue) {
 }
 
 TextEditor::Coordinates TextEditor::ScreenPosToCoordinates(const ImVec2& aPosition) const {
+    EMULATOR_TRACE;
     ImVec2 origin = ImGui::GetCursorScreenPos();
     ImVec2 local(aPosition.x - origin.x, aPosition.y - origin.y);
 
@@ -434,6 +439,7 @@ int TextEditor::GetCharacterIndex(const Coordinates& aCoordinates) const {
     int c = 0;
     int i = 0;
     for (; i < line.size() && c < aCoordinates.mColumn;) {
+    EMULATOR_TRACE;
         if (line[i].mChar == '\t')
             c = (c / mTabSize) * mTabSize + mTabSize;
         else
@@ -471,11 +477,13 @@ int TextEditor::GetLineCharacterCount(int aLine) const {
 }
 
 int TextEditor::GetLineMaxColumn(int aLine) const {
+    EMULATOR_TRACE;
     if (aLine >= mLines.size())
         return 0;
     auto& line = mLines[aLine];
     int col = 0;
     for (unsigned i = 0; i < line.size();) {
+    EMULATOR_TRACE;
         auto c = line[i].mChar;
         if (c == '\t')
             col = (col / mTabSize) * mTabSize + mTabSize;
@@ -508,6 +516,7 @@ void TextEditor::RemoveLine(int aStart, int aEnd) {
 
     ErrorMarkers etmp;
     for (auto& i : mErrorMarkers) {
+    EMULATOR_TRACE;
         ErrorMarkers::value_type e(i.first >= aStart ? i.first - 1 : i.first, i.second);
         if (e.first >= aStart && e.first <= aEnd)
             continue;
@@ -517,6 +526,7 @@ void TextEditor::RemoveLine(int aStart, int aEnd) {
 
     Breakpoints btmp;
     for (auto i : mBreakpoints) {
+    EMULATOR_TRACE;
         if (i >= aStart && i <= aEnd)
             continue;
         btmp.insert(i >= aStart ? i - 1 : i);
@@ -535,6 +545,7 @@ void TextEditor::RemoveLine(int aIndex) {
 
     ErrorMarkers etmp;
     for (auto& i : mErrorMarkers) {
+    EMULATOR_TRACE;
         ErrorMarkers::value_type e(i.first > aIndex ? i.first - 1 : i.first, i.second);
         if (e.first - 1 == aIndex)
             continue;
@@ -544,6 +555,7 @@ void TextEditor::RemoveLine(int aIndex) {
 
     Breakpoints btmp;
     for (auto i : mBreakpoints) {
+    EMULATOR_TRACE;
         if (i == aIndex)
             continue;
         btmp.insert(i >= aIndex ? i - 1 : i);
@@ -575,6 +587,7 @@ TextEditor::Line& TextEditor::InsertLine(int aIndex) {
 }
 
 std::string TextEditor::GetWordUnderCursor() const {
+    EMULATOR_TRACE;
     auto c = GetCursorPosition();
     return GetWordAt(c);
 }
@@ -595,6 +608,7 @@ std::string TextEditor::GetWordAt(const Coordinates& aCoords) const {
 }
 
 ImU32 TextEditor::GetGlyphColor(const Glyph& aGlyph) const {
+    EMULATOR_TRACE;
     if (!mColorizerEnabled)
         return mPalette[(int)PaletteIndex::Default];
     if (aGlyph.mComment)
@@ -690,6 +704,7 @@ void TextEditor::HandleKeyboardInputs() {
 
         if (!IsReadOnly() && !io.InputQueueCharacters.empty()) {
             for (int i = 0; i < io.InputQueueCharacters.Size; i++) {
+    EMULATOR_TRACE;
                 auto c = io.InputQueueCharacters[i];
                 if (c != 0 && (c == '\n' || c >= 32))
                     EnterCharacter(c, shift);
@@ -781,6 +796,7 @@ void TextEditor::Render() {
 
     /* Update palette with the current alpha from style */
     for (int i = 0; i < (int)PaletteIndex::Max; ++i) {
+    EMULATOR_TRACE;
         auto color = ImGui::ColorConvertU32ToFloat4(mPaletteBase[i]);
         color.w *= ImGui::GetStyle().Alpha;
         mPalette[i] = ImGui::ColorConvertFloat4ToU32(color);
@@ -851,6 +867,7 @@ void TextEditor::Render() {
                 ssend += mCharAdvance.x;
 
             if (sstart != -1 && ssend != -1 && sstart < ssend) {
+    EMULATOR_TRACE;
                 ImVec2 vstart(lineStartScreenPos.x + mTextStart + sstart, lineStartScreenPos.y);
                 ImVec2 vend(lineStartScreenPos.x + mTextStart + ssend,
                             lineStartScreenPos.y + mCharAdvance.y);
@@ -955,6 +972,7 @@ void TextEditor::Render() {
             ImVec2 bufferOffset;
 
             for (int i = 0; i < line.size();) {
+    EMULATOR_TRACE;
                 auto& glyph = line[i];
                 auto color = GetGlyphColor(glyph);
 
@@ -1028,6 +1046,7 @@ void TextEditor::Render() {
                     ImGui::TextUnformatted(it->second.mDeclaration.c_str());
                     ImGui::EndTooltip();
                 } else {
+    EMULATOR_TRACE;
                     auto pi = mLanguageDefinition.mPreprocIdentifiers.find(id);
                     if (pi != mLanguageDefinition.mPreprocIdentifiers.end()) {
                         ImGui::BeginTooltip();
@@ -1042,6 +1061,7 @@ void TextEditor::Render() {
     ImGui::Dummy(ImVec2((longest + 2), mLines.size() * mCharAdvance.y));
 
     if (mScrollToCursor) {
+    EMULATOR_TRACE;
         EnsureCursorVisible();
         ImGui::SetWindowFocus();
         mScrollToCursor = false;
@@ -1089,6 +1109,7 @@ void TextEditor::SetText(const std::string& aText) {
     mLines.clear();
     mLines.emplace_back(Line());
     for (auto chr : aText) {
+    EMULATOR_TRACE;
         if (chr == '\r') {
             // ignore the carriage return character
         } else if (chr == '\n')
@@ -1116,6 +1137,7 @@ void TextEditor::SetTextLines(const std::vector<std::string>& aLines) {
         mLines.resize(aLines.size());
 
         for (size_t i = 0; i < aLines.size(); ++i) {
+    EMULATOR_TRACE;
             const std::string& aLine = aLines[i];
 
             mLines[i].reserve(aLine.size());
@@ -1134,6 +1156,7 @@ void TextEditor::SetTextLines(const std::vector<std::string>& aLines) {
 }
 
 void TextEditor::EnterCharacter(ImWchar aChar, bool aShift) {
+    EMULATOR_TRACE;
     ASSERT(!mReadOnly);
 
     UndoRecord u;
@@ -1141,6 +1164,7 @@ void TextEditor::EnterCharacter(ImWchar aChar, bool aShift) {
     u.mBefore = mState;
 
     if (HasSelection()) {
+    EMULATOR_TRACE;
         if (aChar == '\t' && mState.mSelectionStart.mLine != mState.mSelectionEnd.mLine) {
 
             auto start = mState.mSelectionStart;
@@ -1167,6 +1191,7 @@ void TextEditor::EnterCharacter(ImWchar aChar, bool aShift) {
             bool modified = false;
 
             for (int i = start.mLine; i <= end.mLine; i++) {
+    EMULATOR_TRACE;
                 auto& line = mLines[i];
                 if (aShift) {
                     if (!line.empty()) {
@@ -1176,6 +1201,7 @@ void TextEditor::EnterCharacter(ImWchar aChar, bool aShift) {
                         } else {
                             for (int j = 0;
                                  j < mTabSize && !line.empty() && line.front().mChar == ' '; j++) {
+    EMULATOR_TRACE;
                                 line.erase(line.begin());
                                 modified = true;
                             }
@@ -1246,6 +1272,7 @@ void TextEditor::EnterCharacter(ImWchar aChar, bool aShift) {
             Coordinates(coord.mLine + 1, GetCharacterColumn(coord.mLine + 1, (int)whitespaceSize)));
         u.mAdded = (char)aChar;
     } else {
+    EMULATOR_TRACE;
         char buf[7];
         int e = ImTextCharToUtf8(buf, 7, aChar);
         if (e > 0) {
@@ -1287,6 +1314,7 @@ void TextEditor::EnterCharacter(ImWchar aChar, bool aShift) {
 }
 
 void TextEditor::SetReadOnly(bool aValue) {
+    EMULATOR_TRACE;
     mReadOnly = aValue;
 }
 
@@ -1607,6 +1635,7 @@ void TextEditor::Delete() {
     u.mBefore = mState;
 
     if (HasSelection()) {
+    EMULATOR_TRACE;
         u.mRemoved = GetSelectedText();
         u.mRemovedStart = mState.mSelectionStart;
         u.mRemovedEnd = mState.mSelectionEnd;
@@ -1658,6 +1687,7 @@ void TextEditor::Backspace() {
     u.mBefore = mState;
 
     if (HasSelection()) {
+    EMULATOR_TRACE;
         u.mRemoved = GetSelectedText();
         u.mRemovedStart = mState.mSelectionStart;
         u.mRemovedEnd = mState.mSelectionEnd;
@@ -1691,6 +1721,7 @@ void TextEditor::Backspace() {
             --mState.mCursorPosition.mLine;
             mState.mCursorPosition.mColumn = prevSize;
         } else {
+    EMULATOR_TRACE;
             auto& line = mLines[mState.mCursorPosition.mLine];
             auto cindex = GetCharacterIndex(pos) - 1;
             auto cend = cindex + 1;
@@ -1748,6 +1779,7 @@ void TextEditor::Copy() {
 }
 
 void TextEditor::Cut() {
+    EMULATOR_TRACE;
     if (IsReadOnly()) {
         Copy();
     } else {
@@ -1768,6 +1800,7 @@ void TextEditor::Cut() {
 }
 
 void TextEditor::Paste() {
+    EMULATOR_TRACE;
     if (IsReadOnly())
         return;
 
@@ -1777,6 +1810,7 @@ void TextEditor::Paste() {
         u.mBefore = mState;
 
         if (HasSelection()) {
+    EMULATOR_TRACE;
             u.mRemoved = GetSelectedText();
             u.mRemovedStart = mState.mSelectionStart;
             u.mRemovedEnd = mState.mSelectionEnd;
@@ -1903,6 +1937,7 @@ std::vector<std::string> TextEditor::GetTextLines() const {
     result.reserve(mLines.size());
 
     for (auto& line : mLines) {
+    EMULATOR_TRACE;
         std::string text;
 
         text.resize(line.size());
@@ -1917,6 +1952,7 @@ std::vector<std::string> TextEditor::GetTextLines() const {
 }
 
 std::string TextEditor::GetSelectedText() const {
+    EMULATOR_TRACE;
     return GetText(mState.mSelectionStart, mState.mSelectionEnd);
 }
 
@@ -1948,6 +1984,7 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine) {
 
     int endLine = std::max(0, std::min((int)mLines.size(), aToLine));
     for (int i = aFromLine; i < endLine; ++i) {
+    EMULATOR_TRACE;
         auto& line = mLines[i];
 
         if (line.empty())
@@ -1955,6 +1992,7 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine) {
 
         buffer.resize(line.size());
         for (size_t j = 0; j < line.size(); ++j) {
+    EMULATOR_TRACE;
             auto& col = line[j];
             buffer[j] = col.mChar;
             col.mColorIndex = PaletteIndex::Default;
@@ -1966,6 +2004,7 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine) {
         auto last = bufferEnd;
 
         for (auto first = bufferBegin; first != last;) {
+    EMULATOR_TRACE;
             const char* token_begin = nullptr;
             const char* token_end = nullptr;
             PaletteIndex token_color = PaletteIndex::Default;
@@ -1983,6 +2022,7 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine) {
                 // first);
 
                 for (auto& p : mRegexList) {
+    EMULATOR_TRACE;
                     if (std::regex_search(first, last, results, p.first,
                                           std::regex_constants::match_continuous)) {
                         hasTokenizeResult = true;
@@ -2010,6 +2050,7 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine) {
                         std::transform(id.begin(), id.end(), id.begin(), ::toupper);
 
                     if (!line[first - bufferBegin].mPreprocessor) {
+    EMULATOR_TRACE;
                         if (mLanguageDefinition.mKeywords.count(id) != 0)
                             token_color = PaletteIndex::Keyword;
                         else if (mLanguageDefinition.mIdentifiers.count(id) != 0)
@@ -2032,6 +2073,7 @@ void TextEditor::ColorizeRange(int aFromLine, int aToLine) {
 }
 
 void TextEditor::ColorizeInternal() {
+    EMULATOR_TRACE;
     if (mLines.empty() || !mColorizerEnabled)
         return;
 
@@ -2048,6 +2090,7 @@ void TextEditor::ColorizeInternal() {
         auto currentLine = 0;
         auto currentIndex = 0;
         while (currentLine < endLine || currentIndex < endIndex) {
+    EMULATOR_TRACE;
             auto& line = mLines[currentLine];
 
             if (currentIndex == 0 && !concatenate) {
@@ -2167,6 +2210,7 @@ float TextEditor::TextDistanceToLineStart(const Coordinates& aFrom) const {
             .x;
     int colIndex = GetCharacterIndex(aFrom);
     for (size_t it = 0u; it < line.size() && it < colIndex;) {
+    EMULATOR_TRACE;
         if (line[it].mChar == '\t') {
             distance = (1.0f + std::floor((1.0f + distance) / (float(mTabSize) * spaceSize))) *
                        (float(mTabSize) * spaceSize);
@@ -2190,6 +2234,7 @@ float TextEditor::TextDistanceToLineStart(const Coordinates& aFrom) const {
 }
 
 void TextEditor::EnsureCursorVisible() {
+    EMULATOR_TRACE;
     if (!mWithinRender) {
         mScrollToCursor = true;
         return;
@@ -2232,6 +2277,7 @@ TextEditor::UndoRecord::UndoRecord(
     TextEditor::EditorState& aBefore, TextEditor::EditorState& aAfter)
     : mAdded(aAdded), mAddedStart(aAddedStart), mAddedEnd(aAddedEnd), mRemoved(aRemoved),
       mRemovedStart(aRemovedStart), mRemovedEnd(aRemovedEnd), mBefore(aBefore), mAfter(aAfter) {
+    EMULATOR_TRACE;
     ASSERT(mAddedStart <= mAddedEnd);
     ASSERT(mRemovedStart <= mRemovedEnd);
 }
@@ -2253,6 +2299,7 @@ void TextEditor::UndoRecord::Undo(TextEditor* aEditor) {
 }
 
 void TextEditor::UndoRecord::Redo(TextEditor* aEditor) {
+    EMULATOR_TRACE;
     if (!mRemoved.empty()) {
         aEditor->DeleteRange(mRemovedStart, mRemovedEnd);
         aEditor->Colorize(mRemovedStart.mLine - 1, mRemovedEnd.mLine - mRemovedStart.mLine + 1);

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "core/libraries/kernel/threads/pthread.h"
@@ -46,6 +47,7 @@ int ThreadState::CreateStack(PthreadAttr* attr) {
      * from the default-size stack cache:
      */
     if (stacksize == ThrStackDefault && guardsize == ThrGuardDefault) {
+    EMULATOR_TRACE;
         if (!dstackq.empty()) {
             /* Use the spare stack. */
             Stack* spare_stack = dstackq.top();
@@ -104,6 +106,7 @@ int ThreadState::CreateStack(PthreadAttr* attr) {
     ASSERT_MSG(ret == 0, "Unable to map stack memory");
 
     if (guardsize != 0) {
+    EMULATOR_TRACE;
         ret = memory->Protect(stackaddr, guardsize, Core::MemoryProt::NoAccess);
         ASSERT_MSG(ret == 0, "Unable to protect guard page");
     }

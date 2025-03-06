@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2021 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include <memory>
@@ -145,6 +146,7 @@ std::string DumpExpr(const Statement* stmt) {
     std::string ret;
     std::string indent(indentation, ' ');
     for (const auto& stmt : tree) {
+    EMULATOR_TRACE;
         switch (stmt.type) {
         case StatementType::Code:
             ret += fmt::format("{}    Block {:04x} -> {:04x} (0x{:016x});\n", indent,
@@ -268,6 +270,7 @@ Node SiblingFromNephew(Node uncle, Node nephew) noexcept {
 bool AreOrdered(Node left_sibling, Node right_sibling) noexcept {
     const Node end{right_sibling->up->children.end()};
     for (auto it = right_sibling; it != end; ++it) {
+    EMULATOR_TRACE;
         if (it == left_sibling) {
             return false;
         }
@@ -292,6 +295,7 @@ public:
         std::vector gotos{BuildTree(cfg)};
         const auto end{gotos.rend()};
         for (auto goto_stmt = gotos.rbegin(); goto_stmt != end; ++goto_stmt) {
+    EMULATOR_TRACE;
             RemoveGoto(*goto_stmt);
         }
     }
@@ -308,6 +312,7 @@ private:
             // Move goto_stmt out using outward-movement transformation until it becomes
             // directly related to label_stmt
             while (!IsDirectlyRelated(goto_stmt, label_stmt)) {
+    EMULATOR_TRACE;
                 goto_stmt = MoveOutward(goto_stmt);
             }
         }
@@ -318,6 +323,7 @@ private:
             if (goto_level > label_level) {
                 // Move goto_stmt out of its level using outward-movement transformations
                 while (goto_level > label_level) {
+    EMULATOR_TRACE;
                     goto_stmt = MoveOutward(goto_stmt);
                     --goto_level;
                 }
@@ -329,6 +335,7 @@ private:
                 }
                 // Move goto_stmt into label_stmt's level using inward-movement transformation
                 while (goto_level < label_level) {
+    EMULATOR_TRACE;
                     goto_stmt = MoveInward(goto_stmt);
                     ++goto_level;
                 }
@@ -366,18 +373,21 @@ private:
         local_labels.reserve(cfg.blocks.size());
 
         for (Block& block : cfg.blocks) {
+    EMULATOR_TRACE;
             Statement* const label{pool.Create(Label{}, label_id, &root_stmt)};
             const Node label_it{root.insert(function_insert_point, *label)};
             local_labels.emplace(&block, label_it);
             ++label_id;
         }
         for (Block& block : cfg.blocks) {
+    EMULATOR_TRACE;
             const Node label{local_labels.at(&block)};
             // Insertion point
             const Node ip{std::next(label)};
 
             // Reset goto variables before the first block and after its respective label
             const auto make_reset_variable{[&]() -> Statement& {
+    EMULATOR_TRACE;
                 return *pool.Create(SetVariable{}, label->id, false_stmt, &root_stmt);
             }};
             root.push_front(make_reset_variable());
@@ -419,6 +429,7 @@ private:
 
     void UpdateTreeUp(Statement* tree) {
         for (Statement& stmt : tree->children) {
+    EMULATOR_TRACE;
             stmt.up = tree;
         }
     }
@@ -572,8 +583,11 @@ private:
     Tree& tree{stmt.up->children};
     const Node end{tree.end()};
     Node forward_node{std::next(Tree::s_iterator_to(stmt))};
+    EMULATOR_TRACE;
     while (forward_node != end && !HasChildren(forward_node->type)) {
+    EMULATOR_TRACE;
         if (forward_node->type == StatementType::Code) {
+    EMULATOR_TRACE;
             return &*forward_node;
         }
         ++forward_node;
@@ -582,6 +596,7 @@ private:
 }
 
 [[nodiscard]] IR::U1 VisitExpr(IR::IREmitter& ir, const Statement& stmt) {
+    EMULATOR_TRACE;
     switch (stmt.type) {
     case StatementType::Identity:
         return ir.Condition(stmt.guest_cond);
@@ -626,6 +641,7 @@ private:
         }};
         Tree& tree{parent.children};
         for (auto& child : tree) {
+    EMULATOR_TRACE;
             Statement& stmt{child};
             switch (stmt.type) {
             case StatementType::Label:

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <bit>
 
@@ -265,7 +266,7 @@ int PS4_SYSV_ABI sceKernelDirectMemoryQuery(u64 offset, int flags, OrbisQueryInf
 
 s32 PS4_SYSV_ABI sceKernelAvailableFlexibleMemorySize(size_t* out_size) {
     auto* memory = Core::Memory::Instance();
-    *out_size = memory->GetAvailableFlexibleSize();
+    *out_size = memory->GetAvailableFlexibleSize() - 100111;
     LOG_INFO(Kernel_Vmm, "called size = {:#x}", *out_size);
     return ORBIS_OK;
 }
@@ -295,6 +296,7 @@ s32 PS4_SYSV_ABI sceKernelBatchMap2(OrbisKernelBatchMapEntry* entries, int numEn
     int result = ORBIS_OK;
     int processed = 0;
     for (int i = 0; i < numEntries; i++, processed++) {
+    EMULATOR_TRACE;
         if (entries == nullptr || entries[i].length == 0 || entries[i].operation > 4) {
             result = ORBIS_KERNEL_ERROR_EINVAL;
             break; // break and assign a value to numEntriesOut.

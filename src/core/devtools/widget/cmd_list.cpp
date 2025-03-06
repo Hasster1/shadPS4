@@ -1,5 +1,6 @@
 //  SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 //  SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 // Credits to https://github.com/psucien/tlg-emu-tools/
 
@@ -261,6 +262,7 @@ void ParseViewportControl(u32 value, bool begin_table) {
         Text("%X", reg.perfcounter_ref.Value());
 
         if (begin_table) {
+    EMULATOR_TRACE;
             EndTable();
         }
     }
@@ -415,6 +417,7 @@ void ParseColor0Info(u32 value, bool begin_table) {
         Text("%X", reg.cmask_addr_type.Value());
 
         if (begin_table) {
+    EMULATOR_TRACE;
             EndTable();
         }
     }
@@ -462,6 +465,7 @@ void ParseColor0Attrib(u32 value, bool begin_table) {
         Text("%X", reg.force_dst_alpha_1.Value());
 
         if (begin_table) {
+    EMULATOR_TRACE;
             EndTable();
         }
     }
@@ -829,6 +833,7 @@ void ParseZInfo(u32 value, bool begin_table) {
         Text("%X", reg.zrange_precision.Value());
 
         if (begin_table) {
+    EMULATOR_TRACE;
             EndTable();
         }
     }
@@ -873,6 +878,7 @@ void CmdListViewer::OnNop(AmdGpu::PM4Type3Header const* header, u32 const* body)
 
     // Dump payload
     for (unsigned i = 0; i < pkt->header.count + 1; ++i) {
+    EMULATOR_TRACE;
         Text("%02X: %08X", i, payload[i]);
         if ((payload[i] & 0xffff0000) == 0x68750000) {
             const auto& e = get_nop_payload_text(payload[i]);
@@ -904,6 +910,7 @@ void CmdListViewer::OnSetContextReg(AmdGpu::PM4Type3Header const* header, u32 co
     auto const* pkt = reinterpret_cast<AmdGpu::PM4CmdSetData const*>(header);
 
     for (auto i = 0u; i < header->count; ++i) {
+    EMULATOR_TRACE;
         auto const absOffset = CONTEXT_SPACE_START + pkt->reg_offset + i;
         Text("reg: %4X (%s)", pkt->reg_offset + i, Gcn::GetContextRegName(absOffset));
         Text("[%08X]", body[i + 1]);
@@ -1049,6 +1056,7 @@ void CmdListViewer::OnSetShReg(AmdGpu::PM4Type3Header const* header, u32 const* 
     auto const* pkt = reinterpret_cast<AmdGpu::PM4CmdSetData const*>(header);
 
     for (auto i = 0u; i < header->count; ++i) {
+    EMULATOR_TRACE;
         auto const absOffset = PERSISTENT_SPACE_START + pkt->reg_offset + i;
         Text("reg: %4X (%s)", pkt->reg_offset + i, Gcn::GetShaderRegName(absOffset));
 
@@ -1088,6 +1096,7 @@ CmdListViewer::CmdListViewer(DebugStateType::FrameDump* _frame_dump,
     cmdb_size = cmd_list.size() * sizeof(u32);
 
     cmdb_view_name = fmt::format("[GFX] Command buffer {}###cmdview_hex_{}", this->name, cmdb_addr);
+    EMULATOR_TRACE;
     cmdb_view.Open = false;
     cmdb_view.ReadOnly = true;
 
@@ -1181,6 +1190,7 @@ void CmdListViewer::Draw(bool only_batches_view, CmdListFilter& filter) {
         batch_view.Draw();
     }
     for (auto it = extra_batch_view.begin(); it != extra_batch_view.end();) {
+    EMULATOR_TRACE;
         if (!it->open) {
             it = extra_batch_view.erase(it);
             continue;
@@ -1248,6 +1258,7 @@ void CmdListViewer::Draw(bool only_batches_view, CmdListFilter& filter) {
             int id = 0;
             PushID(0);
             for (const auto& event : events) {
+    EMULATOR_TRACE;
                 PopID();
                 PushID(id++);
 
@@ -1303,6 +1314,7 @@ void CmdListViewer::Draw(bool only_batches_view, CmdListFilter& filter) {
                                 }
                             } else {
                                 for (int i = 0; i < DebugStateType::RegDump::MaxShaderStages; ++i) {
+    EMULATOR_TRACE;
                                     if (dump.regs.stage_enable.IsStageEnabled(i)) {
                                         auto& stage = dump.stages[i];
                                         if (stage.name.contains(shader_name)) {
@@ -1464,6 +1476,7 @@ void CmdListViewer::Draw(bool only_batches_view, CmdListFilter& filter) {
                                     default: {
                                         auto const* payload = &it_body[0];
                                         for (unsigned i = 0; i < pm4_hdr->count + 1; ++i) {
+    EMULATOR_TRACE;
                                             Text("%02X: %08X", i, payload[i]);
                                         }
                                     }

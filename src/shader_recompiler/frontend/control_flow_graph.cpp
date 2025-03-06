@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include "common/assert.h"
@@ -88,6 +89,7 @@ void CFG::EmitLabels() {
 
     // Iterate instruction list and add labels to branch targets.
     for (u32 i = 0; i < inst_list.size(); i++) {
+    EMULATOR_TRACE;
         index_to_pc[i] = pc;
         const GcnInst inst = inst_list[i];
         if (inst.IsUnconditionalBranch()) {
@@ -139,6 +141,7 @@ void CFG::EmitDivergenceLabels() {
     // Since we will be adding new labels, avoid iterating those as well.
     const size_t end_size = labels.size();
     for (u32 l = 0; l < end_size; l++) {
+    EMULATOR_TRACE;
         const Label start = labels[l];
         // Stop if we reached end of existing labels.
         if (l == end_size - 1) {
@@ -150,6 +153,7 @@ void CFG::EmitDivergenceLabels() {
         s32 curr_begin = -1;
         s32 last_exec_idx = -1;
         for (size_t index = GetIndex(start); index < end_index; index++) {
+    EMULATOR_TRACE;
             const auto& inst = inst_list[index];
             if (curr_begin != -1) {
                 // Keep note of the last instruction that does not ignore exec, so we know where
@@ -160,6 +164,7 @@ void CFG::EmitDivergenceLabels() {
                 // Consider a close scope on certain instruction types or at the last instruction
                 // before the next label.
                 if (is_close_scope(inst) || index == end_index - 1) {
+    EMULATOR_TRACE;
                     // Only insert a scope if, since the open-scope instruction, there is at least
                     // one instruction that does not ignore exec.
                     if (index - curr_begin > 1 && last_exec_idx != -1) {
@@ -198,6 +203,7 @@ void CFG::EmitDivergenceLabels() {
 
 void CFG::EmitBlocks() {
     for (auto it = labels.cbegin(); it != labels.cend(); ++it) {
+    EMULATOR_TRACE;
         const Label start = *it;
         const auto next_it = std::next(it);
         const bool is_last = (next_it == labels.cend());
@@ -225,6 +231,7 @@ void CFG::EmitBlocks() {
 }
 
 void CFG::LinkBlocks() {
+    EMULATOR_TRACE;
     const auto get_block = [this](u32 address) {
         auto it = blocks.find(address, Compare{});
         ASSERT_MSG(it != blocks.cend() && it->begin == address);
@@ -232,6 +239,7 @@ void CFG::LinkBlocks() {
     };
 
     for (auto it = blocks.begin(); it != blocks.end(); it++) {
+    EMULATOR_TRACE;
         auto& block = *it;
         const auto end_inst{block.end_inst};
         // Handle divergence block inserted here.
@@ -306,11 +314,13 @@ std::string CFG::Dot() const {
     int node_uid{0};
 
     const auto name_of = [](const Block& block) { return fmt::format("\"{:#x}\"", block.begin); };
+    EMULATOR_TRACE;
 
     std::string dot{"digraph shader {\n"};
     dot += fmt::format("\tsubgraph cluster_{} {{\n", 0);
     dot += fmt::format("\t\tnode [style=filled];\n");
     for (const Block& block : blocks) {
+    EMULATOR_TRACE;
         const std::string name{name_of(block)};
         const auto add_branch = [&](Block* branch, bool add_label) {
             dot += fmt::format("\t\t{}->{}", name, name_of(*branch));
@@ -349,6 +359,7 @@ std::string CFG::Dot() const {
         dot += "Start;\n";
     } else {
         dot += fmt::format("\tStart -> {};\n", name_of(*blocks.begin()));
+    EMULATOR_TRACE;
     }
     dot += fmt::format("\tStart [shape=diamond];\n");
     dot += "}\n";

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include "common/config.h"
@@ -42,6 +43,7 @@ void MntPoints::UnmountAll() {
 
 std::filesystem::path MntPoints::GetHostPath(std::string_view path, bool* is_read_only,
                                              bool force_base_path) {
+    EMULATOR_TRACE;
     // Evil games like Turok2 pass double slashes e.g /app0//game.kpf
     std::string corrected_path(path);
     size_t pos = corrected_path.find("//");
@@ -74,6 +76,7 @@ std::filesystem::path MntPoints::GetHostPath(std::string_view path, bool* is_rea
 
     if ((corrected_path.starts_with("/app0") || corrected_path.starts_with("/hostapp")) &&
         !force_base_path && std::filesystem::exists(patch_path)) {
+    EMULATOR_TRACE;
         return patch_path;
     }
 
@@ -115,6 +118,7 @@ std::filesystem::path MntPoints::GetHostPath(std::string_view path, bool* is_rea
             const auto part_low = Common::ToLower(part.string());
             bool found_match = false;
             for (const auto& path : std::filesystem::directory_iterator(current_path)) {
+    EMULATOR_TRACE;
                 const auto candidate = path.path().filename();
                 const auto filename = Common::ToLower(candidate.string());
                 // Check if a filename matches in case insensitive manner.
@@ -134,6 +138,7 @@ std::filesystem::path MntPoints::GetHostPath(std::string_view path, bool* is_rea
     };
 
     if (!force_base_path) {
+    EMULATOR_TRACE;
         if (const auto path = search(patch_path)) {
             return *path;
         }
@@ -158,6 +163,7 @@ void MntPoints::IterateDirectory(std::string_view guest_directory,
     // Pass 1: Any files that existed in the base directory, using patch directory if needed.
     if (std::filesystem::exists(base_path)) {
         for (const auto& entry : std::filesystem::directory_iterator(base_path)) {
+    EMULATOR_TRACE;
             if (apply_patch) {
                 const auto patch_entry_path = patch_path / entry.path().filename();
                 if (std::filesystem::exists(patch_entry_path)) {
@@ -172,6 +178,7 @@ void MntPoints::IterateDirectory(std::string_view guest_directory,
     // Pass 2: Any files that exist only in the patch directory.
     if (apply_patch) {
         for (const auto& entry : std::filesystem::directory_iterator(patch_path)) {
+    EMULATOR_TRACE;
             const auto base_entry_path = base_path / entry.path().filename();
             if (!std::filesystem::exists(base_entry_path)) {
                 callback(entry.path(), !entry.is_directory());
@@ -189,6 +196,7 @@ int HandleTable::CreateHandle() {
     int existingFilesNum = m_files.size();
 
     for (int index = 0; index < existingFilesNum; index++) {
+    EMULATOR_TRACE;
         if (m_files.at(index) == nullptr) {
             m_files[index] = file;
             return index;
@@ -215,6 +223,7 @@ File* HandleTable::GetFile(int d) {
 
 File* HandleTable::GetFile(const std::filesystem::path& host_name) {
     for (auto* file : m_files) {
+    EMULATOR_TRACE;
         if (file != nullptr && file->m_host_name == host_name) {
             return file;
         }

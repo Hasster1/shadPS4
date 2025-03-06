@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2014 Citra Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <array>
 #include <cstdio>

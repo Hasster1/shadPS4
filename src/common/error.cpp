@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2013 Dolphin Emulator Project
 // SPDX-FileCopyrightText: 2014 Citra Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <cstddef>
 #ifdef _WIN32
@@ -39,6 +40,7 @@ std::string NativeErrorToString(int e) {
     // Thread safe (XSI-compliant)
     int second_err = strerror_r(e, err_str, sizeof(err_str));
     if (second_err != 0) {
+    EMULATOR_TRACE;
         return "(strerror_r failed to format error)";
     }
     return std::string(err_str);
@@ -47,6 +49,7 @@ std::string NativeErrorToString(int e) {
 }
 
 std::string GetLastErrorMsg() {
+    EMULATOR_TRACE;
 #ifdef _WIN32
     return NativeErrorToString(GetLastError());
 #else

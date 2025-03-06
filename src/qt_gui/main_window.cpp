@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <QDockWidget>
 #include <QKeyEvent>
@@ -32,6 +33,7 @@
 #endif
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
+    EMULATOR_TRACE;
     ui->setupUi(this);
     installEventFilter(this);
     setAttribute(Qt::WA_DeleteOnClose);
@@ -98,6 +100,7 @@ bool MainWindow::Init() {
 
 #ifdef ENABLE_DISCORD_RPC
     if (Config::getEnableDiscordRPC()) {
+    EMULATOR_TRACE;
         auto* rpc = Common::Singleton<DiscordRPCHandler::RPC>::Instance();
         rpc->init();
         rpc->setStatusIdling();
@@ -133,6 +136,7 @@ void MainWindow::CreateActions() {
 }
 
 void MainWindow::AddUiWidgets() {
+    EMULATOR_TRACE;
     // add toolbar widgets
     QApplication::setStyle("Fusion");
     ui->toolBar->setObjectName("mw_toolbar");
@@ -167,6 +171,7 @@ void MainWindow::CreateDockWindows() {
     int table_mode = Config::getTableMode();
     int slider_pos = 0;
     if (table_mode == 0) { // List
+    EMULATOR_TRACE;
         m_game_grid_frame->hide();
         m_elf_viewer->hide();
         m_game_list_frame->show();
@@ -198,6 +203,7 @@ void MainWindow::CreateDockWindows() {
 
     // handle resize like this for now, we deal with it when we add more docks
     connect(this, &MainWindow::WindowResized, this, [&]() {
+    EMULATOR_TRACE;
         this->resizeDocks({m_dock_widget.data()}, {this->width()}, Qt::Orientation::Horizontal);
     });
 }
@@ -236,6 +242,7 @@ void MainWindow::GetPhysicalDevices() {
     Vulkan::Instance instance(false, false);
     auto physical_devices = instance.GetPhysicalDevices();
     for (const vk::PhysicalDevice physical_device : physical_devices) {
+    EMULATOR_TRACE;
         auto prop = physical_device.getProperties();
         QString name = QString::fromUtf8(prop.deviceName, -1);
         if (prop.apiVersion < Vulkan::TargetVulkanApiVersion) {
@@ -324,6 +331,7 @@ void MainWindow::CreateConnects() {
 
     // this is the editor for kbm keybinds
     connect(ui->controllerButton, &QPushButton::clicked, this, [this]() {
+    EMULATOR_TRACE;
         auto configWindow = new ControlSettings(m_game_info, this);
         configWindow->exec();
     });
@@ -468,6 +476,7 @@ void MainWindow::CreateConnects() {
             };
 
             for (const GameInfo& game : m_game_info->m_games) {
+    EMULATOR_TRACE;
                 QString empty = "";
                 QString gameSerial = QString::fromStdString(game.serial);
                 QString gameVersion = QString::fromStdString(game.version);
@@ -491,6 +500,7 @@ void MainWindow::CreateConnects() {
             panelDialog->accept();
         });
         connect(downloadAllPatchesButton, &QPushButton::clicked, [panelDialog]() {
+    EMULATOR_TRACE;
             QEventLoop eventLoop;
             int pendingDownloads = 0;
 
@@ -524,6 +534,7 @@ void MainWindow::CreateConnects() {
 
     // Dump game list.
     connect(ui->dumpGameListAct, &QAction::triggered, this, [&] {
+    EMULATOR_TRACE;
         QString filePath = qApp->applicationDirPath().append("/GameList.txt");
         QFile file(filePath);
         QTextStream out(&file);
@@ -538,6 +549,7 @@ void MainWindow::CreateConnects() {
                    .arg(" APP VERSION", -11)
                    .arg("                Path");
         for (const GameInfo& game : m_game_info->m_games) {
+    EMULATOR_TRACE;
             QString game_path;
             Common::FS::PathToQString(game_path, game.path);
             out << QString("%1 %2 %3     %4 %5\n")
@@ -661,6 +673,7 @@ void MainWindow::StartGame() {
 void MainWindow::SearchGameTable(const QString& text) {
     if (isTableList) {
         for (int row = 0; row < m_game_list_frame->rowCount(); row++) {
+    EMULATOR_TRACE;
             QString game_name = QString::fromStdString(m_game_info->m_games[row].name);
             bool match = (game_name.contains(text, Qt::CaseInsensitive)); // Check only in column 1
             m_game_list_frame->setRowHidden(row, !match);
@@ -668,6 +681,7 @@ void MainWindow::SearchGameTable(const QString& text) {
     } else {
         QVector<GameInfo> filteredGames;
         for (const auto& gameInfo : m_game_info->m_games) {
+    EMULATOR_TRACE;
             QString game_name = QString::fromStdString(gameInfo.name);
             if (game_name.contains(text, Qt::CaseInsensitive)) {
                 filteredGames.push_back(gameInfo);
@@ -731,6 +745,7 @@ void MainWindow::InstallPkg() {
         int nPkg = fileNames.size();
         int pkgNum = 0;
         for (const QString& file : fileNames) {
+    EMULATOR_TRACE;
             ++pkgNum;
             std::filesystem::path path = Common::FS::PathFromQString(file);
             MainWindow::InstallDragDropPkg(path, pkgNum, nPkg);
@@ -777,6 +792,7 @@ void MainWindow::InstallDragDropPkg(std::filesystem::path file, int pkgNum, int 
         auto category = psf.GetString("CATEGORY");
 
         if (!use_for_all_queued || pkgNum == 1) {
+    EMULATOR_TRACE;
             InstallDirSelect ids;
             const auto selected = ids.exec();
             if (selected == QDialog::Rejected) {
@@ -947,6 +963,7 @@ void MainWindow::InstallDragDropPkg(std::filesystem::path file, int pkgNum, int 
             // what else?
         }
         if (!pkg.Extract(file, game_update_path, failreason)) {
+    EMULATOR_TRACE;
             QMessageBox::critical(this, tr("PKG ERROR"), QString::fromStdString(failreason));
         } else {
             int nfiles = pkg.GetNumberOfFiles();
@@ -954,6 +971,7 @@ void MainWindow::InstallDragDropPkg(std::filesystem::path file, int pkgNum, int 
             if (nfiles > 0) {
                 QVector<int> indices;
                 for (int i = 0; i < nfiles; i++) {
+    EMULATOR_TRACE;
                     indices.append(i);
                 }
 
@@ -1161,6 +1179,7 @@ void MainWindow::CreateRecentGameActions() {
     ui->menuRecent->clear();
     std::vector<std::string> vec = Config::getRecentFiles();
     for (int i = 0; i < vec.size(); i++) {
+    EMULATOR_TRACE;
         QAction* recentFileAct = new QAction(this);
         recentFileAct->setText(QString::fromStdString(vec.at(i)));
         ui->menuRecent->addAction(recentFileAct);
@@ -1198,6 +1217,7 @@ void MainWindow::LoadTranslation() {
                     .arg(base_path));
             delete translator;
         } else {
+    EMULATOR_TRACE;
             qApp->installTranslator(translator);
             ui->retranslateUi(this);
         }

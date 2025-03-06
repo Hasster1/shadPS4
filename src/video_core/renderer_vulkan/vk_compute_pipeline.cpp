@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <boost/container/small_vector.hpp>
 
@@ -47,6 +48,7 @@ ComputePipeline::ComputePipeline(const Instance& instance, Scheduler& scheduler,
         });
     }
     for (const auto& buffer : info->buffers) {
+    EMULATOR_TRACE;
         const auto sharp = buffer.GetSharp(*info);
         bindings.push_back({
             .binding = binding++,
@@ -57,6 +59,7 @@ ComputePipeline::ComputePipeline(const Instance& instance, Scheduler& scheduler,
         });
     }
     for (const auto& image : info->images) {
+    EMULATOR_TRACE;
         bindings.push_back({
             .binding = binding++,
             .descriptorType = image.is_written ? vk::DescriptorType::eStorageImage
@@ -66,6 +69,7 @@ ComputePipeline::ComputePipeline(const Instance& instance, Scheduler& scheduler,
         });
     }
     for (const auto& sampler : info->samplers) {
+    EMULATOR_TRACE;
         bindings.push_back({
             .binding = binding++,
             .descriptorType = vk::DescriptorType::eSampler,

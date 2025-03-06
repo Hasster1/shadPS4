@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include "core/libraries/network/net_ctl_codes.h"
@@ -45,6 +46,7 @@ s32 NetCtlInternal::RegisterNpToolkitCallback(OrbisNetCtlCallbackForNpToolkit fu
 void NetCtlInternal::CheckCallback() {
     std::scoped_lock lock{m_mutex};
     for (const auto [func, arg] : callbacks) {
+    EMULATOR_TRACE;
         if (func != nullptr) {
             Core::ExecuteGuest(func, ORBIS_NET_CTL_EVENT_TYPE_DISCONNECTED, arg);
         }
@@ -54,6 +56,7 @@ void NetCtlInternal::CheckCallback() {
 void NetCtlInternal::CheckNpToolkitCallback() {
     std::scoped_lock lock{m_mutex};
     for (const auto [func, arg] : nptool_callbacks) {
+    EMULATOR_TRACE;
         if (func != nullptr) {
             Core::ExecuteGuest(func, ORBIS_NET_CTL_EVENT_TYPE_DISCONNECTED, arg);
         }

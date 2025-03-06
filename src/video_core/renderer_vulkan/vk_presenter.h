@@ -80,7 +80,7 @@ public:
         auto desc = VideoCore::TextureCache::VideoOutDesc{attribute, cpu_address};
         const auto image_id = texture_cache.FindImage(desc);
         auto& image = texture_cache.GetImage(image_id);
-        image.usage.vo_surface = 1u;
+        image.usage.vo_surface = 2u;
         return image;
     }
 

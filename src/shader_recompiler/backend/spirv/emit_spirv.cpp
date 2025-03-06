@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <span>
 #include <type_traits>
@@ -57,6 +58,7 @@ void SetDefinition(EmitContext& ctx, IR::Inst* inst, Args... args) {
 
 template <typename ArgType>
 ArgType Arg(EmitContext& ctx, const IR::Value& arg) {
+    EMULATOR_TRACE;
     if constexpr (std::is_same_v<ArgType, Id>) {
         return ctx.Def(arg);
     } else if constexpr (std::is_same_v<ArgType, const IR::Value&>) {
@@ -141,6 +143,7 @@ Id TypeId(const EmitContext& ctx, IR::Type type) {
 void Traverse(EmitContext& ctx, const IR::Program& program) {
     IR::Block* current_block{};
     for (const IR::AbstractSyntaxNode& node : program.syntax_list) {
+    EMULATOR_TRACE;
         switch (node.type) {
         case IR::AbstractSyntaxNode::Type::Block: {
             const Id label{node.data.block->Definition<Id>()};
@@ -150,6 +153,7 @@ void Traverse(EmitContext& ctx, const IR::Program& program) {
             current_block = node.data.block;
             ctx.AddLabel(label);
             for (IR::Inst& inst : node.data.block->Instructions()) {
+    EMULATOR_TRACE;
                 EmitInst(ctx, &inst);
             }
             break;
@@ -205,6 +209,7 @@ Id DefineMain(EmitContext& ctx, const IR::Program& program) {
     const Id void_function{ctx.TypeFunction(ctx.void_id)};
     const Id main{ctx.OpFunction(ctx.void_id, spv::FunctionControlMask::MaskNone, void_function)};
     for (IR::Block* const block : program.blocks) {
+    EMULATOR_TRACE;
         block->SetDefinition(ctx.OpLabel());
     }
     Traverse(ctx, program);
@@ -269,13 +274,16 @@ void SetupCapabilities(const Info& info, const Profile& profile, EmitContext& ct
         ctx.AddCapability(spv::Capability::GroupNonUniform);
     }
     if (info.uses_group_quad) {
+    EMULATOR_TRACE;
         ctx.AddCapability(spv::Capability::GroupNonUniformQuad);
     }
     if (info.uses_group_ballot) {
+    EMULATOR_TRACE;
         ctx.AddCapability(spv::Capability::GroupNonUniformBallot);
     }
     const auto stage = info.l_stage;
     if (stage == LogicalStage::Vertex) {
+    EMULATOR_TRACE;
         ctx.AddExtension("SPV_KHR_shader_draw_parameters");
         ctx.AddCapability(spv::Capability::DrawParameters);
     }
@@ -407,6 +415,7 @@ Id EmitPhi(EmitContext& ctx, IR::Inst* inst) {
     boost::container::small_vector<Id, 32> blocks;
     blocks.reserve(num_args);
     for (size_t index = 0; index < num_args; ++index) {
+    EMULATOR_TRACE;
         blocks.push_back(inst->PhiBlock(index)->Definition<Id>());
     }
     // The type of a phi instruction is stored in its flags

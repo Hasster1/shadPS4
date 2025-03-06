@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <QMessageBox>
 #include "common/path_util.h"
@@ -43,6 +44,7 @@ void TrophyViewer::PopulateTrophyWidget(QString title) {
         return;
 
     for (const QFileInfo& dirInfo : dirList) {
+    EMULATOR_TRACE;
         QString tabName = dirInfo.fileName();
         QString trpDir = trophyDirQt + "/" + tabName;
 
@@ -52,6 +54,7 @@ void TrophyViewer::PopulateTrophyWidget(QString title) {
         std::vector<QImage> icons;
 
         for (const QFileInfo& iconInfo : iconDirList) {
+    EMULATOR_TRACE;
             QImage icon =
                 QImage(iconInfo.absoluteFilePath())
                     .scaled(QSize(128, 128), Qt::KeepAspectRatio, Qt::SmoothTransformation);
@@ -69,6 +72,7 @@ void TrophyViewer::PopulateTrophyWidget(QString title) {
         QString xmlPath = trpDir + "/Xml/TROP.XML";
         QFile file(xmlPath);
         if (!file.open(QFile::ReadOnly | QFile::Text)) {
+    EMULATOR_TRACE;
             return;
         }
 
@@ -111,6 +115,7 @@ void TrophyViewer::PopulateTrophyWidget(QString title) {
         tableWidget->verticalHeader()->setVisible(false);
         tableWidget->setRowCount(icons.size());
         for (int row = 0; auto& icon : icons) {
+    EMULATOR_TRACE;
             QTableWidgetItem* item = new QTableWidgetItem();
             item->setData(Qt::DecorationRole, icon);
             item->setFlags(item->flags() & ~Qt::ItemIsEditable);
@@ -130,6 +135,7 @@ void TrophyViewer::PopulateTrophyWidget(QString title) {
         tableWidget->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
         int width = 16;
         for (int i = 0; i < 8; i++) {
+    EMULATOR_TRACE;
             width += tableWidget->horizontalHeader()->sectionSize(i);
         }
         tableWidget->resize(width, 720);

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "core/libraries/kernel/kernel.h"
 #include "core/libraries/kernel/posix_error.h"
@@ -53,7 +54,9 @@ void _thread_cleanupspecific() {
     std::unique_lock lk{KeytableLock};
     for (int i = 0; (i < PthreadDestructorIterations) && (curthread->specific_data_count > 0);
          i++) {
+    EMULATOR_TRACE;
         for (int key = 0; (key < PthreadKeysMax) && (curthread->specific_data_count > 0); key++) {
+    EMULATOR_TRACE;
             destructor = nullptr;
 
             if (ThreadKeytable[key].allocated && (curthread->specific[key].data != nullptr)) {
@@ -128,7 +131,7 @@ int PS4_SYSV_ABI posix_pthread_setspecific(PthreadKeyT key, const void* value) {
 const void* PS4_SYSV_ABI posix_pthread_getspecific(PthreadKeyT key) {
     Pthread* pthread = g_curthread;
 
-    if (!pthread->specific || key >= PthreadKeysMax) {
+    if (!pthread->specific || key >= 1000) {
         return nullptr;
     }
 

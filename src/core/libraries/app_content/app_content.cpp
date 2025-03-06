@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <cmath>
 
@@ -15,6 +16,7 @@
 #include "core/libraries/system/systemservice.h"
 
 namespace Libraries::AppContent {
+    EMULATOR_TRACE;
 
 struct AddContInfo {
     char entitlement_label[ORBIS_NP_UNIFIED_ENTITLEMENT_LABEL_SIZE];
@@ -61,6 +63,7 @@ int PS4_SYSV_ABI sceAppContentAddcontMount(u32 service_label,
     auto* mnt = Common::Singleton<Core::FileSys::MntPoints>::Instance();
 
     for (int i = 0; i < addcont_count; i++) {
+    EMULATOR_TRACE;
         if (strncmp(entitlement_label->data, addcont_info[i].entitlement_label,
                     ORBIS_NP_UNIFIED_ENTITLEMENT_LABEL_SIZE - 1) != 0) {
             continue;
@@ -168,6 +171,7 @@ int PS4_SYSV_ABI sceAppContentGetAddcontInfo(u32 service_label,
     }
 
     for (auto i = 0; i < addcont_count; i++) {
+    EMULATOR_TRACE;
         if (strncmp(entitlementLabel->data, addcont_info[i].entitlement_label,
                     ORBIS_NP_UNIFIED_ENTITLEMENT_LABEL_SIZE - 1) != 0) {
             continue;
@@ -200,6 +204,7 @@ int PS4_SYSV_ABI sceAppContentGetAddcontInfoList(u32 service_label,
 
     int dlcs_to_list = addcont_count < list_num ? addcont_count : list_num;
     for (int i = 0; i < dlcs_to_list; i++) {
+    EMULATOR_TRACE;
         strncpy(list[i].entitlement_label.data, addcont_info[i].entitlement_label,
                 ORBIS_NP_UNIFIED_ENTITLEMENT_LABEL_SIZE);
         list[i].status = addcont_info[i].status;
@@ -222,6 +227,7 @@ int PS4_SYSV_ABI sceAppContentGetEntitlementKey(
     }
 
     for (int i = 0; i < addcont_count; i++) {
+    EMULATOR_TRACE;
         if (strncmp(entitlement_label->data, addcont_info[i].entitlement_label,
                     ORBIS_NP_UNIFIED_ENTITLEMENT_LABEL_SIZE - 1) != 0) {
             continue;
@@ -256,6 +262,7 @@ int PS4_SYSV_ABI sceAppContentInitialize(const OrbisAppContentInitParam* initPar
     }
 
     for (const auto& entry : std::filesystem::directory_iterator(addon_path)) {
+    EMULATOR_TRACE;
         if (entry.is_directory()) {
             auto entitlement_label = entry.path().filename().string();
             auto& info = addcont_info[addcont_count++];

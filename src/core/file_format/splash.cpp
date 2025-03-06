@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <fstream>
 
@@ -13,6 +14,7 @@ bool Splash::Open(const std::filesystem::path& filepath) {
 
     Common::FS::IOFile file(filepath, Common::FS::FileAccessMode::Read);
     if (!file.IsOpen()) {
+    EMULATOR_TRACE;
         return false;
     }
 

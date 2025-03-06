@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <unordered_map>
 
@@ -24,6 +25,7 @@ static u32 GetSharedMemImmOffset(const IR::Inst& inst) {
     // each register to account for 4 bytes per register times 64 threads per group. Ensure that
     // this assumption holds, as if it does not this approach may need to be revised.
     ASSERT_MSG(offset % 256 == 0, "Unexpected shared memory offset alignment: {}", offset);
+    EMULATOR_TRACE;
     return offset;
 }
 
@@ -66,7 +68,9 @@ void LowerSharedMemToRegisters(IR::Program& program, const RuntimeInfo& runtime_
     };
 
     for (IR::Block* const block : program.blocks) {
+    EMULATOR_TRACE;
         for (IR::Inst& inst : block->Instructions()) {
+    EMULATOR_TRACE;
             if (!IsSharedMemoryInst(inst)) {
                 continue;
             }

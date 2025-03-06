@@ -1,5 +1,6 @@
 //  SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 //  SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "frame_graph.h"
 
@@ -25,6 +26,7 @@ void FrameGraph::DrawFrameGraph() {
     const float full_width = GetContentRegionAvail().x;
     auto pos = GetCursorScreenPos();
     const ImVec2 size{full_width, FRAME_GRAPH_HEIGHT + FRAME_GRAPH_PADDING_Y * 2.0f};
+    EMULATOR_TRACE;
     ItemSize(size);
     if (!ItemAdd({pos, pos + size}, GetID("FrameGraph"))) {
         return;
@@ -41,6 +43,7 @@ void FrameGraph::DrawFrameGraph() {
                             IM_COL32(0x33, 0x33, 0x33, 0xFF));
     draw_list.PushClipRect({pos.x, pos.y}, {pos.x + full_width, final_pos_y}, true);
     for (u32 i = 0; i < FRAME_BUFFER_SIZE; ++i) {
+    EMULATOR_TRACE;
         const auto& frame_info = frame_list[(DebugState.GetFrameNum() - i) % FRAME_BUFFER_SIZE];
         const float dt_factor = target_dt / frame_info.delta;
 

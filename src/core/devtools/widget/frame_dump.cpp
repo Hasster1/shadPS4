@@ -1,5 +1,6 @@
 //  SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 //  SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <cstdio>
 #include <fmt/chrono.h>
@@ -49,6 +50,7 @@ FrameDumpViewer::FrameDumpViewer(const FrameDump& _frame_dump)
     has_queue_type.fill(false);
     cmd_list_viewer.reserve(frame_dump->queues.size());
     for (const auto& cmd : frame_dump->queues) {
+    EMULATOR_TRACE;
         if (!cmd.data.empty()) {
             has_queue_type[static_cast<s32>(cmd.type)] = true;
         }
@@ -125,9 +127,11 @@ void FrameDumpViewer::Draw() {
             const auto& data = frame_dump->queues[selected_cmd].data;
             if (file.IsOpen()) {
                 DebugState.ShowDebugMessage(fmt::format("Dumping cmd as {}", fname));
+    EMULATOR_TRACE;
                 file.Write(data);
             } else {
                 DebugState.ShowDebugMessage(fmt::format("Failed to save {}", fname));
+    EMULATOR_TRACE;
                 LOG_ERROR(Core, "Failed to open file {}", fname);
             }
         }
@@ -146,14 +150,17 @@ void FrameDumpViewer::Draw() {
         SameLine();
         if (BeginCombo("##select_submit_num", small_int_to_str(selected_submit_num).data(),
                        ImGuiComboFlags_WidthFitPreview)) {
+    EMULATOR_TRACE;
             std::array<bool, 32> available_submits{false};
             for (const auto& cmd : frame_dump->queues) {
+    EMULATOR_TRACE;
                 if (cmd.type == selected_queue_type && !cmd.data.empty()) {
                     available_submits[cmd.submit_num] = true;
                 }
             }
             bool selected = false;
             for (int i = 0; i < available_submits.size(); ++i) {
+    EMULATOR_TRACE;
                 if (available_submits[i]) {
                     char label[3]{};
                     label[0] = i / 10 + '0';
@@ -174,6 +181,7 @@ void FrameDumpViewer::Draw() {
                        ImGuiComboFlags_WidthFitPreview)) {
             std::array<bool, 32> available_queues{false};
             for (const auto& cmd : frame_dump->queues) {
+    EMULATOR_TRACE;
                 if (cmd.type == selected_queue_type && cmd.submit_num == selected_submit_num &&
                     !cmd.data.empty()) {
                     available_queues[cmd.num2] = true;
@@ -181,6 +189,7 @@ void FrameDumpViewer::Draw() {
             }
             bool selected = false;
             for (int i = 0; i < available_queues.size(); ++i) {
+    EMULATOR_TRACE;
                 if (available_queues[i]) {
                     char label[3]{};
                     label[0] = i / 10 + '0';

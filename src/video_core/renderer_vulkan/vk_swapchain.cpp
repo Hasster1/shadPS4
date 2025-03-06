@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include <limits>
@@ -20,6 +21,7 @@ static constexpr vk::SurfaceFormatKHR SURFACE_FORMAT_HDR = {
 
 Swapchain::Swapchain(const Instance& instance_, const Frontend::WindowSDL& window_)
     : instance{instance_}, window{window_}, surface{CreateSurface(instance.GetInstance(), window)} {
+    EMULATOR_TRACE;
     FindPresentFormat();
 
     Create(window.GetWidth(), window.GetHeight());
@@ -27,6 +29,7 @@ Swapchain::Swapchain(const Instance& instance_, const Frontend::WindowSDL& windo
 }
 
 Swapchain::~Swapchain() {
+    EMULATOR_TRACE;
     Destroy();
     instance.GetInstance().destroySurfaceKHR(surface);
 }
@@ -116,6 +119,7 @@ void Swapchain::SetHDR(bool hdr) {
 }
 
 bool Swapchain::AcquireNextImage() {
+    EMULATOR_TRACE;
     vk::Device device = instance.GetDevice();
     vk::Result result =
         device.acquireNextImageKHR(swapchain, std::numeric_limits<u64>::max(),
@@ -174,6 +178,7 @@ void Swapchain::FindPresentFormat() {
     // rotation
     supports_hdr =
         std::find_if(formats.begin(), formats.end(), [](const vk::SurfaceFormatKHR& format) {
+    EMULATOR_TRACE;
             return format == SURFACE_FORMAT_HDR;
         }) != formats.end();
     // Also make sure that user allowed us to use HDR
@@ -182,6 +187,7 @@ void Swapchain::FindPresentFormat() {
     // If there is a single undefined surface format, the device doesn't care, so we'll just use
     // RGBA sRGB.
     if (formats[0].format == vk::Format::eUndefined) {
+    EMULATOR_TRACE;
         surface_format.format = vk::Format::eR8G8B8A8Unorm;
         surface_format.colorSpace = vk::ColorSpaceKHR::eSrgbNonlinear;
         return;
@@ -189,8 +195,10 @@ void Swapchain::FindPresentFormat() {
 
     // Try to find a suitable format.
     for (const vk::SurfaceFormatKHR& sformat : formats) {
+    EMULATOR_TRACE;
         vk::Format format = sformat.format;
         if (format != vk::Format::eR8G8B8A8Unorm && format != vk::Format::eB8G8R8A8Unorm) {
+    EMULATOR_TRACE;
             continue;
         }
 
@@ -203,6 +211,7 @@ void Swapchain::FindPresentFormat() {
 }
 
 void Swapchain::SetSurfaceProperties() {
+    EMULATOR_TRACE;
     const auto [capabilities_result, capabilities] =
         instance.GetPhysicalDevice().getSurfaceCapabilitiesKHR(surface);
     ASSERT_MSG(capabilities_result == vk::Result::eSuccess,
@@ -225,12 +234,14 @@ void Swapchain::SetSurfaceProperties() {
     // Prefer identity transform if possible
     transform = vk::SurfaceTransformFlagBitsKHR::eIdentity;
     if (!(capabilities.supportedTransforms & transform)) {
+    EMULATOR_TRACE;
         transform = capabilities.currentTransform;
     }
 
     // Opaque is not supported everywhere.
     composite_alpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
     if (!(capabilities.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eOpaque)) {
+    EMULATOR_TRACE;
         composite_alpha = vk::CompositeAlphaFlagBitsKHR::eInherit;
     }
 }
@@ -247,9 +258,11 @@ void Swapchain::Destroy() {
     }
 
     for (const auto& sem : image_acquired) {
+    EMULATOR_TRACE;
         device.destroySemaphore(sem);
     }
     for (const auto& sem : present_ready) {
+    EMULATOR_TRACE;
         device.destroySemaphore(sem);
     }
 
@@ -263,6 +276,7 @@ void Swapchain::RefreshSemaphores() {
     present_ready.resize(image_count);
 
     for (vk::Semaphore& semaphore : image_acquired) {
+    EMULATOR_TRACE;
         auto [semaphore_result, sem] = device.createSemaphore({});
         ASSERT_MSG(semaphore_result == vk::Result::eSuccess,
                    "Failed to create image acquired semaphore: {}",
@@ -270,6 +284,7 @@ void Swapchain::RefreshSemaphores() {
         semaphore = sem;
     }
     for (vk::Semaphore& semaphore : present_ready) {
+    EMULATOR_TRACE;
         auto [semaphore_result, sem] = device.createSemaphore({});
         ASSERT_MSG(semaphore_result == vk::Result::eSuccess,
                    "Failed to create present ready semaphore: {}", vk::to_string(semaphore_result));
@@ -277,6 +292,7 @@ void Swapchain::RefreshSemaphores() {
     }
 
     for (u32 i = 0; i < image_count; ++i) {
+    EMULATOR_TRACE;
         SetObjectName(device, image_acquired[i], "Swapchain Semaphore: image_acquired {}", i);
         SetObjectName(device, present_ready[i], "Swapchain Semaphore: present_ready {}", i);
     }
@@ -291,6 +307,7 @@ void Swapchain::SetupImages() {
     image_count = static_cast<u32>(images.size());
     images_view.resize(image_count);
     for (u32 i = 0; i < image_count; ++i) {
+    EMULATOR_TRACE;
         if (images_view[i]) {
             device.destroyImageView(images_view[i]);
         }
@@ -311,6 +328,7 @@ void Swapchain::SetupImages() {
     }
 
     for (u32 i = 0; i < image_count; ++i) {
+    EMULATOR_TRACE;
         SetObjectName(device, images[i], "Swapchain Image {}", i);
         SetObjectName(device, images_view[i], "Swapchain ImageView {}", i);
     }

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "core/libraries/ajm/ajm_at9.h"
@@ -16,6 +17,7 @@ namespace Libraries::Ajm {
 
 AjmAt9Decoder::AjmAt9Decoder(AjmFormatEncoding format, AjmAt9CodecFlags flags)
     : m_format(format), m_flags(flags), m_handle(Atrac9GetHandle()) {
+    EMULATOR_TRACE;
     ASSERT_MSG(m_handle, "Atrac9GetHandle failed");
     AjmAt9Decoder::Reset();
 }
@@ -45,6 +47,7 @@ void AjmAt9Decoder::Initialize(const void* buffer, u32 buffer_size) {
 }
 
 void AjmAt9Decoder::GetInfo(void* out_info) const {
+    EMULATOR_TRACE;
     auto* info = reinterpret_cast<AjmSidebandDecAt9CodecInfo*>(out_info);
     info->super_frame_size = m_codec_info.superframeSize;
     info->frames_in_super_frame = m_codec_info.framesInSuperframe;
@@ -134,6 +137,7 @@ AjmSidebandFormat AjmAt9Decoder::GetFormat() const {
 }
 
 u32 AjmAt9Decoder::GetNextFrameSize(const AjmInstanceGapless& gapless) const {
+    EMULATOR_TRACE;
     const auto max_samples =
         gapless.init.total_samples != 0
             ? std::min(gapless.current.total_samples, u32(m_codec_info.frameSamples))

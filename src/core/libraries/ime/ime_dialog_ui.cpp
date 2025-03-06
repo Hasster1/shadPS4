@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <cwchar>
 #include <string>
@@ -259,6 +260,7 @@ void ImeDialogUi::Draw() {
         }
 
         if (state->is_multi_line) {
+    EMULATOR_TRACE;
             DrawMultiLineInputText();
         } else {
             DrawInputText();

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/config.h"
 #include "common/debug.h"
@@ -56,12 +57,14 @@ bool Rasterizer::FilterDraw() {
         return false;
     }
     if (regs.color_control.mode == Liverpool::ColorControl::OperationMode::FmaskDecompress) {
+    EMULATOR_TRACE;
         // TODO: check for a valid MRT1 to promote the draw to the resolve pass.
         LOG_TRACE(Render_Vulkan, "FMask decompression pass skipped");
         ScopedMarkerInsert("FmaskDecompress");
         return false;
     }
     if (regs.color_control.mode == Liverpool::ColorControl::OperationMode::Resolve) {
+    EMULATOR_TRACE;
         LOG_TRACE(Render_Vulkan, "Resolve pass");
         Resolve();
         return false;
@@ -84,6 +87,7 @@ bool Rasterizer::FilterDraw() {
         regs.depth_buffer.StencilWriteValid() &&
         regs.depth_buffer.StencilAddress() != regs.depth_buffer.StencilWriteAddress();
     if (cb_disabled && (depth_copy || stencil_copy)) {
+    EMULATOR_TRACE;
         // Games may disable color buffer and enable force depth/stencil dirty and valid to
         // do a copy from one depth-stencil surface to another, without a pixel shader.
         // We need to detect this case and perform the copy, otherwise it will have no effect.
@@ -96,6 +100,7 @@ bool Rasterizer::FilterDraw() {
 }
 
 RenderState Rasterizer::PrepareRenderState(u32 mrt_mask) {
+    EMULATOR_TRACE;
     // Prefetch color and depth buffers to let texture cache handle possible overlaps with bound
     // textures (e.g. mipgen)
     RenderState state;
@@ -112,6 +117,7 @@ RenderState Rasterizer::PrepareRenderState(u32 mrt_mask) {
     const bool skip_cb_binding =
         regs.color_control.mode == AmdGpu::Liverpool::ColorControl::OperationMode::Disable;
     for (auto col_buf_id = 0u; col_buf_id < Liverpool::NumColorBuffers; ++col_buf_id) {
+    EMULATOR_TRACE;
         const auto& col_buf = regs.color_buffers[col_buf_id];
         if (skip_cb_binding || !col_buf) {
             continue;
@@ -121,6 +127,7 @@ RenderState Rasterizer::PrepareRenderState(u32 mrt_mask) {
         // an unnecessary transition and may result in state conflict if the resource is already
         // bound for reading.
         if ((mrt_mask & (1 << col_buf_id)) == 0) {
+    EMULATOR_TRACE;
             state.color_attachments[state.num_color_attachments++].imageView = VK_NULL_HANDLE;
             continue;
         }
@@ -232,6 +239,7 @@ void Rasterizer::EliminateFastClear() {
         return;
     }
     for (u32 slice = col_buf.view.slice_start; slice <= col_buf.view.slice_max; ++slice) {
+    EMULATOR_TRACE;
         texture_cache.TouchMeta(col_buf.CmaskAddress(), slice, false);
     }
     const auto& hint = liverpool->last_cb_extent[0];
@@ -438,6 +446,7 @@ bool Rasterizer::BindResources(const Pipeline* pipeline) {
         // Assume if a shader reads and writes metas at the same time, it is a copy shader.
         bool meta_read = false;
         for (const auto& desc : info.buffers) {
+    EMULATOR_TRACE;
             if (desc.is_gds_buffer) {
                 continue;
             }
@@ -454,6 +463,7 @@ bool Rasterizer::BindResources(const Pipeline* pipeline) {
         // logged.
         if (!meta_read) {
             for (const auto& desc : info.buffers) {
+    EMULATOR_TRACE;
                 const auto sharp = desc.GetSharp(info);
                 const VAddr address = sharp.base_address;
                 if (desc.is_written) {
@@ -480,6 +490,7 @@ bool Rasterizer::BindResources(const Pipeline* pipeline) {
     Shader::Backend::Bindings binding{};
 
     for (const auto* stage : pipeline->GetStages()) {
+    EMULATOR_TRACE;
         if (!stage) {
             continue;
         }
@@ -489,6 +500,7 @@ bool Rasterizer::BindResources(const Pipeline* pipeline) {
         // TODO(roamic): add support for multiple viewports and geometry shaders when ViewportIndex
         // is encountered and implemented in the recompiler.
         if (stage->stage == Shader::Stage::Vertex) {
+    EMULATOR_TRACE;
             push_data.xoffset =
                 regs.viewport_control.xoffset_enable ? regs.viewports[0].xoffset : 0.f;
             push_data.xscale = regs.viewport_control.xscale_enable ? regs.viewports[0].xscale : 1.f;
@@ -513,6 +525,7 @@ void Rasterizer::BindBuffers(const Shader::Info& stage, Shader::Backend::Binding
     buffer_bindings.clear();
 
     for (const auto& desc : stage.buffers) {
+    EMULATOR_TRACE;
         const auto vsharp = desc.GetSharp(stage);
         if (!desc.is_gds_buffer && vsharp.base_address != 0 && vsharp.GetSize() > 0) {
             const auto buffer_id = buffer_cache.FindBuffer(vsharp.base_address, vsharp.GetSize());
@@ -556,6 +569,7 @@ void Rasterizer::BindBuffers(const Shader::Info& stage, Shader::Backend::Binding
 
     // Second pass to re-bind buffers that were updated after binding
     for (u32 i = 0; i < buffer_bindings.size(); i++) {
+    EMULATOR_TRACE;
         const auto& [buffer_id, vsharp] = buffer_bindings[i];
         const auto& desc = stage.buffers[i];
         const bool is_storage = desc.IsStorage(vsharp, pipeline_cache.GetProfile());
@@ -585,9 +599,11 @@ void Rasterizer::BindBuffers(const Shader::Info& stage, Shader::Backend::Binding
                     vk_buffer->GetBarrier(desc.is_written ? vk::AccessFlagBits2::eShaderWrite
                                                           : vk::AccessFlagBits2::eShaderRead,
                                           vk::PipelineStageFlagBits2::eAllCommands)) {
+    EMULATOR_TRACE;
                 buffer_barriers.emplace_back(*barrier);
             }
             if (desc.is_written && desc.is_formatted) {
+    EMULATOR_TRACE;
                 texture_cache.InvalidateMemoryFromGPU(vsharp.base_address, vsharp.GetSize());
             }
         }
@@ -607,9 +623,11 @@ void Rasterizer::BindBuffers(const Shader::Info& stage, Shader::Backend::Binding
 
 void Rasterizer::BindTextures(const Shader::Info& stage, Shader::Backend::Bindings& binding,
                               Pipeline::DescriptorWrites& set_writes) {
+    EMULATOR_TRACE;
     image_bindings.clear();
 
     for (const auto& image_desc : stage.images) {
+    EMULATOR_TRACE;
         const auto tsharp = image_desc.GetSharp(stage);
         if (texture_cache.IsMeta(tsharp.Address())) {
             LOG_WARNING(Render_Vulkan, "Unexpected metadata read by a shader (texture)");
@@ -636,6 +654,7 @@ void Rasterizer::BindTextures(const Shader::Info& stage, Shader::Backend::Bindin
             image->binding.force_general |= image_desc.is_written;
         }
         if (image->binding.is_target) {
+    EMULATOR_TRACE;
             // The image is already bound as target. Since we read and output to it need to force
             // general layout too.
             image->binding.force_general = 1u;
@@ -645,6 +664,7 @@ void Rasterizer::BindTextures(const Shader::Info& stage, Shader::Backend::Bindin
 
     // Second pass to re-bind images that were updated after binding
     for (auto& [image_id, desc] : image_bindings) {
+    EMULATOR_TRACE;
         bool is_storage = desc.type == VideoCore::TextureCache::BindingType::Storage;
         if (!image_id) {
             if (instance.IsNullDescriptorSupported()) {
@@ -667,6 +687,7 @@ void Rasterizer::BindTextures(const Shader::Info& stage, Shader::Backend::Bindin
             auto& image_view = texture_cache.FindTexture(image_id, desc.view_info);
 
             if (image.binding.force_general || image.binding.is_target) {
+    EMULATOR_TRACE;
                 image.Transit(vk::ImageLayout::eGeneral,
                               vk::AccessFlagBits2::eShaderRead |
                                   (image.info.IsDepthStencil()
@@ -706,6 +727,7 @@ void Rasterizer::BindTextures(const Shader::Info& stage, Shader::Backend::Bindin
     }
 
     for (const auto& sampler : stage.samplers) {
+    EMULATOR_TRACE;
         auto ssharp = sampler.GetSharp(stage);
         if (sampler.disable_aniso) {
             const auto& tsharp = stage.images[sampler.associated_image].GetSharp(stage);
@@ -729,6 +751,7 @@ void Rasterizer::BindTextures(const Shader::Info& stage, Shader::Backend::Bindin
 void Rasterizer::BeginRendering(const GraphicsPipeline& pipeline, RenderState& state) {
     int cb_index = 0;
     for (auto& [image_id, desc] : cb_descs) {
+    EMULATOR_TRACE;
         if (auto& old_img = texture_cache.GetImage(image_id); old_img.binding.needs_rebind) {
             auto& view = texture_cache.FindRenderTarget(desc);
             ASSERT(view.image_id != image_id);
@@ -743,6 +766,7 @@ void Rasterizer::BeginRendering(const GraphicsPipeline& pipeline, RenderState& s
         }
         auto& image = texture_cache.GetImage(image_id);
         if (image.binding.force_general) {
+    EMULATOR_TRACE;
             image.Transit(
                 vk::ImageLayout::eGeneral,
                 vk::AccessFlagBits2::eColorAttachmentWrite | vk::AccessFlagBits2::eShaderRead, {});
@@ -768,6 +792,7 @@ void Rasterizer::BeginRendering(const GraphicsPipeline& pipeline, RenderState& s
             image.aspect_mask |= vk::ImageAspectFlagBits::eStencil;
         }
         if (image.binding.force_general) {
+    EMULATOR_TRACE;
             image.Transit(vk::ImageLayout::eGeneral,
                           vk::AccessFlagBits2::eDepthStencilAttachmentWrite |
                               vk::AccessFlagBits2::eShaderRead,
@@ -1096,6 +1121,7 @@ void Rasterizer::UpdateViewportScissorState(const GraphicsPipeline& pipeline) {
     }
 
     for (u32 i = 0; i < Liverpool::NumViewports; i++) {
+    EMULATOR_TRACE;
         const auto& vp = regs.viewports[i];
         const auto& vp_d = regs.viewport_depths[i];
         if (vp.xscale == 0) {

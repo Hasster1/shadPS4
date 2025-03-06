@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "core/libraries/kernel/kernel.h"
 #include "core/libraries/kernel/posix_error.h"
@@ -285,6 +286,10 @@ int PS4_SYSV_ABI scePthreadAttrSetaffinity(PthreadAttrT* attr, const Cpuset mask
     return posix_pthread_attr_setaffinity_np(attr, 0x10, &mask);
 }
 
+int PS4_SYSV_ABI scePthreadSetaffinity(PthreadAttrT* attr, const Cpuset mask) {
+    return 0;
+}
+
 void RegisterThreadAttr(Core::Loader::SymbolsResolver* sym) {
     // Posix
     LIB_FUNCTION("wtkt-teR1so", "libScePosix", 1, "libkernel", 1, 1, posix_pthread_attr_init);
@@ -342,6 +347,8 @@ void RegisterThreadAttr(Core::Loader::SymbolsResolver* sym) {
                  ORBIS(scePthreadAttrGetaffinity));
     LIB_FUNCTION("3qxgM4ezETA", "libkernel", 1, "libkernel", 1, 1,
                  ORBIS(scePthreadAttrSetaffinity));
+    LIB_FUNCTION("bt3CTBKmGyI", "libkernel", 1, "libkernel", 1, 1,
+                 ORBIS(scePthreadSetaffinity));
 }
 
 } // namespace Libraries::Kernel

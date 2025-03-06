@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/logging/log.h"
 #include "common/singleton.h"
@@ -11,6 +12,7 @@
 #include "playgo.h"
 
 namespace Libraries::PlayGo {
+    EMULATOR_TRACE;
 
 static constexpr OrbisPlayGoHandle PlaygoHandle = 1;
 static std::unique_ptr<PlaygoFile> playgo;
@@ -66,6 +68,7 @@ s32 PS4_SYSV_ABI scePlayGoGetChunkId(OrbisPlayGoHandle handle, OrbisPlayGoChunkI
     }
 
     for (u32 i = 0; i < numberOfEntries; i++) {
+    EMULATOR_TRACE;
         outChunkIdList[i] = i;
     }
     *outEntries = numberOfEntries;
@@ -157,6 +160,7 @@ s32 PS4_SYSV_ABI scePlayGoGetLocus(OrbisPlayGoHandle handle, const OrbisPlayGoCh
     }
 
     for (int i = 0; i < numberOfEntries; i++) {
+    EMULATOR_TRACE;
         if (chunkIds[i] < playgo->chunks.size()) {
             outLoci[i] = OrbisPlayGoLocus::LocalFast;
         } else {
@@ -193,6 +197,7 @@ s32 PS4_SYSV_ABI scePlayGoGetProgress(OrbisPlayGoHandle handle, const OrbisPlayG
 
     u64 total_size = 0;
     for (u32 i = 0; i < numberOfEntries; i++) {
+    EMULATOR_TRACE;
         u32 chunk_id = chunkIds[i];
         if (chunk_id < playgo->chunks.size()) {
             total_size += playgo->chunks[chunk_id].total_size;

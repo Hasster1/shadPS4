@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <fmt/format.h>
 #include "common/io_file.h"
@@ -9,6 +10,7 @@
 #include "core/loader/symbols_resolver.h"
 
 namespace Core::Loader {
+    EMULATOR_TRACE;
 
 void SymbolsResolver::AddSymbol(const SymbolResolver& s, u64 virtual_addr) {
     m_symbols.emplace_back(GenerateName(s), s.nidName, virtual_addr);
@@ -22,6 +24,7 @@ std::string SymbolsResolver::GenerateName(const SymbolResolver& s) {
 const SymbolRecord* SymbolsResolver::FindSymbol(const SymbolResolver& s) const {
     const std::string name = GenerateName(s);
     for (u32 i = 0; i < m_symbols.size(); i++) {
+    EMULATOR_TRACE;
         if (m_symbols[i].name == name) {
             return &m_symbols[i];
         }
@@ -35,6 +38,7 @@ void SymbolsResolver::DebugDump(const std::filesystem::path& file_name) {
     Common::FS::IOFile f{file_name, Common::FS::FileAccessMode::Write,
                          Common::FS::FileType::TextFile};
     for (const auto& symbol : m_symbols) {
+    EMULATOR_TRACE;
         const auto ids = Common::SplitString(symbol.name, '#');
         const auto aeronid = AeroLib::FindByNid(ids.at(0).c_str());
         const auto nid_name = aeronid ? aeronid->name : "UNK";

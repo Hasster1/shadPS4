@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <ranges>
 
@@ -139,6 +140,7 @@ const Shader::RuntimeInfo& PipelineCache::BuildRuntimeInfo(Stage stage, LogicalS
             regs.vgt_gs_instance_cnt.IsEnabled() ? regs.vgt_gs_instance_cnt.count : 1;
         gs_info.in_primitive = regs.primitive_type;
         for (u32 stream_id = 0; stream_id < Shader::GsMaxOutputStreams; ++stream_id) {
+    EMULATOR_TRACE;
             gs_info.out_primitive[stream_id] =
                 regs.vgt_gs_out_prim_type.GetPrimitiveType(stream_id);
         }
@@ -157,6 +159,7 @@ const Shader::RuntimeInfo& PipelineCache::BuildRuntimeInfo(Stage stage, LogicalS
         const auto& ps_inputs = regs.ps_inputs;
         info.fs_info.num_inputs = regs.num_interp;
         for (u32 i = 0; i < regs.num_interp; i++) {
+    EMULATOR_TRACE;
             info.fs_info.inputs[i] = {
                 .param_index = u8(ps_inputs[i].input_offset.Value()),
                 .is_default = bool(ps_inputs[i].use_default),
@@ -165,6 +168,7 @@ const Shader::RuntimeInfo& PipelineCache::BuildRuntimeInfo(Stage stage, LogicalS
             };
         }
         for (u32 i = 0; i < Shader::MaxColorBuffers; i++) {
+    EMULATOR_TRACE;
             info.fs_info.color_buffers[i] = graphics_key.color_buffers[i];
         }
         break;
@@ -213,6 +217,7 @@ PipelineCache::PipelineCache(const Instance& instance_, Scheduler& scheduler_,
         .max_shared_memory_size = instance.MaxComputeSharedMemorySize(),
     };
     auto [cache_result, cache] = instance.GetDevice().createPipelineCacheUnique({});
+    EMULATOR_TRACE;
     ASSERT_MSG(cache_result == vk::Result::eSuccess, "Failed to create pipeline cache: {}",
                vk::to_string(cache_result));
     pipeline_cache = std::move(cache);
@@ -231,6 +236,7 @@ const GraphicsPipeline* PipelineCache::GetGraphicsPipeline() {
                                                         runtime_infos, fetch_shader, modules);
         if (Config::collectShadersForDebug()) {
             for (auto stage = 0; stage < MaxShaderStages; ++stage) {
+    EMULATOR_TRACE;
                 if (infos[stage]) {
                     auto& m = modules[stage];
                     module_related_pipelines[m].emplace_back(graphics_key);
@@ -279,14 +285,18 @@ bool PipelineCache::RefreshGraphicsKey() {
                                    regs.depth_buffer.stencil_info.format),
         vk::FormatFeatureFlagBits2::eDepthStencilAttachment);
     if (regs.depth_buffer.DepthValid()) {
+    EMULATOR_TRACE;
         key.depth_format = depth_format;
     } else {
+    EMULATOR_TRACE;
         key.depth_format = vk::Format::eUndefined;
         key.depth_test_enable = false;
     }
     if (regs.depth_buffer.StencilValid()) {
+    EMULATOR_TRACE;
         key.stencil_format = depth_format;
     } else {
+    EMULATOR_TRACE;
         key.stencil_format = vk::Format::eUndefined;
         key.stencil_test_enable = false;
     }
@@ -309,18 +319,21 @@ bool PipelineCache::RefreshGraphicsKey() {
     key.num_color_attachments = 0;
     key.color_formats.fill(vk::Format::eUndefined);
     key.color_buffers.fill({});
+    EMULATOR_TRACE;
     key.blend_controls.fill({});
     key.write_masks.fill({});
     key.vertex_buffer_formats.fill(vk::Format::eUndefined);
 
     key.patch_control_points = 0;
     if (regs.stage_enable.hs_en.Value()) {
+    EMULATOR_TRACE;
         key.patch_control_points = regs.ls_hs_config.hs_input_control_points.Value();
     }
 
     // First pass of bindings check to idenitfy formats and swizzles and pass them to rhe shader
     // recompiler.
     for (auto cb = 0u; cb < Liverpool::NumColorBuffers; ++cb) {
+    EMULATOR_TRACE;
         auto const& col_buf = regs.color_buffers[cb];
         if (skip_cb_binding || !col_buf) {
             // No attachment bound and no incremented index.
@@ -445,6 +458,7 @@ bool PipelineCache::RefreshGraphicsKey() {
         // Stride will still be handled outside the pipeline using dynamic state.
         u32 vertex_binding = 0;
         for (const auto& attrib : fetch_shader->attributes) {
+    EMULATOR_TRACE;
             if (attrib.UsesStepRates()) {
                 // Skip attribute binding as the data will be pulled by shader.
                 continue;
@@ -458,6 +472,7 @@ bool PipelineCache::RefreshGraphicsKey() {
 
     // Second pass to fill remain CB pipeline key data
     for (auto cb = 0u, remapped_cb = 0u; cb < Liverpool::NumColorBuffers; ++cb) {
+    EMULATOR_TRACE;
         auto const& col_buf = regs.color_buffers[cb];
         if (skip_cb_binding || !col_buf) {
             // No attachment bound and no incremented index.
@@ -470,6 +485,7 @@ bool PipelineCache::RefreshGraphicsKey() {
             // increment the index for the null attachment binding.
             key.color_formats[remapped_cb] = vk::Format::eUndefined;
             key.color_buffers[remapped_cb] = {};
+    EMULATOR_TRACE;
             ++remapped_cb;
             continue;
         }
@@ -511,6 +527,7 @@ vk::ShaderModule PipelineCache::CompileModule(Shader::Info& info, Shader::Runtim
     const bool is_patched = patch && Config::patchShaders();
     if (is_patched) {
         LOG_INFO(Loader, "Loaded patch for {} shader {:#x}", info.stage, info.pgm_hash);
+    EMULATOR_TRACE;
         module = CompileSPV(*patch, instance.GetDevice());
     } else {
         module = CompileSPV(spv, instance.GetDevice());
@@ -567,7 +584,9 @@ std::optional<vk::ShaderModule> PipelineCache::ReplaceShader(vk::ShaderModule mo
                                                              std::span<const u32> spv_code) {
     std::optional<vk::ShaderModule> new_module{};
     for (const auto& [_, program] : program_cache) {
+    EMULATOR_TRACE;
         for (auto& m : program->modules) {
+    EMULATOR_TRACE;
             if (m.module == module) {
                 const auto& d = instance.GetDevice();
                 d.destroyShaderModule(m.module);
@@ -579,6 +598,7 @@ std::optional<vk::ShaderModule> PipelineCache::ReplaceShader(vk::ShaderModule mo
     if (module_related_pipelines.contains(module)) {
         auto& pipeline_keys = module_related_pipelines[module];
         for (auto& key : pipeline_keys) {
+    EMULATOR_TRACE;
             if (std::holds_alternative<GraphicsPipelineKey>(key)) {
                 auto& graphics_key = std::get<GraphicsPipelineKey>(key);
                 graphics_pipelines.erase(graphics_key);
@@ -595,8 +615,10 @@ std::string PipelineCache::GetShaderName(Shader::Stage stage, u64 hash,
                                          std::optional<size_t> perm) {
     if (perm) {
         return fmt::format("{}_{:#018x}_{}", stage, hash, *perm);
+    EMULATOR_TRACE;
     }
     return fmt::format("{}_{:#018x}", stage, hash);
+    EMULATOR_TRACE;
 }
 
 void PipelineCache::DumpShader(std::span<const u32> code, u64 hash, Shader::Stage stage,
@@ -611,6 +633,7 @@ void PipelineCache::DumpShader(std::span<const u32> code, u64 hash, Shader::Stag
         std::filesystem::create_directories(dump_dir);
     }
     const auto filename = fmt::format("{}.{}", GetShaderName(stage, hash, perm_idx), ext);
+    EMULATOR_TRACE;
     const auto file = IOFile{dump_dir / filename, FileAccessMode::Write};
     file.WriteSpan(code);
 }
@@ -625,6 +648,7 @@ std::optional<std::vector<u32>> PipelineCache::GetShaderPatch(u64 hash, Shader::
         std::filesystem::create_directories(patch_dir);
     }
     const auto filename = fmt::format("{}.{}", GetShaderName(stage, hash, perm_idx), ext);
+    EMULATOR_TRACE;
     const auto filepath = patch_dir / filename;
     if (!std::filesystem::exists(filepath)) {
         return {};

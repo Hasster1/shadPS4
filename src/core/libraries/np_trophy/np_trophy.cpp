@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <unordered_map>
 #include <pugixml.hpp>
@@ -35,6 +36,7 @@ static std::unordered_map<ContextKey, TrophyContext, ContextKeyHash> contexts_in
 
 void ORBIS_NP_TROPHY_FLAG_ZERO(OrbisNpTrophyFlagArray* p) {
     for (int i = 0; i < ORBIS_NP_TROPHY_NUM_MAX; i++) {
+    EMULATOR_TRACE;
         uint32_t array_index = i / 32;
         uint32_t bit_position = i % 32;
 
@@ -51,6 +53,7 @@ void ORBIS_NP_TROPHY_FLAG_SET(int32_t trophyId, OrbisNpTrophyFlagArray* p) {
 
 void ORBIS_NP_TROPHY_FLAG_SET_ALL(OrbisNpTrophyFlagArray* p) {
     for (int i = 0; i < ORBIS_NP_TROPHY_NUM_MAX; i++) {
+    EMULATOR_TRACE;
         uint32_t array_index = i / 32;
         uint32_t bit_position = i % 32;
 
@@ -262,6 +265,7 @@ int PS4_SYSV_ABI sceNpTrophyGetGameInfo(OrbisNpTrophyContext context, OrbisNpTro
 
     auto trophyconf = doc.child("trophyconf");
     for (const pugi::xml_node& node : trophyconf.children()) {
+    EMULATOR_TRACE;
         std::string_view node_name = node.name();
 
         if (node_name == "title-name") {
@@ -331,6 +335,7 @@ int PS4_SYSV_ABI sceNpTrophyGetGroupInfo(OrbisNpTrophyContext context, OrbisNpTr
                                          OrbisNpTrophyGroupDetails* details,
                                          OrbisNpTrophyGroupData* data) {
     LOG_INFO(Lib_NpTrophy, "Getting Trophy Group Info for id {}", groupId);
+    EMULATOR_TRACE;
 
     if (context == ORBIS_NP_TROPHY_INVALID_CONTEXT)
         return ORBIS_NP_TROPHY_ERROR_INVALID_CONTEXT;
@@ -360,6 +365,7 @@ int PS4_SYSV_ABI sceNpTrophyGetGroupInfo(OrbisNpTrophyContext context, OrbisNpTr
 
     auto trophyconf = doc.child("trophyconf");
     for (const pugi::xml_node& node : trophyconf.children()) {
+    EMULATOR_TRACE;
         std::string_view node_name = node.name();
 
         if (node_name == "group") {
@@ -430,6 +436,7 @@ int PS4_SYSV_ABI sceNpTrophyGetTrophyInfo(OrbisNpTrophyContext context, OrbisNpT
                                           OrbisNpTrophyId trophyId, OrbisNpTrophyDetails* details,
                                           OrbisNpTrophyData* data) {
     LOG_INFO(Lib_NpTrophy, "Getting trophy info for id {}", trophyId);
+    EMULATOR_TRACE;
 
     if (context == ORBIS_NP_TROPHY_INVALID_CONTEXT)
         return ORBIS_NP_TROPHY_ERROR_INVALID_CONTEXT;
@@ -461,6 +468,7 @@ int PS4_SYSV_ABI sceNpTrophyGetTrophyInfo(OrbisNpTrophyContext context, OrbisNpT
     auto trophyconf = doc.child("trophyconf");
 
     for (const pugi::xml_node& node : trophyconf.children()) {
+    EMULATOR_TRACE;
         std::string_view node_name = node.name();
 
         if (node_name == "trophy") {
@@ -528,6 +536,7 @@ s32 PS4_SYSV_ABI sceNpTrophyGetTrophyUnlockState(OrbisNpTrophyContext context,
     auto trophyconf = doc.child("trophyconf");
 
     for (const pugi::xml_node& node : trophyconf.children()) {
+    EMULATOR_TRACE;
         std::string_view node_name = node.name();
         int current_trophy_id = node.attribute("id").as_int(ORBIS_NP_TROPHY_INVALID_TROPHY_ID);
         bool current_trophy_unlockstate = node.attribute("unlockstate").as_bool();
@@ -825,6 +834,7 @@ int PS4_SYSV_ABI sceNpTrophySystemOpenStorage() {
 }
 
 int PS4_SYSV_ABI sceNpTrophySystemPerformRecovery() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_NpTrophy, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -891,6 +901,7 @@ int PS4_SYSV_ABI sceNpTrophyUnlockTrophy(OrbisNpTrophyContext context, OrbisNpTr
     auto trophyconf = doc.child("trophyconf");
 
     for (pugi::xml_node& node : trophyconf.children()) {
+    EMULATOR_TRACE;
         int current_trophy_id = node.attribute("id").as_int(ORBIS_NP_TROPHY_INVALID_TROPHY_ID);
         bool current_trophy_unlockstate = node.attribute("unlockstate").as_bool();
         const char* current_trophy_name = node.child("name").text().as_string();

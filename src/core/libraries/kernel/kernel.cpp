@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <thread>
 #include <boost/asio/io_context.hpp>
@@ -160,6 +161,7 @@ int PS4_SYSV_ABI sceKernelUuidCreate(OrbisKernelUuid* orbisUuid) {
     orbisUuid->clockSeqHiAndReserved = uuid.Data4[0];
     orbisUuid->clockSeqLow = uuid.Data4[1];
     for (int i = 0; i < 6; i++) {
+    EMULATOR_TRACE;
         orbisUuid->node[i] = uuid.Data4[2 + i];
     }
 #else

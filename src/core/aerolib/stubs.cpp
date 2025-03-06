@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/logging/log.h"
 #include "core/aerolib/aerolib.h"
@@ -22,6 +23,7 @@ namespace Core::AeroLib {
 constexpr u32 MAX_STUBS = 1024;
 
 u64 UnresolvedStub() {
+    EMULATOR_TRACE;
     LOG_ERROR(Core, "Returning zero to {}", __builtin_return_address(0));
     return 0;
 }

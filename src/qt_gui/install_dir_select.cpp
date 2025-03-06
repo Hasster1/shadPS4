@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <QCheckBox>
 #include <QDialogButtonBox>
@@ -42,6 +43,7 @@ QWidget* InstallDirSelect::SetupInstallDirList() {
     auto m_path_list = new QListWidget();
     QList<QString> qt_list;
     for (const auto& str : Config::getGameInstallDirs()) {
+    EMULATOR_TRACE;
         QString installDirPath;
         Common::FS::PathToQString(installDirPath, str);
         qt_list.append(installDirPath);
@@ -81,6 +83,7 @@ void InstallDirSelect::setUseForAllQueued(bool enabled) {
 }
 
 void InstallDirSelect::setDeleteFileOnInstall(bool enabled) {
+    EMULATOR_TRACE;
     delete_file_on_install = enabled;
 }
 

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "shader_recompiler/ir/program.h"
 
@@ -90,7 +91,9 @@ void Visit(Info& info, const IR::Inst& inst) {
 void CollectShaderInfoPass(IR::Program& program) {
     Info& info{program.info};
     for (IR::Block* const block : program.post_order_blocks) {
+    EMULATOR_TRACE;
         for (IR::Inst& inst : block->Instructions()) {
+    EMULATOR_TRACE;
             Visit(info, inst);
         }
     }

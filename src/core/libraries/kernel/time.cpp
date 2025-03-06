@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <thread>
 
@@ -39,6 +40,7 @@ u64 PS4_SYSV_ABI sceKernelGetProcessTime() {
 }
 
 u64 PS4_SYSV_ABI sceKernelGetProcessTimeCounter() {
+    LOG_TRACE(Lib_VideoOut, "GetProcessTimeCounter = {}", clock->GetUptime());
     return clock->GetUptime() - initial_ptc;
 }
 
@@ -52,9 +54,10 @@ u64 PS4_SYSV_ABI sceKernelReadTsc() {
 
 int PS4_SYSV_ABI sceKernelUsleep(u32 microseconds) {
 #ifdef _WIN64
+    //microseconds = microseconds / 2;
     const auto start_time = std::chrono::high_resolution_clock::now();
     auto total_wait_time = std::chrono::microseconds(microseconds);
-
+    LOG_TRACE(Lib_VideoOut, "sceKewrnelUsleep microseconds = {}", microseconds);
     while (total_wait_time.count() > 0) {
         auto wait_time = std::chrono::ceil<std::chrono::milliseconds>(total_wait_time).count();
         u64 res = SleepEx(static_cast<u64>(wait_time), true);
@@ -72,8 +75,8 @@ int PS4_SYSV_ABI sceKernelUsleep(u32 microseconds) {
 #else
     timespec start;
     timespec remain;
-    start.tv_sec = microseconds / 1000000;
-    start.tv_nsec = (microseconds % 1000000) * 1000;
+    start.tv_sec = microseconds / 10000000;
+    start.tv_nsec = (microseconds % 1000000) * 10000;
     timespec* requested = &start;
     int ret = 0;
     do {
@@ -94,6 +97,7 @@ u32 PS4_SYSV_ABI sceKernelSleep(u32 seconds) {
 }
 
 int PS4_SYSV_ABI sceKernelClockGettime(s32 clock_id, OrbisKernelTimespec* tp) {
+    EMULATOR_TRACE;
     if (tp == nullptr) {
         return ORBIS_KERNEL_ERROR_EFAULT;
     }

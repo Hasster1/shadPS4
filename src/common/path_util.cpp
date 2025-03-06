@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <unordered_map>
 #include "common/logging/log.h"
@@ -101,6 +102,7 @@ static auto UserPaths = [] {
 #elif defined(__linux__)
         const char* xdg_data_home = getenv("XDG_DATA_HOME");
         if (xdg_data_home != nullptr && strlen(xdg_data_home) > 0) {
+    EMULATOR_TRACE;
             user_dir = std::filesystem::path(xdg_data_home) / "shadPS4";
         } else {
             user_dir = std::filesystem::path(getenv("HOME")) / ".local" / "share" / "shadPS4";
@@ -184,6 +186,7 @@ std::optional<fs::path> FindGameByID(const fs::path& dir, const std::string& gam
 
     // Check if this is the game we're looking for
     if (dir.filename() == game_id && fs::exists(dir / "sce_sys" / "param.sfo")) {
+    EMULATOR_TRACE;
         auto eboot_path = dir / "eboot.bin";
         if (fs::exists(eboot_path)) {
             return eboot_path;
@@ -193,6 +196,7 @@ std::optional<fs::path> FindGameByID(const fs::path& dir, const std::string& gam
     // Recursively search subdirectories
     std::error_code ec;
     for (const auto& entry : fs::directory_iterator(dir, ec)) {
+    EMULATOR_TRACE;
         if (!entry.is_directory()) {
             continue;
         }

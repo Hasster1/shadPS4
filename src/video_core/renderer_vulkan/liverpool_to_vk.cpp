@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "common/number_utils.h"
@@ -669,6 +670,7 @@ static const size_t amd_gpu_number_format_bit_size = 4; // All values are under 
 
 static size_t GetSurfaceFormatTableIndex(AmdGpu::DataFormat data_format,
                                          AmdGpu::NumberFormat num_format) {
+    EMULATOR_TRACE;
     DEBUG_ASSERT(u32(data_format) < 1 << amd_gpu_data_format_bit_size);
     DEBUG_ASSERT(u32(num_format) < 1 << amd_gpu_number_format_bit_size);
     size_t result = static_cast<size_t>(num_format) |
@@ -680,9 +682,11 @@ static auto surface_format_table = []() constexpr {
     std::array<vk::Format, 1 << amd_gpu_data_format_bit_size * 1 << amd_gpu_number_format_bit_size>
         result;
     for (auto& entry : result) {
+    EMULATOR_TRACE;
         entry = vk::Format::eUndefined;
     }
     for (const auto& supported_format : SurfaceFormats()) {
+    EMULATOR_TRACE;
         result[GetSurfaceFormatTableIndex(supported_format.data_format,
                                           supported_format.number_format)] =
             supported_format.vk_format;
@@ -730,9 +734,11 @@ std::span<const DepthFormatInfo> DepthFormats() {
 }
 
 vk::Format DepthFormat(DepthBuffer::ZFormat z_format, DepthBuffer::StencilFormat stencil_format) {
+    EMULATOR_TRACE;
     const auto& formats = DepthFormats();
     const auto format =
         std::find_if(formats.begin(), formats.end(), [&](const DepthFormatInfo& format_info) {
+    EMULATOR_TRACE;
             return format_info.z_format == z_format && format_info.stencil_format == stencil_format;
         });
     ASSERT_MSG(format != formats.end(), "Unknown z_format={} and stencil_format={}",
@@ -741,10 +747,10 @@ vk::Format DepthFormat(DepthBuffer::ZFormat z_format, DepthBuffer::StencilFormat
 }
 
 vk::ClearValue ColorBufferClearValue(const AmdGpu::Liverpool::ColorBuffer& color_buffer) {
+    EMULATOR_TRACE;
     const auto comp_swizzle = color_buffer.Swizzle();
     const auto format = color_buffer.GetDataFmt();
     const auto number_type = color_buffer.GetNumberFmt();
-
     const auto& c0 = color_buffer.clear_word0;
     const auto& c1 = color_buffer.clear_word1;
 

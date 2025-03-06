@@ -1,6 +1,7 @@
 
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <unordered_map>
 #include <boost/container/flat_map.hpp>
@@ -36,6 +37,7 @@ static void DumpSrtProgram(const Shader::Info& info, const u8* code, size_t code
         std::filesystem::create_directories(dump_dir);
     }
     const auto filename = fmt::format("{}_{:#018x}.srtprogram.txt", info.stage, info.pgm_hash);
+    EMULATOR_TRACE;
     const auto file = IOFile{dump_dir / filename, FileAccessMode::Write, FileType::TextFile};
 
     u64 address = reinterpret_cast<u64>(code);
@@ -73,6 +75,7 @@ struct PassInfo {
     u32 dst_off_dw;
 
     PtrUserList* GetUsesAsPointer(IR::Inst* inst) {
+    EMULATOR_TRACE;
         auto it = pointer_uses.find(inst);
         if (it != pointer_uses.end()) {
             return &it->second;
@@ -84,6 +87,7 @@ struct PassInfo {
     // to value number
     // The "original" is arbitrary. Here it's the first instruction found for a given value number
     IR::Inst* DeduplicateInstruction(IR::Inst* inst) {
+    EMULATOR_TRACE;
         auto it = vn_to_inst.try_emplace(gvn_table.GetValueNumber(inst), inst);
         return it.first->second;
     }
@@ -117,6 +121,7 @@ static void VisitPointer(u32 off_dw, IR::Inst* subtree, PassInfo& pass_info,
     // TODO src and dst are contiguous. Optimize with wider loads/stores
     // TODO if this subtree is dynamically indexed, don't compact it (keep it sparse)
     for (auto [src_off_dw, use] : *use_list) {
+    EMULATOR_TRACE;
         c.mov(r10d, ptr[rdi + (src_off_dw << 2)]);
         c.mov(ptr[rsi + (pass_info.dst_off_dw << 2)], r10d);
 
@@ -126,6 +131,7 @@ static void VisitPointer(u32 off_dw, IR::Inst* subtree, PassInfo& pass_info,
 
     // Then visit any children used as pointers
     for (const auto [src_off_dw, use] : *use_list) {
+    EMULATOR_TRACE;
         if (pass_info.GetUsesAsPointer(use)) {
             VisitPointer(src_off_dw, use, pass_info, c);
         }
@@ -147,6 +153,7 @@ static void GenerateSrtProgram(Info& info, PassInfo& pass_info) {
 
     // Special case for V# step rate buffers in fetch shader
     for (const auto [sgpr_base, dword_offset, num_dwords] : info.srt_info.srt_reservations) {
+    EMULATOR_TRACE;
         // get pointer to V#
         if (sgpr_base != IR::NumScalarRegs) {
             PushPtr(c, sgpr_base);
@@ -154,6 +161,7 @@ static void GenerateSrtProgram(Info& info, PassInfo& pass_info) {
         u32 src_off = dword_offset << 2;
 
         for (auto j = 0; j < num_dwords; j++) {
+    EMULATOR_TRACE;
             c.mov(r11d, ptr[rdi + src_off]);
             c.mov(ptr[rsi + (pass_info.dst_off_dw << 2)], r11d);
 
@@ -168,6 +176,7 @@ static void GenerateSrtProgram(Info& info, PassInfo& pass_info) {
     ASSERT(pass_info.dst_off_dw == info.srt_info.flattened_bufsize_dw);
 
     for (const auto& [sgpr_base, root] : pass_info.srt_roots) {
+    EMULATOR_TRACE;
         VisitPointer(static_cast<u32>(sgpr_base), root, pass_info, c);
     }
 
@@ -194,8 +203,10 @@ void FlattenExtendedUserdataPass(IR::Program& program) {
 
     for (auto r_it = program.post_order_blocks.rbegin(); r_it != program.post_order_blocks.rend();
          r_it++) {
+    EMULATOR_TRACE;
         IR::Block* block = *r_it;
         for (IR::Inst& inst : *block) {
+    EMULATOR_TRACE;
             if (inst.GetOpcode() == IR::Opcode::ReadConst) {
                 if (!inst.Arg(1).IsImmediate()) {
                     LOG_WARNING(Render_Recompiler, "ReadConst has non-immediate offset");
@@ -242,6 +253,7 @@ void FlattenExtendedUserdataPass(IR::Program& program) {
 
     // Assign offsets to duplicate readconsts
     for (IR::Inst* readconst : all_readconsts) {
+    EMULATOR_TRACE;
         ASSERT(pass_info.vn_to_inst.contains(pass_info.gvn_table.GetValueNumber(readconst)));
         IR::Inst* original = pass_info.DeduplicateInstruction(readconst);
         readconst->SetFlags<u32>(original->Flags<u32>());

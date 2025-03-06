@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2021 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <bit>
 #include <optional>
@@ -275,6 +276,7 @@ void FoldReadLane(IR::Block& block, IR::Inst& inst) {
     if (prod->GetOpcode() == IR::Opcode::Phi) {
         boost::container::small_vector<IR::Value, 2> phi_args;
         for (size_t arg_index = 0; arg_index < prod->NumArgs(); ++arg_index) {
+    EMULATOR_TRACE;
             const IR::Inst* arg{prod->Arg(arg_index).InstRecursive()};
             if (arg->GetOpcode() != IR::Opcode::WriteLane) {
                 return;
@@ -293,6 +295,7 @@ void FoldReadLane(IR::Block& block, IR::Inst& inst) {
         IR::Inst* const new_phi{&*block.PrependNewInst(insert_point, IR::Opcode::Phi)};
         new_phi->SetFlags(IR::Type::U32);
         for (size_t arg_index = 0; arg_index < phi_args.size(); arg_index++) {
+    EMULATOR_TRACE;
             new_phi->AddPhiOperand(prod->PhiBlock(arg_index), phi_args[arg_index]);
         }
         inst.ReplaceUsesWith(IR::Value{new_phi});
@@ -545,8 +548,10 @@ void ConstantPropagation(IR::Block& block, IR::Inst& inst) {
 void ConstantPropagationPass(IR::BlockList& program) {
     const auto end{program.rend()};
     for (auto it = program.rbegin(); it != end; ++it) {
+    EMULATOR_TRACE;
         IR::Block* const block{*it};
         for (IR::Inst& inst : block->Instructions()) {
+    EMULATOR_TRACE;
             ConstantPropagation(*block, inst);
         }
     }

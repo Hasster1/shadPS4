@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <set>
 #include <fmt/core.h>
@@ -42,6 +43,7 @@
 Frontend::WindowSDL* g_window = nullptr;
 
 namespace Core {
+    EMULATOR_TRACE;
 
 Emulator::Emulator() {
     // Initialize NT API functions and set high priority
@@ -153,6 +155,7 @@ void Emulator::Run(const std::filesystem::path& file, const std::vector<std::str
         // Timer for 'Play Time'
         QTimer* timer = new QTimer();
         QObject::connect(timer, &QTimer::timeout, [this, id]() {
+    EMULATOR_TRACE;
             UpdatePlayTime(id);
             start_time = std::chrono::steady_clock::now();
         });
@@ -169,6 +172,7 @@ void Emulator::Run(const std::filesystem::path& file, const std::vector<std::str
         if (!args.empty()) {
             int argc = std::min<int>(args.size(), 32);
             for (int i = 0; i < argc; i++) {
+    EMULATOR_TRACE;
                 LOG_INFO(Loader, "Game argument {}: {}", i, args[i]);
             }
             if (args.size() > 32) {
@@ -196,9 +200,11 @@ void Emulator::Run(const std::filesystem::path& file, const std::vector<std::str
     game_info.psf_attributes = psf_attributes;
 
     std::string game_title = fmt::format("{} - {} <{}>", id, title, app_version);
+    EMULATOR_TRACE;
     std::string window_title = "";
     if (Common::isRelease) {
         window_title = fmt::format("shadPS4 v{} | {}", Common::VERSION, game_title);
+    EMULATOR_TRACE;
     } else {
         std::string remote_url(Common::g_scm_remote_url);
         std::string remote_host;
@@ -305,9 +311,11 @@ void Emulator::LoadSystemModules(const std::string& game_serial) {
     std::vector<std::filesystem::path> found_modules;
     const auto& sys_module_path = Common::FS::GetUserPath(Common::FS::PathType::SysModuleDir);
     for (const auto& entry : std::filesystem::directory_iterator(sys_module_path)) {
+    EMULATOR_TRACE;
         found_modules.push_back(entry.path());
     }
     for (const auto& [module_name, init_func] : ModulesToLoad) {
+    EMULATOR_TRACE;
         const auto it = std::ranges::find_if(
             found_modules, [&](const auto& path) { return path.filename() == module_name; });
         if (it != found_modules.end()) {
@@ -321,11 +329,13 @@ void Emulator::LoadSystemModules(const std::string& game_serial) {
             init_func(&linker->GetHLESymbols());
         } else {
             LOG_INFO(Loader, "No HLE available for {} module", module_name);
+    EMULATOR_TRACE;
         }
     }
     if (!game_serial.empty() && std::filesystem::exists(sys_module_path / game_serial)) {
         for (const auto& entry :
              std::filesystem::directory_iterator(sys_module_path / game_serial)) {
+    EMULATOR_TRACE;
             LOG_INFO(Loader, "Loading {} from game serial file {}", entry.path().string(),
                      game_serial);
             linker->LoadModule(entry.path());
@@ -361,6 +371,7 @@ void Emulator::UpdatePlayTime(const std::string& serial) {
     bool found = false;
 
     for (const QString& line : existingLines) {
+    EMULATOR_TRACE;
         QStringList parts = line.split(' ');
         if (parts.size() == 2 && parts[0] == QString::fromStdString(serial)) {
             QStringList timeParts = parts[1].split(':');
@@ -387,6 +398,7 @@ void Emulator::UpdatePlayTime(const std::string& serial) {
         bool lineUpdated = false;
 
         for (const QString& line : existingLines) {
+    EMULATOR_TRACE;
             if (line.startsWith(QString::fromStdString(serial))) {
                 out << QString::fromStdString(serial) + " " + playTimeSaved + "\n";
                 lineUpdated = true;
@@ -400,6 +412,7 @@ void Emulator::UpdatePlayTime(const std::string& serial) {
         }
     }
     LOG_INFO(Loader, "Playing time for {}: {}", serial, playTimeSaved.toStdString());
+    EMULATOR_TRACE;
 }
 #endif
 

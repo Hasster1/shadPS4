@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/logging/log.h"
 #include "core/libraries/error_codes.h"
@@ -21,6 +22,7 @@ int PS4_SYSV_ABI sceNpCmpNpId(OrbisNpId* np_id1, OrbisNpId* np_id2) {
 
     // Compare opt
     for (u32 i = 0; i < 8; i++) {
+    EMULATOR_TRACE;
         if (np_id1->opt[i] != np_id2->opt[i]) {
             return ORBIS_NP_UTIL_ERROR_NOT_MATCH;
         }
@@ -28,6 +30,7 @@ int PS4_SYSV_ABI sceNpCmpNpId(OrbisNpId* np_id1, OrbisNpId* np_id2) {
 
     // Compare reserved
     for (u32 i = 0; i < 8; i++) {
+    EMULATOR_TRACE;
         if (np_id1->reserved[i] != np_id2->reserved[i]) {
             return ORBIS_NP_UTIL_ERROR_NOT_MATCH;
         }
@@ -54,6 +57,7 @@ int PS4_SYSV_ABI sceNpCmpNpIdInOrder(OrbisNpId* np_id1, OrbisNpId* np_id2, u32* 
 
     // Compare opt
     for (u32 i = 0; i < 8; i++) {
+    EMULATOR_TRACE;
         if (np_id1->opt[i] < np_id2->opt[i]) {
             *out_result = -1;
             return ORBIS_OK;
@@ -65,6 +69,7 @@ int PS4_SYSV_ABI sceNpCmpNpIdInOrder(OrbisNpId* np_id1, OrbisNpId* np_id2, u32* 
 
     // Compare reserved
     for (u32 i = 0; i < 8; i++) {
+    EMULATOR_TRACE;
         if (np_id1->reserved[i] < np_id2->reserved[i]) {
             *out_result = -1;
             return ORBIS_OK;
@@ -3280,6 +3285,7 @@ int PS4_SYSV_ABI sceNpGetNavSdkVersion() {
 }
 
 int PS4_SYSV_ABI sceNpGetPlatformType() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_NpCommon, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -3370,6 +3376,7 @@ int PS4_SYSV_ABI sceNpInt64ToStr() {
 }
 
 int PS4_SYSV_ABI sceNpIntGetPlatformType() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_NpCommon, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -3385,6 +3392,7 @@ int PS4_SYSV_ABI sceNpIntIsValidOnlineId() {
 }
 
 int PS4_SYSV_ABI sceNpIntSetPlatformType() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_NpCommon, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -3610,6 +3618,7 @@ int PS4_SYSV_ABI sceNpSetEventFlag() {
 }
 
 int PS4_SYSV_ABI sceNpSetPlatformType() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_NpCommon, "(STUBBED) called");
     return ORBIS_OK;
 }

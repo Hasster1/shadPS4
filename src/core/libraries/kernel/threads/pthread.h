@@ -320,7 +320,7 @@ struct Pthread {
 
     bool Sleep(const OrbisKernelTimespec* abstime, u64 usec) {
         will_sleep = 0;
-        if (nwaiter_defer > 0) {
+        if (nwaiter_defer == 0) {
             WakeAll();
         }
         if (abstime == THR_RELTIME) {

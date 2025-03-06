@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <optional>
 #include <xxhash.h>
@@ -49,6 +50,7 @@ TextureCache::TextureCache(const Vulkan::Instance& instance_, Vulkan::Scheduler&
 TextureCache::~TextureCache() = default;
 
 void TextureCache::MarkAsMaybeDirty(ImageId image_id, Image& image) {
+    EMULATOR_TRACE;
     if (image.hash == 0) {
         // Initialize hash
         const u8* addr = std::bit_cast<u8*>(image.info.guest_address);
@@ -59,6 +61,9 @@ void TextureCache::MarkAsMaybeDirty(ImageId image_id, Image& image) {
 }
 
 void TextureCache::InvalidateMemory(VAddr addr, size_t size) {
+
+    //NOPE
+
     std::scoped_lock lock{mutex};
     const auto pages_start = PageManager::GetPageAddr(addr);
     const auto pages_end = PageManager::GetNextPageAddr(addr + size - 1);
@@ -87,9 +92,14 @@ void TextureCache::InvalidateMemory(VAddr addr, size_t size) {
             MarkAsMaybeDirty(image_id, image);
         }
     });
+
+    
 }
 
 void TextureCache::InvalidateMemoryFromGPU(VAddr address, size_t max_size) {
+
+   //NOPE 
+
     std::scoped_lock lock{mutex};
     ForEachImageInRegion(address, max_size, [&](ImageId image_id, Image& image) {
         // Only consider images that match base address.
@@ -100,17 +110,24 @@ void TextureCache::InvalidateMemoryFromGPU(VAddr address, size_t max_size) {
         // Ensure image is reuploaded when accessed again.
         image.flags |= ImageFlagBits::GpuDirty;
     });
+
+    
 }
 
 void TextureCache::UnmapMemory(VAddr cpu_addr, size_t size) {
+
+    //NOPE
+
     std::scoped_lock lk{mutex};
 
     boost::container::small_vector<ImageId, 16> deleted_images;
     ForEachImageInRegion(cpu_addr, size, [&](ImageId id, Image&) { deleted_images.push_back(id); });
     for (const ImageId id : deleted_images) {
+    EMULATOR_TRACE;
         // TODO: Download image data back to host.
         FreeImage(id);
     }
+    
 }
 
 ImageId TextureCache::ResolveDepthOverlap(const ImageInfo& requested_info, BindingType binding,
@@ -158,6 +175,7 @@ ImageId TextureCache::ResolveDepthOverlap(const ImageInfo& requested_info, Bindi
     }
 
     if (recreate) {
+    EMULATOR_TRACE;
         auto new_info{requested_info};
         new_info.resources = std::max(requested_info.resources, cache_image.info.resources);
         new_info.UpdateSize();
@@ -182,12 +200,14 @@ std::tuple<ImageId, int, int> TextureCache::ResolveOverlap(const ImageInfo& imag
                                                            BindingType binding,
                                                            ImageId cache_image_id,
                                                            ImageId merged_image_id) {
+    EMULATOR_TRACE;
     auto& tex_cache_image = slot_images[cache_image_id];
     // We can assume it is safe to delete the image if it wasn't accessed in some number of frames.
     const bool safe_to_delete =
         scheduler.CurrentTick() - tex_cache_image.tick_accessed_last > NumFramesBeforeRemoval;
 
     if (image_info.guest_address == tex_cache_image.info.guest_address) { // Equal address
+    EMULATOR_TRACE;
         if (image_info.size != tex_cache_image.info.size) {
             // Very likely this kind of overlap is caused by allocation from a pool.
             if (safe_to_delete) {
@@ -202,6 +222,7 @@ std::tuple<ImageId, int, int> TextureCache::ResolveOverlap(const ImageInfo& imag
 
         if (image_info.pixel_format != tex_cache_image.info.pixel_format ||
             image_info.guest_size <= tex_cache_image.info.guest_size) {
+    EMULATOR_TRACE;
             auto result_id = merged_image_id ? merged_image_id : cache_image_id;
             const auto& result_image = slot_images[result_id];
             return {
@@ -273,6 +294,9 @@ std::tuple<ImageId, int, int> TextureCache::ResolveOverlap(const ImageInfo& imag
 }
 
 ImageId TextureCache::ExpandImage(const ImageInfo& info, ImageId image_id) {
+
+
+
     const auto new_image_id = slot_images.insert(instance, scheduler, info);
     RegisterImage(new_image_id);
 
@@ -309,6 +333,7 @@ ImageId TextureCache::FindImage(BaseDesc& desc, FindFlags flags) {
 
     // Check for a perfect match first
     for (const auto& cache_id : image_ids) {
+    EMULATOR_TRACE;
         auto& cache_image = slot_images[cache_id];
         if (cache_image.info.guest_address != info.guest_address) {
             continue;
@@ -321,10 +346,12 @@ ImageId TextureCache::FindImage(BaseDesc& desc, FindFlags flags) {
         }
         if (False(flags & FindFlags::RelaxFmt) &&
             !IsVulkanFormatCompatible(info.pixel_format, cache_image.info.pixel_format)) {
+    EMULATOR_TRACE;
             continue;
         }
         if (True(flags & FindFlags::ExactFmt) &&
             info.pixel_format != cache_image.info.pixel_format) {
+    EMULATOR_TRACE;
             continue;
         }
         ASSERT((cache_image.info.type == info.type || info.size == Extent3D{1, 1, 1} ||
@@ -341,6 +368,7 @@ ImageId TextureCache::FindImage(BaseDesc& desc, FindFlags flags) {
     int view_slice{-1};
     if (!image_id) {
         for (const auto& cache_id : image_ids) {
+    EMULATOR_TRACE;
             view_mip = -1;
             view_slice = -1;
 
@@ -359,6 +387,7 @@ ImageId TextureCache::FindImage(BaseDesc& desc, FindFlags flags) {
         Image& image_resolved = slot_images[image_id];
         if (True(flags & FindFlags::ExactFmt) &&
             info.pixel_format != image_resolved.info.pixel_format) {
+    EMULATOR_TRACE;
             // Cannot reuse this image as we need the exact requested format.
             image_id = {};
         } else if (image_resolved.info.resources < info.resources) {
@@ -411,6 +440,7 @@ ImageView& TextureCache::FindRenderTarget(BaseDesc& desc) {
 
     // Register meta data for this color buffer
     if (!(image.flags & ImageFlagBits::MetaRegistered)) {
+    EMULATOR_TRACE;
         if (desc.info.meta_info.cmask_addr) {
             surface_metas.emplace(desc.info.meta_info.cmask_addr,
                                   MetaDataInfo{.type = MetaDataInfo::Type::CMask});
@@ -439,6 +469,7 @@ ImageView& TextureCache::FindDepthTarget(BaseDesc& desc) {
 
     // Register meta data for this depth buffer
     if (!(image.flags & ImageFlagBits::MetaRegistered)) {
+    EMULATOR_TRACE;
         if (desc.info.meta_info.htile_addr) {
             surface_metas.emplace(desc.info.meta_info.htile_addr,
                                   MetaDataInfo{.type = MetaDataInfo::Type::HTile});
@@ -509,6 +540,7 @@ void TextureCache::RefreshImage(Image& image, Vulkan::Scheduler* custom_schedule
 
     boost::container::small_vector<vk::BufferImageCopy, 14> image_copy{};
     for (u32 m = 0; m < num_mips; m++) {
+    EMULATOR_TRACE;
         const u32 width = std::max(image.info.size.width >> m, 1u);
         const u32 height = std::max(image.info.size.height >> m, 1u);
         const u32 depth =
@@ -516,14 +548,14 @@ void TextureCache::RefreshImage(Image& image, Vulkan::Scheduler* custom_schedule
         const auto& mip = image.info.mips_layout[m];
 
         // Protect GPU modified resources from accidental CPU reuploads.
-        if (is_gpu_modified && !is_gpu_dirty) {
+         if (is_gpu_modified && !is_gpu_dirty) {
             const u8* addr = std::bit_cast<u8*>(image.info.guest_address);
             const u64 hash = XXH3_64bits(addr + mip.offset, mip.size);
             if (image.mip_hashes[m] == hash) {
                 continue;
             }
             image.mip_hashes[m] = hash;
-        }
+        } 
 
         image_copy.push_back({
             .bufferOffset = mip.offset * num_layers,
@@ -568,7 +600,8 @@ void TextureCache::RefreshImage(Image& image, Vulkan::Scheduler* custom_schedule
     const auto [buffer, offset] =
         tile_manager.TryDetile(vk_buffer->Handle(), buf_offset, image.info);
     for (auto& copy : image_copy) {
-        copy.bufferOffset += offset;
+    EMULATOR_TRACE;
+        //copy.bufferOffset += offset;
     }
 
     const vk::BufferMemoryBarrier2 pre_barrier{
@@ -773,6 +806,7 @@ void TextureCache::DeleteImage(ImageId image_id) {
     scheduler.DeferOperation([this, image_id] {
         Image& image = slot_images[image_id];
         for (const ImageViewId image_view_id : image.image_view_ids) {
+    EMULATOR_TRACE;
             slot_image_views.erase(image_view_id);
         }
         slot_images.erase(image_id);

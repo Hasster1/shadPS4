@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #ifdef _WIN32
 
@@ -12,6 +13,7 @@ NtTerminateThread_t NtTerminateThread = nullptr;
 NtQueueApcThreadEx_t NtQueueApcThreadEx = nullptr;
 
 namespace Common::NtApi {
+    EMULATOR_TRACE;
 
 void Initialize() {
     HMODULE nt_handle = GetModuleHandleA("ntdll.dll");

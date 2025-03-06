@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <cstdlib>
 #include "common/logging/log.h"
@@ -46,6 +47,7 @@ s64 SRandomDevice::lseek(s64 offset, int whence) {
 s64 SRandomDevice::read(void* buf, size_t nbytes) {
     auto rbuf = static_cast<char*>(buf);
     for (size_t i = 0; i < nbytes; i++) {
+    EMULATOR_TRACE;
         rbuf[i] = std::rand();
     }
     return nbytes;

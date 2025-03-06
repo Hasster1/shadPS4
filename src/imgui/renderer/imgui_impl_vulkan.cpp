@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 // Based on imgui_impl_vulkan.cpp from Dear ImGui repository
 
@@ -82,6 +83,7 @@ layout(location = 0) in vec2 aPos;
 layout(location = 1) in vec2 aUV;
 layout(location = 2) in vec4 aColor;
 layout(push_constant) uniform uPushConstant { vec2 uScale; vec2 uTranslate; } pc;
+    EMULATOR_TRACE;
 
 out gl_PerVertex { vec4 gl_Position; };
 layout(location = 0) out struct { vec4 Color; vec2 UV; } Out;
@@ -143,6 +145,7 @@ static uint32_t glsl_shader_vert_spv[] = {
 layout(location = 0) out vec4 fColor;
 layout(set=0, binding=0) uniform sampler2D sTexture;
 layout(location = 0) in struct { vec4 Color; vec2 UV; } In;
+    EMULATOR_TRACE;
 void main()
 {
     fColor = In.Color * texture(sTexture, In.UV.st);
@@ -179,6 +182,7 @@ static uint32_t glsl_shader_frag_spv[] = {
 // contexts It is STRONGLY preferred that you use docking branch with multi-viewports (== single
 // Dear ImGui context + multiple windows) instead of multiple Dear ImGui contexts.
 static VkData* GetBackendData() {
+    EMULATOR_TRACE;
     return ImGui::GetCurrentContext() ? (VkData*)ImGui::GetIO().BackendRendererUserData : nullptr;
 }
 
@@ -194,6 +198,7 @@ static uint32_t FindMemoryType(vk::MemoryPropertyFlags properties, uint32_t type
 
 template <typename T>
 static T CheckVkResult(vk::ResultValue<T> res) {
+    EMULATOR_TRACE;
     if (res.result == vk::Result::eSuccess) {
         return res.value;
     }
@@ -310,6 +315,7 @@ ImTextureID AddTexture(vk::ImageView image_view, vk::ImageLayout image_layout,
 }
 UploadTextureData UploadTexture(const void* data, vk::Format format, u32 width, u32 height,
                                 size_t size) {
+    EMULATOR_TRACE;
     ImGuiIO& io = GetIO();
     VkData* bd = GetBackendData();
     const InitInfo& v = bd->init_info;
@@ -542,6 +548,7 @@ static void SetupRenderState(ImDrawData& draw_data, vk::Pipeline pipeline, vk::C
     // draw_data->DisplayPos+data_data->DisplaySize (bottom right). DisplayPos is (0,0) for single
     // viewport apps.
     {
+    EMULATOR_TRACE;
         float scale[2];
         scale[0] = 2.0f / draw_data.DisplaySize.x;
         scale[1] = 2.0f / draw_data.DisplaySize.y;
@@ -563,6 +570,7 @@ void RenderDrawData(ImDrawData& draw_data, vk::CommandBuffer command_buffer,
     int fb_width = (int)(draw_data.DisplaySize.x * draw_data.FramebufferScale.x);
     int fb_height = (int)(draw_data.DisplaySize.y * draw_data.FramebufferScale.y);
     if (fb_width <= 0 || fb_height <= 0) {
+    EMULATOR_TRACE;
         return;
     }
 
@@ -598,6 +606,7 @@ void RenderDrawData(ImDrawData& draw_data, vk::CommandBuffer command_buffer,
         idx_dst = (ImDrawIdx*)CheckVkResult(
             v.device.mapMemory(frb.index.buffer_memory, 0, index_size, vk::MemoryMapFlags{}));
         for (int n = 0; n < draw_data.CmdListsCount; n++) {
+    EMULATOR_TRACE;
             const ImDrawList* cmd_list = draw_data.CmdLists[n];
             memcpy(vtx_dst, cmd_list->VtxBuffer.Data,
                    cmd_list->VtxBuffer.Size * sizeof(ImDrawVert));
@@ -635,8 +644,10 @@ void RenderDrawData(ImDrawData& draw_data, vk::CommandBuffer command_buffer,
     int global_vtx_offset = 0;
     int global_idx_offset = 0;
     for (int n = 0; n < draw_data.CmdListsCount; n++) {
+    EMULATOR_TRACE;
         const ImDrawList* cmd_list = draw_data.CmdLists[n];
         for (int cmd_i = 0; cmd_i < cmd_list->CmdBuffer.Size; cmd_i++) {
+    EMULATOR_TRACE;
             const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[cmd_i];
             if (pcmd->UserCallback != nullptr) {
                 // User callback, registered via ImDrawList::AddCallback()
@@ -933,6 +944,7 @@ static void DestroyFrameRenderBuffers(vk::Device device, RenderBuffer& rb,
 static void DestroyWindowRenderBuffers(vk::Device device, WindowRenderBuffers& buffers,
                                        const vk::AllocationCallbacks* allocator) {
     for (uint32_t n = 0; n < buffers.count; n++) {
+    EMULATOR_TRACE;
         auto& frb = buffers.frame_render_buffers[n];
         DestroyFrameRenderBuffers(device, frb.index, allocator);
         DestroyFrameRenderBuffers(device, frb.vertex, allocator);
@@ -1254,6 +1266,7 @@ bool Init(InitInfo info) {
 }
 
 void Shutdown() {
+    EMULATOR_TRACE;
     VkData* bd = GetBackendData();
     IM_ASSERT(bd != nullptr && "No renderer backend to shutdown, or already shutdown?");
     ImGuiIO& io = ImGui::GetIO();
@@ -1266,13 +1279,16 @@ void Shutdown() {
 }
 
 void OnSurfaceFormatChange(vk::Format surface_format) {
+    EMULATOR_TRACE;
     VkData* bd = GetBackendData();
     const InitInfo& v = bd->init_info;
     auto& pl_format = const_cast<vk::Format&>(
         bd->init_info.pipeline_rendering_create_info.pColorAttachmentFormats[0]);
     if (pl_format != surface_format) {
+    EMULATOR_TRACE;
         pl_format = surface_format;
         if (bd->pipeline) {
+    EMULATOR_TRACE;
             v.device.destroyPipeline(bd->pipeline, v.allocator);
             bd->pipeline = VK_NULL_HANDLE;
             CreatePipeline(v.device, v.allocator, v.pipeline_cache, nullptr, &bd->pipeline,

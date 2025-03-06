@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <cstring>
 
@@ -65,6 +66,7 @@ bool PSF::Open(const std::vector<u8>& psf_buffer) {
     }
 
     for (u32 i = 0; i < header.index_table_entries; i++) {
+    EMULATOR_TRACE;
         PSFRawEntry raw_entry{};
         std::memcpy(&raw_entry, psf_data + sizeof(PSFHeader) + i * sizeof(PSFRawEntry),
                     sizeof(raw_entry));
@@ -99,6 +101,7 @@ bool PSF::Open(const std::vector<u8>& psf_buffer) {
 }
 
 bool PSF::Encode(const std::filesystem::path& filepath) const {
+    EMULATOR_TRACE;
     Common::FS::IOFile file(filepath, Common::FS::FileAccessMode::Write);
     if (!file.IsOpen()) {
         return false;
@@ -134,6 +137,7 @@ void PSF::Encode(std::vector<u8>& psf_buffer) const {
     const size_t key_table_offset = psf_buffer.size();
     ((PSFHeader*)psf_buffer.data())->key_table_offset = key_table_offset;
     for (size_t i = 0; i < entry_list.size(); i++) {
+    EMULATOR_TRACE;
         auto& raw_entry = ((PSFRawEntry*)(psf_buffer.data() + sizeof(PSFHeader)))[i];
         const Entry& entry = entry_list[i];
         raw_entry.key_offset = psf_buffer.size() - key_table_offset;
@@ -146,6 +150,7 @@ void PSF::Encode(std::vector<u8>& psf_buffer) const {
     const size_t data_table_offset = psf_buffer.size();
     ((PSFHeader*)psf_buffer.data())->data_table_offset = data_table_offset;
     for (size_t i = 0; i < entry_list.size(); i++) {
+    EMULATOR_TRACE;
         if (psf_buffer.size() % 4 != 0) {
             std::ranges::fill_n(std::back_inserter(psf_buffer), 4 - psf_buffer.size() % 4, 0);
         }
@@ -186,6 +191,7 @@ void PSF::Encode(std::vector<u8>& psf_buffer) const {
 }
 
 std::optional<std::span<const u8>> PSF::GetBinary(std::string_view key) const {
+    EMULATOR_TRACE;
     const auto& [it, index] = FindEntry(key);
     if (it == entry_list.end()) {
         return {};
@@ -233,6 +239,7 @@ void PSF::AddBinary(std::string key, std::vector<u8> value, bool update) {
 }
 
 void PSF::AddBinary(std::string key, uint64_t value, bool update) {
+    EMULATOR_TRACE;
     std::vector<u8> data(8);
     std::memcpy(data.data(), &value, 8);
     return AddBinary(std::move(key), std::move(data), update);
@@ -259,6 +266,7 @@ void PSF::AddString(std::string key, std::string value, bool update) {
 }
 
 void PSF::AddInteger(std::string key, s32 value, bool update) {
+    EMULATOR_TRACE;
     auto [it, index] = FindEntry(key);
     bool exist = it != entry_list.end();
     if (exist && !update) {
@@ -279,6 +287,7 @@ void PSF::AddInteger(std::string key, s32 value, bool update) {
 }
 
 std::pair<std::vector<PSF::Entry>::iterator, size_t> PSF::FindEntry(std::string_view key) {
+    EMULATOR_TRACE;
     auto entry =
         std::ranges::find_if(entry_list, [&](const auto& entry) { return entry.key == key; });
     return {entry, std::distance(entry_list.begin(), entry)};

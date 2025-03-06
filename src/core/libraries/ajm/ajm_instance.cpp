@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "core/libraries/ajm/ajm_at9.h"
 #include "core/libraries/ajm/ajm_instance.h"
@@ -43,12 +44,14 @@ AjmInstance::AjmInstance(AjmCodecType codec_type, AjmInstanceFlags flags) : m_fl
         break;
     }
     case AjmCodecType::Mp3Dec: {
+    EMULATOR_TRACE;
         m_codec = std::make_unique<AjmMp3Decoder>(AjmFormatEncoding(flags.format),
                                                   AjmMp3CodecFlags(flags.codec));
         break;
     }
     default:
         UNREACHABLE_MSG("Unimplemented codec type {}", magic_enum::enum_name(codec_type));
+    EMULATOR_TRACE;
     }
 }
 
@@ -57,6 +60,7 @@ void AjmInstance::ExecuteJob(AjmJob& job) {
     if (True(control_flags & AjmJobControlFlags::Reset)) {
         LOG_TRACE(Lib_Ajm, "Resetting instance {}", job.instance_id);
         m_format = {};
+    EMULATOR_TRACE;
         m_gapless = {};
         m_resample_parameters = {};
         m_total_samples = 0;
@@ -72,10 +76,12 @@ void AjmInstance::ExecuteJob(AjmJob& job) {
         m_resample_parameters = job.input.resample_parameters.value();
     }
     if (job.input.format.has_value()) {
+    EMULATOR_TRACE;
         LOG_ERROR(Lib_Ajm, "Unimplemented: format parameters");
         m_format = job.input.format.value();
     }
     if (job.input.gapless_decode.has_value()) {
+    EMULATOR_TRACE;
         auto& params = job.input.gapless_decode.value();
         if (params.total_samples != 0) {
             const auto max = std::max(params.total_samples, m_gapless.init.total_samples);
@@ -130,9 +136,11 @@ void AjmInstance::ExecuteJob(AjmJob& job) {
     }
 
     if (job.output.p_format != nullptr) {
+    EMULATOR_TRACE;
         *job.output.p_format = m_codec->GetFormat();
     }
     if (job.output.p_gapless_decode != nullptr) {
+    EMULATOR_TRACE;
         *job.output.p_gapless_decode = m_gapless.current;
     }
     if (job.output.p_codec_info != nullptr) {

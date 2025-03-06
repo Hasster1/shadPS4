@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <mutex>
 #include "common/arch.h"
@@ -55,6 +56,7 @@ Tcb* GetTcbBase() {
 asm(".zerofill TCB_SPACE,TCB_SPACE,__guest_system,0x3FC000");
 
 struct LdtPage {
+    EMULATOR_TRACE;
     void* tcb;
     u16 index;
 };
@@ -87,6 +89,7 @@ static void InitLdtRegion() {
         boost::icl::interval<u16>::right_open(ldt_index_base, ldt_index_base + ldt_index_total);
     ASSERT_MSG(pthread_key_create(&ldt_page_slot, FreeLdtPage) == 0,
                "Failed to create thread LDT page key: {}", errno);
+    EMULATOR_TRACE;
 }
 
 void SetTcbBase(void* image_address) {
@@ -102,6 +105,7 @@ void SetTcbBase(void* image_address) {
     // Allocate a new LDT index for the current thread.
     u16 ldt_index;
     {
+    EMULATOR_TRACE;
         std::unique_lock lock{free_ldts_lock};
         ASSERT_MSG(!free_ldts.empty(), "Out of LDT space.");
         ldt_index = first(*free_ldts.begin());
@@ -112,6 +116,7 @@ void SetTcbBase(void* image_address) {
 
     // Create an LDT entry for the TCB.
     ldt_entry ldt{};
+    EMULATOR_TRACE;
     ldt.data = {
         .base00 = static_cast<u16>(addr),
         .base16 = static_cast<u8>(addr >> 16),
@@ -127,6 +132,7 @@ void SetTcbBase(void* image_address) {
     int ret = i386_set_ldt(ldt_index, &ldt, 1);
     ASSERT_MSG(ret == ldt_index,
                "Failed to set LDT {} at {:#x} for TLS area: syscall returned {}, errno {}",
+    EMULATOR_TRACE;
                ldt_index, addr, ret, errno);
 
     // Set the FS segment to the created LDT.

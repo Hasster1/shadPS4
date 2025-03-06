@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2021 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <vector>
 
@@ -243,6 +244,7 @@ void IOFile::Unlink() {
                          FileDispositionInformation);
 #else
     if (unlink(file_path.c_str()) != 0) {
+    EMULATOR_TRACE;
         const auto ec = std::error_code{errno, std::generic_category()};
         LOG_ERROR(Common_Filesystem, "Failed to unlink the file at path={}, ec_message={}",
                   PathToUTF8String(file_path), ec.message());
@@ -422,6 +424,7 @@ u64 GetDirectorySize(const std::filesystem::path& path) {
 
     u64 total = 0;
     for (const auto& entry : fs::recursive_directory_iterator(path)) {
+    EMULATOR_TRACE;
         if (fs::is_regular_file(entry.path())) {
             total += fs::file_size(entry.path());
         }

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include "video_core/amdgpu/resource.h"
@@ -11,6 +12,7 @@ namespace VideoCore {
 
 Sampler::Sampler(const Vulkan::Instance& instance, const AmdGpu::Sampler& sampler) {
     if (sampler.force_degamma) {
+    EMULATOR_TRACE;
         LOG_WARNING(Render_Vulkan, "Texture requires gamma correction");
     }
     using namespace Vulkan;

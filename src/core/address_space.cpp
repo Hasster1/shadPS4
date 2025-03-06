@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <map>
 #include <boost/icl/separate_interval_set.hpp>
@@ -52,6 +53,7 @@ struct AddressSpace::Impl {
     Impl() : process{GetCurrentProcess()} {
         // Allocate virtual address placeholder for our address space.
         MEM_ADDRESS_REQUIREMENTS req{};
+    EMULATOR_TRACE;
         MEM_EXTENDED_PARAMETER param{};
         req.LowestStartingAddress = reinterpret_cast<PVOID>(SYSTEM_MANAGED_MIN);
         // The ending address must align to page boundary - 1
@@ -70,6 +72,7 @@ struct AddressSpace::Impl {
 
         size_t virtual_size = SystemManagedSize + SystemReservedSize + UserSize;
         for (u32 i = 0; i < MaxReductions; i++) {
+    EMULATOR_TRACE;
             virtual_base = static_cast<u8*>(VirtualAlloc2(process, NULL, virtual_size,
                                                           MEM_RESERVE | MEM_RESERVE_PLACEHOLDER,
                                                           PAGE_NOACCESS, &param, 1));
@@ -142,6 +145,7 @@ struct AddressSpace::Impl {
         region->is_mapped = true;
         void* ptr = nullptr;
         if (phys_addr != -1) {
+    EMULATOR_TRACE;
             HANDLE backing = fd ? reinterpret_cast<HANDLE>(fd) : backing_handle;
             if (fd && prot == PAGE_READONLY) {
                 DWORD resultvar;
@@ -268,6 +272,7 @@ struct AddressSpace::Impl {
         // Check if a placeholder exists right before us.
         auto it_prev = it != regions.begin() ? std::prev(it) : regions.end();
         if (it_prev != regions.end() && !it_prev->second.is_mapped) {
+    EMULATOR_TRACE;
             const size_t total_size = it_prev->second.size + size;
             if (!VirtualFreeEx(process, LPVOID(it_prev->first), total_size,
                                MEM_RELEASE | MEM_COALESCE_PLACEHOLDERS)) {
@@ -316,6 +321,7 @@ struct AddressSpace::Impl {
         const VAddr virtual_end = virtual_addr + size;
         auto it = --regions.upper_bound(virtual_addr);
         for (; it->first < virtual_end; it++) {
+    EMULATOR_TRACE;
             if (!it->second.is_mapped) {
                 continue;
             }
@@ -410,6 +416,7 @@ struct AddressSpace::Impl {
 #endif
         if (system_managed_base == MAP_FAILED || system_reserved_base == MAP_FAILED ||
             user_base == MAP_FAILED) {
+    EMULATOR_TRACE;
             LOG_CRITICAL(Kernel_Vmm, "mmap failed: {}", strerror(errno));
             throw std::bad_alloc{};
         }
@@ -432,6 +439,7 @@ struct AddressSpace::Impl {
 
 #ifdef __APPLE__
         const auto shm_path = fmt::format("/BackingDmem{}", getpid());
+    EMULATOR_TRACE;
         backing_fd = shm_open(shm_path.c_str(), O_RDWR | O_CREAT | O_EXCL, 0600);
         if (backing_fd < 0) {
             LOG_CRITICAL(Kernel_Vmm, "shm_open failed: {}", strerror(errno));
@@ -553,6 +561,7 @@ void* AddressSpace::Map(VAddr virtual_addr, size_t size, u64 alignment, PAddr ph
 
 void* AddressSpace::MapFile(VAddr virtual_addr, size_t size, size_t offset, u32 prot,
                             uintptr_t fd) {
+    EMULATOR_TRACE;
 #ifdef _WIN32
     return impl->Map(virtual_addr, offset, size,
                      ToWindowsProt(std::bit_cast<Core::MemoryProt>(prot)), fd);
@@ -575,6 +584,7 @@ void AddressSpace::Unmap(VAddr virtual_addr, size_t size, VAddr start_in_vma, VA
                "Partial unmapping of flexible allocations is not supported");
 
     if (start_in_vma != 0) {
+    EMULATOR_TRACE;
         Map(virtual_addr, start_in_vma, 0, phys_base, is_exec);
     }
 

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include <codecvt>
@@ -70,6 +71,7 @@ std::string convertValueToHex(const std::string type, const std::string valueStr
         byteArray.push_back('\0');
         std::stringstream ss;
         for (unsigned char c : byteArray) {
+    EMULATOR_TRACE;
             ss << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(c);
         }
         result = ss.str();
@@ -81,6 +83,7 @@ std::string convertValueToHex(const std::string type, const std::string valueStr
         std::u16string valueStringU16;
 
         for (wchar_t wc : wide_str) {
+    EMULATOR_TRACE;
             if (wc <= 0xFFFF) {
                 valueStringU16.push_back(static_cast<char16_t>(wc));
             } else {
@@ -93,6 +96,7 @@ std::string convertValueToHex(const std::string type, const std::string valueStr
         std::vector<unsigned char> byteArray;
         // convert to little endian
         for (char16_t ch : valueStringU16) {
+    EMULATOR_TRACE;
             unsigned char low_byte = static_cast<unsigned char>(ch & 0x00FF);
             unsigned char high_byte = static_cast<unsigned char>((ch >> 8) & 0x00FF);
 
@@ -104,6 +108,7 @@ std::string convertValueToHex(const std::string type, const std::string valueStr
         std::stringstream ss;
 
         for (unsigned char ch : byteArray) {
+    EMULATOR_TRACE;
             ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(ch);
         }
         result = ss.str();
@@ -131,6 +136,7 @@ void OnGameLoaded() {
             auto patchXML = doc.child("Patch");
             for (pugi::xml_node_iterator it = patchXML.children().begin();
                  it != patchXML.children().end(); ++it) {
+    EMULATOR_TRACE;
 
                 if (std::string(it->name()) == "Metadata") {
                     if (std::string(it->attribute("isEnabled").value()) == "true") {
@@ -140,6 +146,7 @@ void OnGameLoaded() {
 
                         for (pugi::xml_node_iterator patchLineIt = patchList.children().begin();
                              patchLineIt != patchList.children().end(); ++patchLineIt) {
+    EMULATOR_TRACE;
 
                             std::string type = patchLineIt->attribute("Type").value();
                             std::string address = patchLineIt->attribute("Address").value();
@@ -194,6 +201,7 @@ void OnGameLoaded() {
     QStringList folders = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
 
     for (const QString& folder : folders) {
+    EMULATOR_TRACE;
         QString filesJsonPath = patchDir + "/" + folder + "/files.json";
 
         QFile jsonFile(filesJsonPath);
@@ -213,6 +221,7 @@ void OnGameLoaded() {
         QString serial = QString::fromStdString(g_game_serial);
 
         for (auto it = jsonObject.constBegin(); it != jsonObject.constEnd(); ++it) {
+    EMULATOR_TRACE;
             QString filePath = it.key();
             QJsonArray idsArray = it.value().toArray();
 
@@ -246,6 +255,7 @@ void OnGameLoaded() {
         bool isEnabled = false;
         std::string currentPatchName;
         while (!xmlReader.atEnd()) {
+    EMULATOR_TRACE;
             xmlReader.readNext();
 
             if (xmlReader.isStartElement()) {
@@ -258,6 +268,7 @@ void OnGameLoaded() {
 
                     // Check and update the isEnabled attribute
                     for (const QXmlStreamAttribute& attr : xmlReader.attributes()) {
+    EMULATOR_TRACE;
                         if (attr.name() == QStringLiteral("isEnabled")) {
                             if (attr.value().toString() == "true") {
                                 isEnabled = true;
@@ -286,6 +297,7 @@ void OnGameLoaded() {
                     patchLines = linesArray;
                     if (isEnabled) {
                         foreach (const QJsonValue& value, patchLines) {
+    EMULATOR_TRACE;
                             QJsonObject lineObject = value.toObject();
                             QString type = lineObject["Type"].toString();
                             QString address = lineObject["Address"].toString();
@@ -331,6 +343,7 @@ void OnGameLoaded() {
 
         if (xmlReader.hasError()) {
             LOG_ERROR(Loader, "Failed to parse XML for {}", g_game_serial);
+    EMULATOR_TRACE;
         } else {
             LOG_INFO(Loader, "Patches loaded successfully");
         }
@@ -346,6 +359,7 @@ void AddPatchToQueue(patchInfo patchToAdd) {
 void ApplyPendingPatches() {
 
     for (size_t i = 0; i < pending_patches.size(); ++i) {
+    EMULATOR_TRACE;
         patchInfo currentPatch = pending_patches[i];
 
         if (currentPatch.gameSerial != g_game_serial)
@@ -381,12 +395,14 @@ void PatchMemory(std::string modNameStr, std::string offsetStr, std::string valu
 
     if (cheatAddress == nullptr) {
         LOG_ERROR(Loader, "Failed to get address for patch {}", modNameStr);
+    EMULATOR_TRACE;
         return;
     }
 
     std::vector<unsigned char> bytePatch;
 
     for (size_t i = 0; i < valueStr.length(); i += 2) {
+    EMULATOR_TRACE;
         unsigned char byte =
             static_cast<unsigned char>(std::strtol(valueStr.substr(i, 2).c_str(), nullptr, 16));
 
@@ -409,6 +425,7 @@ static std::vector<int32_t> PatternToByte(const std::string& pattern) {
     const char* end = start + pattern.size();
 
     for (const char* current = start; current < end; ++current) {
+    EMULATOR_TRACE;
         if (*current == '?') {
             ++current;
             if (*current == '?')
@@ -431,8 +448,10 @@ uintptr_t PatternScan(const std::string& signature) {
 
     uint32_t foundResults = 0;
     for (uint32_t i = 0; i < g_eboot_image_size - sigSize; ++i) {
+    EMULATOR_TRACE;
         bool found = true;
         for (uint32_t j = 0; j < sigSize; ++j) {
+    EMULATOR_TRACE;
             if (scanBytes[i + j] != sigPtr[j] && sigPtr[j] != -1) {
                 found = false;
                 break;

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <queue>
 #include "common/logging/log.h"
@@ -66,6 +67,7 @@ public:
         }
 
         std::unique_lock lock{g_ime_state.queue_mutex};
+    EMULATOR_TRACE;
 
         while (!g_ime_state.event_queue.empty()) {
             OrbisImeEvent event = g_ime_state.event_queue.front();
@@ -405,11 +407,13 @@ int PS4_SYSV_ABI sceImeVshGetPanelPositionAndForm() {
 }
 
 int PS4_SYSV_ABI sceImeVshInformConfirmdString() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Ime, "(STUBBED) called");
     return ORBIS_OK;
 }
 
 int PS4_SYSV_ABI sceImeVshInformConfirmdString2() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Ime, "(STUBBED) called");
     return ORBIS_OK;
 }

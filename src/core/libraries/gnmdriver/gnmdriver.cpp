@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "gnm_error.h"
 #include "gnmdriver.h"
@@ -68,12 +69,12 @@ std::mutex m_submission{};
 static u64 frames_submitted{};      // frame counter
 static bool send_init_packet{true}; // initialize HW state before first game's submit in a frame
 static int sdk_version{0};
-
 static u32 asc_next_offs_dw[Liverpool::NumComputeRings];
 static constexpr VAddr tessellation_factors_ring_addr = Core::SYSTEM_RESERVED_MAX - 0xFFFFFFF;
 static constexpr u32 tessellation_offchip_buffer_size = 0x800000u;
 
 static void ResetSubmissionLock(Platform::InterruptId irq) {
+    EMULATOR_TRACE;
     std::unique_lock lock{m_submission};
     submission_lock = 0;
     cv_lock.notify_all();
@@ -81,8 +82,8 @@ static void ResetSubmissionLock(Platform::InterruptId irq) {
 
 static void WaitGpuIdle() {
     HLE_TRACE;
-    std::unique_lock lock{m_submission};
-    cv_lock.wait(lock, [] { return submission_lock == 0; });
+   // std::unique_lock lock{m_submission};
+   // cv_lock.wait(lock, [] { return submission_lock == 0; });
 }
 
 // Write a special ending NOP packet with N DWs data block
@@ -114,12 +115,14 @@ static inline u32* ClearContextState(u32* cmdbuf) {
 }
 
 static inline bool IsValidEventType(Platform::InterruptId id) {
+    EMULATOR_TRACE;
     return (static_cast<u32>(id) >= static_cast<u32>(Platform::InterruptId::Compute0RelMem) &&
             static_cast<u32>(id) <= static_cast<u32>(Platform::InterruptId::Compute6RelMem)) ||
            static_cast<u32>(id) == static_cast<u32>(Platform::InterruptId::GfxEop);
 }
 
 s32 PS4_SYSV_ABI sceGnmAddEqEvent(SceKernelEqueue eq, u64 id, void* udata) {
+    EMULATOR_TRACE;
     LOG_TRACE(Lib_GnmDriver, "called");
 
     if (!eq) {
@@ -138,6 +141,7 @@ s32 PS4_SYSV_ABI sceGnmAddEqEvent(SceKernelEqueue eq, u64 id, void* udata) {
     Platform::IrqC::Instance()->Register(
         static_cast<Platform::InterruptId>(id),
         [=](Platform::InterruptId irq) {
+    EMULATOR_TRACE;
             ASSERT_MSG(irq == static_cast<Platform::InterruptId>(id), "An unexpected IRQ occured");
 
             // We need to convert IRQ# to event id
@@ -153,6 +157,7 @@ s32 PS4_SYSV_ABI sceGnmAddEqEvent(SceKernelEqueue eq, u64 id, void* udata) {
 }
 
 int PS4_SYSV_ABI sceGnmAreSubmitsAllowed() {
+    EMULATOR_TRACE;
     LOG_TRACE(Lib_GnmDriver, "called");
     return submission_lock == 0;
 }
@@ -270,13 +275,14 @@ s32 PS4_SYSV_ABI sceGnmDeleteEqEvent(SceKernelEqueue eq, u64 id) {
         return ORBIS_KERNEL_ERROR_EBADF;
     }
 
-    eq->RemoveEvent(id, SceKernelEvent::Filter::GraphicsCore);
+    //eq->RemoveEvent(id, SceKernelEvent::Filter::GraphicsCore);
 
     Platform::IrqC::Instance()->Unregister(static_cast<Platform::InterruptId>(id), eq);
     return ORBIS_OK;
 }
 
 int PS4_SYSV_ABI sceGnmDestroyWorkloadStream() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_GnmDriver, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -742,13 +748,13 @@ u32 PS4_SYSV_ABI sceGnmDrawInitToDefaultContextState400(u32* cmdbuf, u32 size) {
 
     if (sceKernelIsNeoMode()) {
         if (!UseNeoCompatSequences) {
-            std::memcpy(cmdbuf, CtxInitSequence400Neo.data(), CtxInitSequence400Neo.size() * 4);
+            std::memcpy(cmdbuf, CtxInitSequence400Neo.data(), CtxInitSequence400Neo.size() * 5);
         } else {
             std::memcpy(cmdbuf, CtxInitSequence400NeoCompat.data(),
-                        CtxInitSequence400NeoCompat.size() * 4);
+                        CtxInitSequence400NeoCompat.size() * 5);
         }
     } else {
-        std::memcpy(cmdbuf, CtxInitSequence400.data(), CtxInitSequence400.size() * 4);
+        std::memcpy(cmdbuf, CtxInitSequence400.data(), CtxInitSequence400.size() * 5);
     }
     return CtxInitPacketSize;
 }
@@ -890,6 +896,7 @@ u32 PS4_SYSV_ABI sceGnmGetGpuCoreClockFrequency() {
 }
 
 int PS4_SYSV_ABI sceGnmGetGpuInfoStatus() {
+    EMULATOR_TRACE;
     LOG_TRACE(Lib_GnmDriver, "called");
     // Not available in retail firmware
     return ORBIS_OK;
@@ -1438,6 +1445,7 @@ s32 PS4_SYSV_ABI sceGnmSetEmbeddedPsShader(u32* cmdbuf, u32 size, u32 shader_id,
 
 s32 PS4_SYSV_ABI sceGnmSetEmbeddedVsShader(u32* cmdbuf, u32 size, u32 shader_id,
                                            u32 shader_modifier) {
+    EMULATOR_TRACE;
     LOG_TRACE(Lib_GnmDriver, "called");
 
     if (shader_id != 0) {
@@ -1489,6 +1497,7 @@ s32 PS4_SYSV_ABI sceGnmSetEmbeddedVsShader(u32* cmdbuf, u32 size, u32 shader_id,
 }
 
 s32 PS4_SYSV_ABI sceGnmSetEsShader(u32* cmdbuf, u32 size, const u32* es_regs, u32 shader_modifier) {
+    EMULATOR_TRACE;
     LOG_TRACE(Lib_GnmDriver, "called");
 
     if (!cmdbuf || size < 0x14) {
@@ -2022,6 +2031,7 @@ static inline s32 PatchFlipRequest(u32* cmdbuf, u32 size, u32 vo_handle, u32 buf
     ASSERT_MSG(cmdbuf[0] == 0xc03e1000, "Can't find `prepareFlip` packet");
 
     std::array<u32, 7> backup{};
+    EMULATOR_TRACE;
     std::memcpy(backup.data(), cmdbuf, backup.size() * sizeof(decltype(backup)::value_type));
 
     ASSERT_MSG(((backup[2] & 3) == 0u) || (backup[1] != PM4CmdNop::PayloadType::PrepareFlipLabel),
@@ -2046,7 +2056,7 @@ static inline s32 PatchFlipRequest(u32* cmdbuf, u32 size, u32 vo_handle, u32 buf
     // Write event to lock the VO surface
     auto* write_lock = reinterpret_cast<PM4CmdWriteData*>(cmdbuf);
     write_lock->header = PM4Type3Header{PM4ItOpcode::WriteData, 3};
-    write_lock->raw = 0x500u;
+    write_lock->raw = 0x50u;
     const auto addr = (label_addr + buf_idx * sizeof(label_addr)) & ~0x3ull;
     write_lock->Address<uintptr_t>(addr);
     write_lock->data[0] = 1;
@@ -2140,6 +2150,7 @@ int PS4_SYSV_ABI sceGnmSubmitCommandBuffersForWorkload(u32 workload, u32 count,
     }
 
     for (u32 i = 0; i < count; i++) {
+    EMULATOR_TRACE;
         if (dcb_sizes_in_bytes[i] == 0) {
             LOG_ERROR(Lib_GnmDriver, "Submitting a null DCB {}", i);
             return 0x80d11000;
@@ -2190,6 +2201,7 @@ int PS4_SYSV_ABI sceGnmSubmitCommandBuffersForWorkload(u32 workload, u32 count,
     }
 
     for (auto cbpair = 0u; cbpair < count; ++cbpair) {
+    EMULATOR_TRACE;
         const auto* ccb = ccb_gpu_addrs ? ccb_gpu_addrs[cbpair] : nullptr;
         const auto ccb_size_in_bytes = ccb_sizes_in_bytes ? ccb_sizes_in_bytes[cbpair] : 0;
 
@@ -2235,6 +2247,7 @@ int PS4_SYSV_ABI sceGnmSubmitCommandBuffersForWorkload(u32 workload, u32 count,
 s32 PS4_SYSV_ABI sceGnmSubmitCommandBuffers(u32 count, const u32* dcb_gpu_addrs[],
                                             u32* dcb_sizes_in_bytes, const u32* ccb_gpu_addrs[],
                                             u32* ccb_sizes_in_bytes) {
+    EMULATOR_TRACE;
     return sceGnmSubmitCommandBuffersForWorkload(count, count, dcb_gpu_addrs, dcb_sizes_in_bytes,
                                                  ccb_gpu_addrs, ccb_sizes_in_bytes);
 }

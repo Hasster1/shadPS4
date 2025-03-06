@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <thread>
 #include <boost/icl/interval_set.hpp>
@@ -82,6 +83,7 @@ struct PageManager::Impl {
             // Block until the descriptor is ready for data reads.
             const int pollres = poll(&pollfd, 1, -1);
             switch (pollres) {
+    EMULATOR_TRACE;
             case -1:
                 perror("Poll userfaultfd");
                 continue;
@@ -198,6 +200,7 @@ void PageManager::UpdatePagesCachedCount(VAddr addr, u64 size, s32 delta) {
 
     const auto& range = cached_pages.equal_range(pages_interval);
     for (const auto& [range, count] : boost::make_iterator_range(range)) {
+    EMULATOR_TRACE;
         const auto interval = range & pages_interval;
         const VAddr interval_start_addr = boost::icl::first(interval) << PageShift;
         const VAddr interval_end_addr = boost::icl::last_next(interval) << PageShift;

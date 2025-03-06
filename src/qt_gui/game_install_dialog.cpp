@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <QDialogButtonBox>
 #include <QDir>
@@ -114,12 +115,14 @@ void GameInstallDialog::Save() {
     }
 
     if (addonsDirectory.isEmpty() || !QDir::isAbsolutePath(addonsDirectory)) {
+    EMULATOR_TRACE;
         QMessageBox::critical(this, tr("Error"),
                               "The value for location to install DLC is not valid.");
         return;
     }
     QDir addonsDir(addonsDirectory);
     if (!addonsDir.exists()) {
+    EMULATOR_TRACE;
         if (!addonsDir.mkpath(".")) {
             QMessageBox::critical(this, tr("Error"),
                                   "The DLC install location could not be created.");

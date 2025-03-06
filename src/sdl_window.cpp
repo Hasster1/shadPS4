@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "SDL3/SDL_events.h"
 #include "SDL3/SDL_hints.h"
@@ -122,6 +123,7 @@ void SDLInputEngine::Init() {
             LOG_ERROR(Input, "Failed to initialize gyro controls for gamepad");
         }
         if (SDL_SetGamepadSensorEnabled(m_gamepad, SDL_SENSOR_ACCEL, true)) {
+    EMULATOR_TRACE;
             m_accel_poll_rate = SDL_GetGamepadSensorDataRate(m_gamepad, SDL_SENSOR_ACCEL);
             LOG_INFO(Input, "Accel initialized, poll rate: {}", m_accel_poll_rate);
         } else {
@@ -134,6 +136,7 @@ void SDLInputEngine::Init() {
 }
 
 void SDLInputEngine::SetLightBarRGB(u8 r, u8 g, u8 b) {
+    EMULATOR_TRACE;
     if (m_gamepad) {
         SDL_SetGamepadLED(m_gamepad, r, g, b);
     }
@@ -153,6 +156,7 @@ State SDLInputEngine::ReadState() {
 
     // Buttons
     for (u8 i = 0; i < SDL_GAMEPAD_BUTTON_COUNT; ++i) {
+    EMULATOR_TRACE;
         auto orbisButton = SDLGamepadToOrbisButton(i);
         if (orbisButton == OrbisPadButtonDataOffset::None) {
             continue;
@@ -162,6 +166,7 @@ State SDLInputEngine::ReadState() {
 
     // Axes
     for (int i = 0; i < static_cast<int>(Axis::AxisMax); ++i) {
+    EMULATOR_TRACE;
         const auto axis = static_cast<Axis>(i);
         const auto value = SDL_GetGamepadAxis(m_gamepad, InputAxisToSDL(axis));
         switch (axis) {
@@ -178,6 +183,7 @@ State SDLInputEngine::ReadState() {
     // Touchpad
     if (SDL_GetNumGamepadTouchpads(m_gamepad) > 0) {
         for (int finger = 0; finger < 2; ++finger) {
+    EMULATOR_TRACE;
             bool down;
             float x, y;
             if (SDL_GetGamepadTouchpadFinger(m_gamepad, 0, finger, &down, &x, &y, NULL)) {

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/logging/log.h"
 #include "shader_recompiler/info.h"
@@ -38,6 +39,7 @@ ImageViewInfo::ImageViewInfo(const AmdGpu::Image& image, const Shader::ImageReso
     }
     format = Vulkan::LiverpoolToVK::SurfaceFormat(dfmt, nfmt);
     if (desc.is_depth) {
+    EMULATOR_TRACE;
         format = Vulkan::LiverpoolToVK::PromoteFormatToDepth(format);
     }
 
@@ -48,6 +50,7 @@ ImageViewInfo::ImageViewInfo(const AmdGpu::Image& image, const Shader::ImageReso
     type = ConvertImageViewType(image.GetViewType(desc.is_array));
 
     if (!is_storage) {
+    EMULATOR_TRACE;
         mapping = Vulkan::LiverpoolToVK::ComponentMapping(image.DstSelect());
     }
 }
@@ -63,6 +66,7 @@ ImageViewInfo::ImageViewInfo(const AmdGpu::Liverpool::ColorBuffer& col_buffer) n
 ImageViewInfo::ImageViewInfo(const AmdGpu::Liverpool::DepthBuffer& depth_buffer,
                              AmdGpu::Liverpool::DepthView view,
                              AmdGpu::Liverpool::DepthControl ctl) {
+    EMULATOR_TRACE;
     format = Vulkan::LiverpoolToVK::DepthFormat(depth_buffer.z_info.format,
                                                 depth_buffer.stencil_info.format);
     is_storage = ctl.depth_write_enable;
@@ -74,6 +78,7 @@ ImageViewInfo::ImageViewInfo(const AmdGpu::Liverpool::DepthBuffer& depth_buffer,
 ImageView::ImageView(const Vulkan::Instance& instance, const ImageViewInfo& info_, Image& image,
                      ImageId image_id_)
     : image_id{image_id_}, info{info_} {
+    EMULATOR_TRACE;
     vk::ImageViewUsageCreateInfo usage_ci{.usage = image.usage_flags};
     if (!info.is_storage) {
         usage_ci.usage &= ~vk::ImageUsageFlagBits::eStorage;
@@ -83,11 +88,13 @@ ImageView::ImageView(const Vulkan::Instance& instance, const ImageViewInfo& info
     vk::ImageAspectFlags aspect = image.aspect_mask;
     if (image.aspect_mask & vk::ImageAspectFlagBits::eDepth &&
         Vulkan::LiverpoolToVK::IsFormatDepthCompatible(format)) {
+    EMULATOR_TRACE;
         format = image.info.pixel_format;
         aspect = vk::ImageAspectFlagBits::eDepth;
     }
     if (image.aspect_mask & vk::ImageAspectFlagBits::eStencil &&
         Vulkan::LiverpoolToVK::IsFormatStencilCompatible(format)) {
+    EMULATOR_TRACE;
         format = image.info.pixel_format;
         aspect = vk::ImageAspectFlagBits::eStencil;
     }

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "videodec_impl.h"
 
@@ -89,6 +90,7 @@ s32 VdecDecoder::Decode(const OrbisVideodecInputData& pInputDataIn,
         }
 
         if (frame->format != AV_PIX_FMT_NV12) {
+    EMULATOR_TRACE;
             AVFrame* nv12_frame = ConvertNV12Frame(*frame);
             ASSERT(nv12_frame);
             av_frame_free(&frame);
@@ -139,6 +141,7 @@ s32 VdecDecoder::Flush(OrbisVideodecFrameBuffer& pFrameBufferInOut,
         }
 
         if (frame->format != AV_PIX_FMT_NV12) {
+    EMULATOR_TRACE;
             AVFrame* nv12_frame = ConvertNV12Frame(*frame);
             ASSERT(nv12_frame);
             av_frame_free(&frame);
@@ -195,6 +198,7 @@ AVFrame* VdecDecoder::ConvertNV12Frame(AVFrame& frame) {
     av_frame_get_buffer(nv12_frame, 0);
 
     if (mSwsContext == nullptr) {
+    EMULATOR_TRACE;
         mSwsContext = sws_getContext(frame.width, frame.height, AVPixelFormat(frame.format),
                                      nv12_frame->width, nv12_frame->height, AV_PIX_FMT_NV12,
                                      SWS_FAST_BILINEAR, nullptr, nullptr, nullptr);
@@ -203,6 +207,7 @@ AVFrame* VdecDecoder::ConvertNV12Frame(AVFrame& frame) {
     const auto res = sws_scale(mSwsContext, frame.data, frame.linesize, 0, frame.height,
                                nv12_frame->data, nv12_frame->linesize);
     if (res < 0) {
+    EMULATOR_TRACE;
         LOG_ERROR(Lib_Videodec, "Could not convert to NV12: {}", av_err2str(res));
         return nullptr;
     }

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <array>
 #include <string>
@@ -19,6 +20,7 @@ std::string NameOf(Type type) {
     }
     std::string result;
     for (size_t i = 0; i < names.size(); i++) {
+    EMULATOR_TRACE;
         if ((bits & (size_t{1} << i)) != 0) {
             if (!result.empty()) {
                 result += '|';

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <fstream>
 #include <string>
@@ -13,6 +14,7 @@
 #include "version.h"
 
 namespace toml {
+    EMULATOR_TRACE;
 template <typename TC, typename K>
 std::filesystem::path find_fs_path_or(const basic_value<TC>& v, const K& ky,
                                       std::filesystem::path opt) {
@@ -73,6 +75,7 @@ static int cursorHideTimeout = 5; // 5 seconds (default)
 static bool useUnifiedInputConfig = true;
 static bool overrideControllerColor = false;
 static int controllerCustomColorRGB[3] = {0, 0, 255};
+    EMULATOR_TRACE;
 static bool separateupdatefolder = false;
 static bool compatibilityData = false;
 static bool checkCompatibilityOnStartup = false;
@@ -600,6 +603,7 @@ std::filesystem::path getAddonInstallDir() {
 }
 
 u32 getMainWindowTheme() {
+    EMULATOR_TRACE;
     return mw_themes;
 }
 
@@ -774,6 +778,7 @@ void load(const std::filesystem::path& path) {
         const auto install_dir_array =
             toml::find_or<std::vector<std::string>>(gui, "installDirs", {});
         for (const auto& dir : install_dir_array) {
+    EMULATOR_TRACE;
             addGameInstallDir(std::filesystem::path{dir});
         }
 
@@ -886,6 +891,7 @@ void save(const std::filesystem::path& path) {
 
     std::vector<std::string> install_dirs;
     for (const auto& dirString : settings_install_dirs) {
+    EMULATOR_TRACE;
         install_dirs.emplace_back(std::string{fmt::UTF(dirString.u8string()).data});
     }
     data["GUI"]["installDirs"] = install_dirs;
@@ -1071,6 +1077,7 @@ override_controller_color = false, 0, 0, 255
 )";
 }
 std::filesystem::path GetFoolproofKbmConfigFile(const std::string& game_id) {
+    EMULATOR_TRACE;
     // Read configuration file of the game, and if it doesn't exist, generate it from default
     // If that doesn't exist either, generate that from getDefaultConfig() and try again
     // If even the folder is missing, we start with that.

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <cstdarg>
 #include <cstdio>
@@ -63,6 +64,7 @@ s32 PS4_SYSV_ABI internal_printf_s() {
 }
 
 s32 PS4_SYSV_ABI internal_snprintf(char* s, size_t n, const char* format, ...) {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -153,6 +155,7 @@ s32 PS4_SYSV_ABI internal_vfwscanf_s() {
 }
 
 s32 PS4_SYSV_ABI internal_vprintf(const char* format, va_list args) {
+    EMULATOR_TRACE;
     // Copy the va_list because vsnprintf consumes it
     va_list args_copy;
     va_copy(args_copy, args);
@@ -162,6 +165,7 @@ s32 PS4_SYSV_ABI internal_vprintf(const char* format, va_list args) {
     va_end(args_copy);
 
     if (size < 0) {
+    EMULATOR_TRACE;
         // Handle vsnprintf error
         LOG_ERROR(Lib_LibcInternal, "vsnprintf failed to calculate size");
         return size;
@@ -174,6 +178,7 @@ s32 PS4_SYSV_ABI internal_vprintf(const char* format, va_list args) {
     int result =
         std::vsnprintf(buffer.data(), buffer.size() + 1, format, args); // +1 for null terminator
     if (result >= 0) {
+    EMULATOR_TRACE;
         // Log the formatted result
         LOG_INFO(Lib_LibcInternal, "{}", buffer);
     } else {
@@ -184,6 +189,7 @@ s32 PS4_SYSV_ABI internal_vprintf(const char* format, va_list args) {
 }
 
 s32 PS4_SYSV_ABI internal_vprintf_s() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }

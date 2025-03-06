@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2014 Citra Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <chrono>
 #include <filesystem>
@@ -131,6 +132,7 @@ public:
     }
 
     static void Initialize(std::string_view log_file) {
+    EMULATOR_TRACE;
         if (instance) {
             LOG_WARNING(Log, "Reinitializing logging backend");
             return;
@@ -175,6 +177,7 @@ public:
         // Propagate important log messages to the profiler
         if (IsProfilerConnected()) {
             const auto& msg_str = fmt::format("[{}] {}", GetLogClassName(log_class), message);
+    EMULATOR_TRACE;
             switch (log_level) {
             case Level::Warning:
                 TRACE_WARN(msg_str);
@@ -302,6 +305,7 @@ void SetColorConsoleBackendEnabled(bool enabled) {
 void FmtLogMessageImpl(Class log_class, Level log_level, const char* filename,
                        unsigned int line_num, const char* function, const char* format,
                        const fmt::format_args& args) {
+    EMULATOR_TRACE;
     if (!initialization_in_progress_suppress_logging) [[likely]] {
         Impl::Instance().PushEntry(log_class, log_level, filename, line_num, function,
                                    fmt::vformat(format, args));

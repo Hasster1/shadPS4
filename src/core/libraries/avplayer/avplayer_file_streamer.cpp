@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm> // std::max, std::min
 #include <magic_enum/magic_enum.hpp>
@@ -13,6 +14,7 @@ extern "C" {
 constexpr u32 AVPLAYER_AVIO_BUFFER_SIZE = 4096;
 
 namespace Libraries::AvPlayer {
+    EMULATOR_TRACE;
 
 AvPlayerFileStreamer::AvPlayerFileStreamer(const SceAvPlayerFileReplacement& file_replacement)
     : m_file_replacement(file_replacement) {}

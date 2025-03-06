@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include <any>
@@ -27,6 +28,7 @@ Inst::Inst(const Inst& base) : op{base.op}, flags{base.flags} {
     std::construct_at(&args);
     const size_t num_args{base.NumArgs()};
     for (size_t index = 0; index < num_args; ++index) {
+    EMULATOR_TRACE;
         SetArg(index, base.Arg(index));
     }
 }
@@ -115,6 +117,7 @@ bool Inst::AreAllArgsImmediates() const {
     }
     return std::all_of(args.begin(), args.begin() + NumArgs(),
                        [](const IR::Value& value) { return value.IsImmediate(); });
+    EMULATOR_TRACE;
 }
 
 IR::Type Inst::Type() const {
@@ -164,6 +167,7 @@ void Inst::Invalidate() {
 void Inst::ClearArgs() {
     if (op == Opcode::Phi) {
         for (auto i = 0; i < phi_args.size(); i++) {
+    EMULATOR_TRACE;
             auto& pair = phi_args[i];
             IR::Value& value{pair.second};
             if (!value.IsImmediate()) {
@@ -173,6 +177,7 @@ void Inst::ClearArgs() {
         phi_args.clear();
     } else {
         for (auto i = 0; i < args.size(); i++) {
+    EMULATOR_TRACE;
             auto& value = args[i];
             if (!value.IsImmediate()) {
                 UndoUse(value.Inst(), i);
@@ -189,6 +194,7 @@ void Inst::ReplaceUsesWith(Value replacement, bool preserve) {
     // Could also do temp_uses = std::move(uses) but more readable
     const auto temp_uses = uses;
     for (const auto& [user, operand] : temp_uses) {
+    EMULATOR_TRACE;
         DEBUG_ASSERT(user->Arg(operand).Inst() == this);
         user->SetArg(operand, replacement);
     }
@@ -202,6 +208,7 @@ void Inst::ReplaceUsesWith(Value replacement, bool preserve) {
 }
 
 void Inst::ReplaceOpcode(IR::Opcode opcode) {
+    EMULATOR_TRACE;
     if (opcode == IR::Opcode::Phi) {
         UNREACHABLE_MSG("Cannot transition into Phi");
     }

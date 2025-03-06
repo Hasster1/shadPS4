@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/logging/log.h"
 #include "core/libraries/error_codes.h"
@@ -174,6 +175,7 @@ int PS4_SYSV_ABI sceSslGetNotAfter() {
 }
 
 int PS4_SYSV_ABI sceSslGetNotBefore() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Ssl2, "(STUBBED) called");
     return ORBIS_OK;
 }

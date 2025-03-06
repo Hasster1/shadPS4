@@ -1,11 +1,13 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "elf_viewer.h"
 
 ElfViewer::ElfViewer(QWidget* parent) : QTableWidget(parent) {
     dir_list_std = Config::getElfViewer();
     for (const auto& str : dir_list_std) {
+    EMULATOR_TRACE;
         dir_list.append(QString::fromStdString(str));
     }
 
@@ -48,6 +50,7 @@ void ElfViewer::OpenElfFolder() {
         QDir directory(folderPath);
         QFileInfoList fileInfoList = directory.entryInfoList(QDir::Files);
         for (const QFileInfo& fileInfo : fileInfoList) {
+    EMULATOR_TRACE;
             QString file_ext = fileInfo.suffix();
             if (fileInfo.isFile() && (file_ext == "bin" || file_ext == "elf")) {
                 m_elf_list.append(fileInfo.absoluteFilePath());
@@ -57,6 +60,7 @@ void ElfViewer::OpenElfFolder() {
         OpenElfFiles();
         dir_list_std.clear();
         for (auto dir : dir_list) {
+    EMULATOR_TRACE;
             dir_list_std.push_back(dir.toStdString());
         }
         Config::setElfViewer(dir_list_std);
@@ -68,9 +72,11 @@ void ElfViewer::OpenElfFolder() {
 void ElfViewer::CheckElfFolders() {
     m_elf_list.clear();
     for (const QString& dir : dir_list) {
+    EMULATOR_TRACE;
         QDir directory(dir);
         QFileInfoList fileInfoList = directory.entryInfoList(QDir::Files);
         for (const QFileInfo& fileInfo : fileInfoList) {
+    EMULATOR_TRACE;
             QString file_ext = fileInfo.suffix();
             if (fileInfo.isFile() && (file_ext == "bin" || file_ext == "elf")) {
                 m_elf_list.append(fileInfo.absoluteFilePath());
@@ -84,6 +90,7 @@ void ElfViewer::OpenElfFiles() {
     this->clearContents();
     this->setRowCount(m_elf_list.size());
     for (int i = 0; auto elf : m_elf_list) {
+    EMULATOR_TRACE;
         QTableWidgetItem* item = new QTableWidgetItem();
         QFileInfo fileInfo(m_elf_list[i]);
         QString fileName = fileInfo.baseName();

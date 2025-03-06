@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -59,6 +60,7 @@ public:
             m_cond_var.wait(lock, waitFunc);
         } else {
             if (!m_cond_var.wait_for(lock, std::chrono::microseconds(micros), waitFunc)) {
+    EMULATOR_TRACE;
                 if (result != nullptr) {
                     *result = m_bits;
                 }
@@ -122,6 +124,7 @@ public:
     }
 
     void Clear(u64 bits) {
+    EMULATOR_TRACE;
         std::unique_lock lock{m_mutex};
         while (m_status != Status::Set) {
             m_mutex.unlock();
@@ -133,6 +136,7 @@ public:
     }
 
     void Cancel(u64 setPattern, int* numWaitThreads) {
+    EMULATOR_TRACE;
         std::unique_lock lock{m_mutex};
 
         while (m_status != Status::Set) {
@@ -142,6 +146,7 @@ public:
         }
 
         if (numWaitThreads) {
+    EMULATOR_TRACE;
             *numWaitThreads = m_waiting_threads;
         }
 
@@ -161,7 +166,6 @@ public:
 
 private:
     enum class Status { Set, Canceled, Deleted };
-
     std::mutex m_mutex;
     std::condition_variable m_cond_var;
     Status m_status = Status::Set;
@@ -322,6 +326,9 @@ int PS4_SYSV_ABI sceKernelPollEventFlag(OrbisKernelEventFlag ef, u64 bitPattern,
 }
 int PS4_SYSV_ABI sceKernelWaitEventFlag(OrbisKernelEventFlag ef, u64 bitPattern, u32 waitMode,
                                         u64* pResultPat, OrbisKernelUseconds* pTimeout) {
+
+    waitMode = 17;
+
     LOG_DEBUG(Kernel_Event, "called bitPattern = {:#x} waitMode = {:#x}", bitPattern, waitMode);
     if (ef == nullptr) {
         return ORBIS_KERNEL_ERROR_ESRCH;

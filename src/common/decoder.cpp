@@ -1,10 +1,12 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <fmt/format.h>
 #include "common/decoder.h"
 
 namespace Common {
+    EMULATOR_TRACE;
 
 DecoderImpl::DecoderImpl() {
     ZydisDecoderInit(&m_decoder, ZYDIS_MACHINE_MODE_LONG_64, ZYDIS_STACK_WIDTH_64);
@@ -15,6 +17,7 @@ DecoderImpl::~DecoderImpl() = default;
 
 std::string DecoderImpl::disassembleInst(ZydisDecodedInstruction& inst,
                                          ZydisDecodedOperand* operands, u64 address) {
+    EMULATOR_TRACE;
     const int bufLen = 256;
     char szBuffer[bufLen];
     ZydisFormatterFormatInstruction(&m_formatter, &inst, operands, inst.operand_count_visible,
@@ -23,6 +26,7 @@ std::string DecoderImpl::disassembleInst(ZydisDecodedInstruction& inst,
 }
 
 void DecoderImpl::printInstruction(void* code, u64 address) {
+    EMULATOR_TRACE;
     ZydisDecodedInstruction instruction;
     ZydisDecodedOperand operands[ZYDIS_MAX_OPERAND_COUNT_VISIBLE];
     ZyanStatus status =

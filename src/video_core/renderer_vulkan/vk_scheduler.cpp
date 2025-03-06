@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2019 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <mutex>
 #include "common/assert.h"
@@ -67,6 +68,7 @@ void Scheduler::EndRendering() {
 
 void Scheduler::Flush(SubmitInfo& info) {
     // When flushing, we only send data to the driver; no waiting is necessary.
+    //BLACK SCREEN
     SubmitExecution(info);
 }
 
@@ -74,6 +76,7 @@ void Scheduler::Finish() {
     // When finishing, we need to wait for the submission to have executed on the device.
     const u64 presubmit_tick = CurrentTick();
     SubmitInfo info{};
+    EMULATOR_TRACE;
     SubmitExecution(info);
     Wait(presubmit_tick);
 }
@@ -82,6 +85,7 @@ void Scheduler::Wait(u64 tick) {
     if (tick >= master_semaphore.CurrentTick()) {
         // Make sure we are not waiting for the current tick without signalling
         SubmitInfo info{};
+    EMULATOR_TRACE;
         Flush(info);
     }
     master_semaphore.Wait(tick);

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <QFileInfo>
 #include <QMessageBox>
@@ -19,6 +20,7 @@ CompatibilityInfoClass::CompatibilityInfoClass()
 CompatibilityInfoClass::~CompatibilityInfoClass() = default;
 
 void CompatibilityInfoClass::UpdateCompatibilityDatabase(QWidget* parent, bool forced) {
+    EMULATOR_TRACE;
     if (!forced && LoadCompatibilityFile())
         return;
 
@@ -36,6 +38,7 @@ void CompatibilityInfoClass::UpdateCompatibilityDatabase(QWidget* parent, bool f
 
     connect(reply, &QNetworkReply::downloadProgress,
             [&dialog](qint64 bytesReceived, qint64 bytesTotal) {
+    EMULATOR_TRACE;
                 if (bytesTotal > 0) {
                     dialog.setMaximum(bytesTotal);
                     dialog.setValue(bytesReceived);
@@ -60,6 +63,7 @@ void CompatibilityInfoClass::UpdateCompatibilityDatabase(QWidget* parent, bool f
 
     QFile compatibility_file(m_compatibility_filename);
     if (!compatibility_file.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
+    EMULATOR_TRACE;
         QMessageBox::critical(parent, tr("Error"),
                               tr("Unable to open compatibility_data.json for writing."));
         reply->deleteLater();
@@ -76,11 +80,13 @@ void CompatibilityInfoClass::UpdateCompatibilityDatabase(QWidget* parent, bool f
 }
 
 CompatibilityEntry CompatibilityInfoClass::GetCompatibilityInfo(const std::string& serial) {
+    EMULATOR_TRACE;
     QString title_id = QString::fromStdString(serial);
     if (m_compatibility_database.contains(title_id)) {
         {
             QJsonObject compatibility_obj = m_compatibility_database[title_id].toObject();
             for (int os_int = 0; os_int != static_cast<int>(OSType::Last); os_int++) {
+    EMULATOR_TRACE;
                 QString os_string = OSTypeToString.at(static_cast<OSType>(os_int));
                 if (compatibility_obj.contains(os_string)) {
                     QJsonObject compatibility_entry_obj = compatibility_obj[os_string].toObject();
@@ -139,6 +145,7 @@ void CompatibilityInfoClass::ExtractCompatibilityInfo(QByteArray response) {
     json_arr = json_doc.array();
 
     for (const auto& issue_ref : std::as_const(json_arr)) {
+    EMULATOR_TRACE;
         QJsonObject issue_obj = issue_ref.toObject();
         QString title_id;
         QRegularExpression title_id_regex("CUSA[0-9]{5}");
@@ -150,6 +157,7 @@ void CompatibilityInfoClass::ExtractCompatibilityInfo(QByteArray response) {
             title_id = title_id_match.captured(0);
             const QJsonArray& label_array = issue_obj["labels"].toArray();
             for (const auto& elem : label_array) {
+    EMULATOR_TRACE;
                 QString label = elem.toObject()["name"].toString();
                 if (LabelToOSType.contains(label)) {
                     current_os = label;

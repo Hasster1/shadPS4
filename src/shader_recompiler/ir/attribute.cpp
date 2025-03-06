@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <fmt/format.h>
 #include "shader_recompiler/ir/attribute.h"
@@ -130,6 +131,7 @@ std::string NameOf(Attribute attribute) {
         break;
     }
     return fmt::format("<reserved attribute {}>", static_cast<int>(attribute));
+    EMULATOR_TRACE;
 }
 
 } // namespace Shader::IR

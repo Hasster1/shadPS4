@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "layer.h"
 
@@ -47,6 +48,7 @@ static std::string help_text =
 // clang-format on
 
 void L::DrawMenuBar() {
+    EMULATOR_TRACE;
     const auto& ctx = *GImGui;
     const auto& io = ctx.IO;
 
@@ -158,6 +160,7 @@ void L::DrawAdvanced() {
     }
 
     for (auto it = frame_viewers.begin(); it != frame_viewers.end();) {
+    EMULATOR_TRACE;
         if (it->is_open) {
             it->Draw();
             ++it;
@@ -250,6 +253,7 @@ void L::DrawAdvanced() {
     }
 
     if (memory_map.open) {
+    EMULATOR_TRACE;
         memory_map.Draw();
     }
     if (shader_list.open) {

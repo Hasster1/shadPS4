@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "shader_recompiler/frontend/translate/translate.h"
 #include "shader_recompiler/ir/reinterpret.h"
@@ -26,6 +27,7 @@ void Translator::ExportMrtValue(IR::Attribute attribute, u32 comp, const IR::F32
 }
 
 void Translator::ExportMrtCompressed(IR::Attribute attribute, u32 idx, const IR::U32& value) {
+    EMULATOR_TRACE;
     const u32 color_buffer_idx =
         static_cast<u32>(attribute) - static_cast<u32>(IR::Attribute::RenderTarget0);
     const auto color_buffer = runtime_info.fs_info.color_buffers[color_buffer_idx];
@@ -107,6 +109,7 @@ void Translator::ExportMrtUncompressed(IR::Attribute attribute, u32 comp, const 
 }
 
 void Translator::ExportCompressed(IR::Attribute attribute, u32 idx, const IR::U32& value) {
+    EMULATOR_TRACE;
     if (IsMrt(attribute)) {
         ExportMrtCompressed(attribute, idx, value);
         return;
@@ -159,6 +162,7 @@ void Translator::EmitExport(const GcnInst& inst) {
         // Components are float32 into separate VGPRS
         u32 mask = exp.en;
         for (u32 i = 0; i < 4; i++, mask >>= 1) {
+    EMULATOR_TRACE;
             if ((mask & 1) == 0) {
                 continue;
             }

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <magic_enum/magic_enum.hpp>
 
@@ -183,6 +184,7 @@ s32 PS4_SYSV_ABI sceJpegEncEncode(OrbisJpegEncHandle handle, const OrbisJpegEncE
               param->restart_interval);
 
     if (output_info) {
+    EMULATOR_TRACE;
         output_info->size = param->jpeg_size;
         output_info->height = param->image_height;
     }

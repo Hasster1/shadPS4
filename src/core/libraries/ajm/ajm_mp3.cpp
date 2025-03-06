@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "core/libraries/ajm/ajm_error.h"
@@ -78,6 +79,7 @@ static AVSampleFormat AjmToAVSampleFormat(AjmFormatEncoding format) {
 AVFrame* AjmMp3Decoder::ConvertAudioFrame(AVFrame* frame) {
     AVSampleFormat format = AjmToAVSampleFormat(m_format);
     if (frame->format == format) {
+    EMULATOR_TRACE;
         return frame;
     }
 
@@ -96,6 +98,7 @@ AVFrame* AjmMp3Decoder::ConvertAudioFrame(AVFrame* frame) {
     swr_init(m_swr_context);
     const auto res = swr_convert_frame(m_swr_context, new_frame, frame);
     if (res < 0) {
+    EMULATOR_TRACE;
         LOG_ERROR(Lib_AvPlayer, "Could not convert frame: {}", av_err2str(res));
         av_frame_free(&new_frame);
         av_frame_free(&frame);
@@ -108,6 +111,7 @@ AVFrame* AjmMp3Decoder::ConvertAudioFrame(AVFrame* frame) {
 AjmMp3Decoder::AjmMp3Decoder(AjmFormatEncoding format, AjmMp3CodecFlags flags)
     : m_format(format), m_flags(flags), m_codec(avcodec_find_decoder(AV_CODEC_ID_MP3)),
       m_codec_context(avcodec_alloc_context3(m_codec)), m_parser(av_parser_init(m_codec->id)) {
+    EMULATOR_TRACE;
     int ret = avcodec_open2(m_codec_context, m_codec, nullptr);
     ASSERT_MSG(ret >= 0, "Could not open m_codec");
 }
@@ -237,6 +241,7 @@ public:
     T Read(u32 const nbits) {
         T accumulator = 0;
         for (unsigned i = 0; i < nbits; ++i) {
+    EMULATOR_TRACE;
             accumulator = (accumulator << 1) + GetBit();
         }
         return accumulator;
@@ -338,7 +343,9 @@ int AjmMp3Decoder::ParseMp3Header(const u8* p_begin, u32 stream_size, int parse_
     // Number of granules (18x32 sub-band samples)
     const u8 ngr = header->version == Mp3AudioVersion::V1 ? 2 : 1;
     for (u8 gr = 0; gr < ngr; ++gr) {
+    EMULATOR_TRACE;
         for (u32 ch = 0; ch < frame->num_channels; ++ch) {
+    EMULATOR_TRACE;
             // part2_3_length[gr][ch] = reader.Read<u16>(12);
             part2_3_length += reader.Read<u16>(12);
             // big_values[gr][ch] = reader.Read<u16>(9);
@@ -404,7 +411,9 @@ int AjmMp3Decoder::ParseMp3Header(const u8* p_begin, u32 stream_size, int parse_
                 return (c * 2) ^ 0x45;
             };
             for (u8 i = 0; i < 9; ++i, ++p_current) {
+    EMULATOR_TRACE;
                 for (u8 j = 0; j < 8; ++j) {
+    EMULATOR_TRACE;
                     crc = crc_func(crc, *p_current, 7 - j);
                 }
             }

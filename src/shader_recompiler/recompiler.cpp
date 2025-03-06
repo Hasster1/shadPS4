@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/config.h"
 #include "common/io_file.h"
@@ -16,6 +17,7 @@ namespace Shader {
 IR::BlockList GenerateBlocks(const IR::AbstractSyntaxList& syntax_list) {
     size_t num_syntax_blocks{};
     for (const auto& node : syntax_list) {
+    EMULATOR_TRACE;
         if (node.type == IR::AbstractSyntaxNode::Type::Block) {
             ++num_syntax_blocks;
         }
@@ -24,6 +26,7 @@ IR::BlockList GenerateBlocks(const IR::AbstractSyntaxList& syntax_list) {
     blocks.reserve(num_syntax_blocks);
     u32 order_index{};
     for (const auto& node : syntax_list) {
+    EMULATOR_TRACE;
         if (node.type == IR::AbstractSyntaxNode::Type::Block) {
             blocks.push_back(node.data.block);
         }
@@ -72,6 +75,7 @@ IR::Program TranslateProgram(std::span<const u32> code, Pools& pools, Info& info
     Shader::Optimization::SsaRewritePass(program.post_order_blocks);
     Shader::Optimization::IdentityRemovalPass(program.blocks);
     if (info.l_stage == LogicalStage::TessellationControl) {
+    EMULATOR_TRACE;
         // Tess passes require previous const prop passes for now (for simplicity). TODO allow
         // fine grained folding or opportunistic folding we set an operand to an immediate
         Shader::Optimization::ConstantPropagationPass(program.post_order_blocks);
@@ -79,6 +83,7 @@ IR::Program TranslateProgram(std::span<const u32> code, Pools& pools, Info& info
         Shader::Optimization::ConstantPropagationPass(program.post_order_blocks);
         Shader::Optimization::HullShaderTransform(program, runtime_info);
     } else if (info.l_stage == LogicalStage::TessellationEval) {
+    EMULATOR_TRACE;
         Shader::Optimization::ConstantPropagationPass(program.post_order_blocks);
         Shader::Optimization::TessellationPreprocess(program, runtime_info);
         Shader::Optimization::ConstantPropagationPass(program.post_order_blocks);

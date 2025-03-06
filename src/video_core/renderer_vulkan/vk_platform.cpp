@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 // Include the vulkan platform specific header
 #if defined(ANDROID)
@@ -116,6 +117,7 @@ vk::SurfaceKHR CreateSurface(vk::Instance instance, const Frontend::WindowSDL& e
 
 std::vector<const char*> GetInstanceExtensions(Frontend::WindowSystemType window_type,
                                                bool enable_debug_utils) {
+    EMULATOR_TRACE;
     const auto [properties_result, properties] = vk::enumerateInstanceExtensionProperties();
     if (properties_result != vk::Result::eSuccess || properties.empty()) {
         LOG_ERROR(Render_Vulkan, "Failed to query extension properties: {}",
@@ -157,6 +159,7 @@ std::vector<const char*> GetInstanceExtensions(Frontend::WindowSystemType window
 #endif
 
     if (window_type != Frontend::WindowSystemType::Headless) {
+    EMULATOR_TRACE;
         extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
     }
 
@@ -243,6 +246,7 @@ vk::UniqueInstance CreateInstance(Frontend::WindowSystemType window_type, bool e
             : vk::ResultValue(vk::Result::eSuccess, VK_API_VERSION_1_0);
     ASSERT_MSG(available_version_result == vk::Result::eSuccess,
                "Failed to query Vulkan API version: {}", vk::to_string(available_version_result));
+    EMULATOR_TRACE;
     ASSERT_MSG(available_version >= TargetVulkanApiVersion,
                "Vulkan {}.{} is required, but only {}.{} is supported by instance!",
                VK_VERSION_MAJOR(TargetVulkanApiVersion), VK_VERSION_MINOR(TargetVulkanApiVersion),
@@ -348,6 +352,7 @@ vk::UniqueInstance CreateInstance(Frontend::WindowSystemType window_type, bool e
         // MoltenVK debug mode turns on additional device loss error details, so
         // use the crash diagnostic setting as an indicator of whether to turn it on.
         vk::LayerSettingEXT{
+    EMULATOR_TRACE;
             .pLayerName = "MoltenVK",
             .pSettingName = "MVK_CONFIG_DEBUG",
             .type = vk::LayerSettingTypeEXT::eBool32,

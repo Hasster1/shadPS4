@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/alignment.h"
 #include "common/assert.h"
@@ -134,6 +135,8 @@ PAddr MemoryManager::Allocate(PAddr search_start, PAddr search_end, size_t size,
 }
 
 void MemoryManager::Free(PAddr phys_addr, size_t size) {
+
+    //nope
     std::scoped_lock lk{mutex};
 
     auto dmem_area = CarveDmemArea(phys_addr, size);
@@ -142,6 +145,7 @@ void MemoryManager::Free(PAddr phys_addr, size_t size) {
     // Release any dmem mappings that reference this physical block.
     std::vector<std::pair<VAddr, u64>> remove_list;
     for (const auto& [addr, mapping] : vma_map) {
+    EMULATOR_TRACE;
         if (mapping.type != VMAType::Direct) {
             continue;
         }
@@ -154,7 +158,8 @@ void MemoryManager::Free(PAddr phys_addr, size_t size) {
         }
     }
     for (const auto& [addr, size] : remove_list) {
-        UnmapMemoryImpl(addr, size);
+    EMULATOR_TRACE;
+       // UnmapMemoryImpl(addr, size);
     }
 
     // Mark region as free and attempt to coalesce it with neighbours.
@@ -162,6 +167,8 @@ void MemoryManager::Free(PAddr phys_addr, size_t size) {
     area.is_free = true;
     area.memory_type = 0;
     MergeAdjacent(dmem_map, dmem_area);
+
+    
 }
 
 int MemoryManager::PoolReserve(void** out_addr, VAddr virtual_addr, size_t size,
@@ -274,11 +281,13 @@ int MemoryManager::PoolCommit(VAddr virtual_addr, size_t size, MemoryProt prot) 
 int MemoryManager::MapMemory(void** out_addr, VAddr virtual_addr, size_t size, MemoryProt prot,
                              MemoryMapFlags flags, VMAType type, std::string_view name,
                              bool is_exec, PAddr phys_addr, u64 alignment) {
+    EMULATOR_TRACE;
     std::scoped_lock lk{mutex};
 
     // Certain games perform flexible mappings on loop to determine
     // the available flexible memory size. Questionable but we need to handle this.
     if (type == VMAType::Flexible && flexible_usage + size > total_flexible_size) {
+    EMULATOR_TRACE;
         return ORBIS_KERNEL_ERROR_ENOMEM;
     }
 
@@ -290,6 +299,7 @@ int MemoryManager::MapMemory(void** out_addr, VAddr virtual_addr, size_t size, M
 
     // Fixed mapping means the virtual address must exactly match the provided one.
     if (True(flags & MemoryMapFlags::Fixed)) {
+    EMULATOR_TRACE;
         // This should return SCE_KERNEL_ERROR_ENOMEM but shouldn't normally happen.
         const auto& vma = FindVMA(mapped_addr)->second;
         const size_t remaining_size = vma.base + vma.size - mapped_addr;
@@ -313,6 +323,7 @@ int MemoryManager::MapMemory(void** out_addr, VAddr virtual_addr, size_t size, M
     new_vma.is_exec = is_exec;
 
     if (type == VMAType::Direct) {
+    EMULATOR_TRACE;
         new_vma.phys_base = phys_addr;
         rasterizer->MapMemory(mapped_addr, size);
     }
@@ -340,7 +351,7 @@ int MemoryManager::MapFile(void** out_addr, VAddr virtual_addr, size_t size, Mem
     }
 
     // Map the file.
-    impl.MapFile(mapped_addr, size_aligned, offset, std::bit_cast<u32>(prot), fd);
+    //impl.MapFile(mapped_addr, size_aligned, offset, std::bit_cast<u32>(prot), fd);
 
     // Add virtual memory area
     auto& new_vma = CarveVMA(mapped_addr, size_aligned)->second;
@@ -369,7 +380,7 @@ void MemoryManager::PoolDecommit(VAddr virtual_addr, size_t size) {
     const auto start_in_vma = virtual_addr - vma_base_addr;
     const auto type = vma_base.type;
 
-    rasterizer->UnmapMemory(virtual_addr, size);
+    rasterizer->UnmapMemory(virtual_addr, size); //LOLOLOLLOOL
 
     // Mark region as free and attempt to coalesce it with neighbours.
     const auto new_it = CarveVMA(virtual_addr, size);
@@ -426,8 +437,8 @@ u64 MemoryManager::UnmapBytesFromEntry(VAddr virtual_addr, VirtualMemoryArea vma
     bool readonly_file = post_merge_vma.prot == MemoryProt::CpuRead && type == VMAType::File;
     if (type != VMAType::Reserved && type != VMAType::PoolReserved) {
         // Unmap the memory region.
-        impl.Unmap(vma_base_addr, vma_base_size, start_in_vma, start_in_vma + adjusted_size,
-                   phys_base, is_exec, has_backing, readonly_file);
+       // impl.Unmap(vma_base_addr, vma_base_size, start_in_vma, start_in_vma + adjusted_size,
+      //             phys_base, is_exec, has_backing, readonly_file);
         TRACK_FREE(virtual_addr, "VMEM");
     }
     return adjusted_size;
@@ -617,7 +628,7 @@ void MemoryManager::NameVirtualRange(VAddr virtual_addr, size_t size, std::strin
 
 void MemoryManager::InvalidateMemory(const VAddr addr, const u64 size) const {
     if (rasterizer) {
-        rasterizer->InvalidateMemory(addr, size);
+       // rasterizer->InvalidateMemory(addr, size);
     }
 }
 
@@ -637,6 +648,7 @@ VAddr MemoryManager::SearchFree(VAddr virtual_addr, size_t size, u32 alignment) 
     }
     // Search for the first free VMA that fits our mapping.
     const auto is_suitable = [&] {
+    EMULATOR_TRACE;
         if (!it->second.IsFree()) {
             return false;
         }

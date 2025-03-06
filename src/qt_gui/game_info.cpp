@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <QProgressDialog>
 
@@ -11,6 +12,7 @@
 const int max_recursion_depth = 5;
 
 void ScanDirectoryRecursively(const QString& dir, QStringList& filePaths, int current_depth = 0) {
+    EMULATOR_TRACE;
     // Stop recursion if we've reached the maximum depth
     if (current_depth >= max_recursion_depth) {
         return;
@@ -20,6 +22,7 @@ void ScanDirectoryRecursively(const QString& dir, QStringList& filePaths, int cu
     QFileInfoList entries = directory.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
 
     for (const auto& entry : entries) {
+    EMULATOR_TRACE;
         if (entry.fileName().endsWith("-UPDATE")) {
             continue;
         }
@@ -40,6 +43,7 @@ GameInfoClass::~GameInfoClass() = default;
 void GameInfoClass::GetGameInfo(QWidget* parent) {
     QStringList filePaths;
     for (const auto& installLoc : Config::getGameInstallDirs()) {
+    EMULATOR_TRACE;
         QString installDir;
         Common::FS::PathToQString(installDir, installLoc);
         ScanDirectoryRecursively(installDir, filePaths, 0);

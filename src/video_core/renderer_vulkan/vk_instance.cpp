@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <ranges>
 #include <span>
@@ -38,12 +39,14 @@ std::vector<std::string> GetSupportedExtensions(vk::PhysicalDevice physical) {
     std::vector<std::string> supported_extensions;
     supported_extensions.reserve(extensions.size());
     for (const auto& extension : extensions) {
+    EMULATOR_TRACE;
         supported_extensions.emplace_back(extension.extensionName.data());
     }
     return supported_extensions;
 }
 
 vk::FormatProperties3 GetFormatProperties(vk::PhysicalDevice physical, vk::Format format) {
+    EMULATOR_TRACE;
     vk::FormatProperties3 properties3{};
     vk::FormatProperties2 properties2 = {
         .pNext = &properties3,
@@ -54,16 +57,21 @@ vk::FormatProperties3 GetFormatProperties(vk::PhysicalDevice physical, vk::Forma
 
 std::unordered_map<vk::Format, vk::FormatProperties3> GetFormatProperties(
     vk::PhysicalDevice physical) {
+    EMULATOR_TRACE;
     std::unordered_map<vk::Format, vk::FormatProperties3> format_properties;
     for (const auto& format_info : LiverpoolToVK::SurfaceFormats()) {
+    EMULATOR_TRACE;
         const auto format = format_info.vk_format;
         if (!format_properties.contains(format)) {
+    EMULATOR_TRACE;
             format_properties.emplace(format, GetFormatProperties(physical, format));
         }
     }
     for (const auto& format_info : LiverpoolToVK::DepthFormats()) {
+    EMULATOR_TRACE;
         const auto format = format_info.vk_format;
         if (!format_properties.contains(format)) {
+    EMULATOR_TRACE;
             format_properties.emplace(format, GetFormatProperties(physical, format));
         }
     }
@@ -75,7 +83,9 @@ std::unordered_map<vk::Format, vk::FormatProperties3> GetFormatProperties(
         vk::Format::eD24UnormS8Uint,
     };
     for (const auto& format : misc_formats) {
+    EMULATOR_TRACE;
         if (!format_properties.contains(format)) {
+    EMULATOR_TRACE;
             format_properties.emplace(format, GetFormatProperties(physical, format));
         }
     }
@@ -83,6 +93,7 @@ std::unordered_map<vk::Format, vk::FormatProperties3> GetFormatProperties(
 }
 
 std::string GetReadableVersion(u32 version) {
+    EMULATOR_TRACE;
     return fmt::format("{}.{}.{}", VK_VERSION_MAJOR(version), VK_VERSION_MINOR(version),
                        VK_VERSION_PATCH(version));
 }
@@ -111,6 +122,7 @@ Instance::Instance(Frontend::WindowSDL& window, s32 physical_device_index,
             std::tuple<size_t, vk::PhysicalDeviceProperties2, vk::PhysicalDeviceMemoryProperties>>
             properties2{};
         for (auto const& physical : physical_devices) {
+    EMULATOR_TRACE;
             properties2.emplace_back(properties2.size(), physical.getProperties2(),
                                      physical.getMemoryProperties());
         }
@@ -127,6 +139,7 @@ Instance::Instance(Frontend::WindowSDL& window, s32 physical_device_index,
             constexpr auto get_mem = [](const vk::PhysicalDeviceMemoryProperties& mem) -> size_t {
                 size_t max = 0;
                 for (u32 i = 0; i < mem.memoryHeapCount; i++) {
+    EMULATOR_TRACE;
                     const vk::MemoryHeap& heap = mem.memoryHeaps[i];
                     if (heap.flags & vk::MemoryHeapFlagBits::eDeviceLocal && heap.size > max) {
                         max = heap.size;
@@ -161,7 +174,9 @@ Instance::Instance(Frontend::WindowSDL& window, s32 physical_device_index,
 
     // Check and log format support details.
     for (const auto& format : LiverpoolToVK::SurfaceFormats()) {
+    EMULATOR_TRACE;
         if (!IsFormatSupported(format.vk_format, format.flags)) {
+    EMULATOR_TRACE;
             LOG_WARNING(Render_Vulkan,
                         "Surface format data_format={}, number_format={} is not fully supported "
                         "(vk_format={}, missing features={})",
@@ -171,6 +186,7 @@ Instance::Instance(Frontend::WindowSDL& window, s32 physical_device_index,
         }
     }
     for (const auto& format : LiverpoolToVK::DepthFormats()) {
+    EMULATOR_TRACE;
         if (!IsFormatSupported(format.vk_format, format.flags)) {
             LOG_WARNING(Render_Vulkan,
                         "Depth format z_format={}, stencil_format={} is not fully supported "
@@ -183,6 +199,7 @@ Instance::Instance(Frontend::WindowSDL& window, s32 physical_device_index,
 }
 
 Instance::~Instance() {
+    EMULATOR_TRACE;
     vmaDestroyAllocator(allocator);
 }
 
@@ -196,11 +213,13 @@ std::string Instance::GetDriverVersionName() {
         const u32 secondary = (version >> 6) & 0x0ff;
         const u32 tertiary = version & 0x003f;
         return fmt::format("{}.{}.{}.{}", major, minor, secondary, tertiary);
+    EMULATOR_TRACE;
     }
     if (driver_id == vk::DriverId::eIntelProprietaryWindows) {
         const u32 major = version >> 14;
         const u32 minor = version & 0x3fff;
         return fmt::format("{}.{}", major, minor);
+    EMULATOR_TRACE;
     }
     return GetReadableVersion(version);
 }
@@ -264,6 +283,7 @@ bool Instance::CreateDevice() {
     add_extension(VK_EXT_DEPTH_RANGE_UNRESTRICTED_EXTENSION_NAME);
     dynamic_color_write_mask = add_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
     if (dynamic_color_write_mask) {
+    EMULATOR_TRACE;
         dynamic_color_write_mask =
             feature_chain.get<vk::PhysicalDeviceExtendedDynamicState3FeaturesEXT>()
                 .extendedDynamicState3ColorWriteMask;
@@ -298,6 +318,7 @@ bool Instance::CreateDevice() {
 
     bool graphics_queue_found = false;
     for (std::size_t i = 0; i < family_properties.size(); i++) {
+    EMULATOR_TRACE;
         const u32 index = static_cast<u32>(i);
         if (family_properties[i].queueFlags & vk::QueueFlagBits::eGraphics) {
             queue_family_index = index;
@@ -470,6 +491,7 @@ bool Instance::CreateDevice() {
             const bool has_host_time_domain = false;
 #endif
             if (has_host_time_domain) {
+    EMULATOR_TRACE;
                 static constexpr std::string_view context_name{"vk_rasterizer"};
                 profiler_context = TracyVkContextHostCalibrated(
                     *instance, physical_device, *device,
@@ -521,6 +543,7 @@ void Instance::CollectDeviceParameters() {
     const std::string model_name{GetModelName()};
     const std::string driver_version = GetDriverVersionName();
     const std::string driver_name = fmt::format("{} {}", vendor_name, driver_version);
+    EMULATOR_TRACE;
     const std::string api_version = GetReadableVersion(properties.apiVersion);
     const std::string extensions = fmt::format("{}", fmt::join(available_extensions, ", "));
 
@@ -542,14 +565,17 @@ void Instance::CollectToolingInfo() {
         return;
     }
     for (const vk::PhysicalDeviceToolProperties& tool : tools) {
+    EMULATOR_TRACE;
         const std::string_view name = tool.name;
         LOG_INFO(Render_Vulkan, "Attached debugging tool: {}", name);
     }
 }
 
 vk::FormatFeatureFlags2 Instance::GetFormatFeatureFlags(vk::Format format) const {
+    EMULATOR_TRACE;
     const auto it = format_properties.find(format);
     if (it == format_properties.end()) {
+    EMULATOR_TRACE;
         UNIMPLEMENTED_MSG("Properties of format {} have not been queried.", vk::to_string(format));
     }
 
@@ -558,7 +584,9 @@ vk::FormatFeatureFlags2 Instance::GetFormatFeatureFlags(vk::Format format) const
 
 bool Instance::IsFormatSupported(const vk::Format format,
                                  const vk::FormatFeatureFlags2 flags) const {
+    EMULATOR_TRACE;
     if (format == vk::Format::eUndefined) [[unlikely]] {
+    EMULATOR_TRACE;
         return true;
     }
     return (GetFormatFeatureFlags(format) & flags) == flags;
@@ -566,6 +594,7 @@ bool Instance::IsFormatSupported(const vk::Format format,
 
 vk::Format Instance::GetSupportedFormat(const vk::Format format,
                                         const vk::FormatFeatureFlags2 flags) const {
+    EMULATOR_TRACE;
     if (!IsFormatSupported(format, flags)) [[unlikely]] {
         switch (format) {
         case vk::Format::eD16UnormS8Uint:

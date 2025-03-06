@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <array>
 
@@ -94,6 +95,7 @@ void Crypto::RSA2048Decrypt(std::span<CryptoPP::byte, 32> dec_key,
 
 void Crypto::ivKeyHASH256(std::span<const CryptoPP::byte, 64> cipher_input,
                           std::span<CryptoPP::byte, 32> ivkey_result) {
+    EMULATOR_TRACE;
     CryptoPP::SHA256 sha256;
     std::array<CryptoPP::byte, CryptoPP::SHA256::DIGESTSIZE> hashResult;
     auto array_sink = new CryptoPP::ArraySink(hashResult.data(), CryptoPP::SHA256::DIGESTSIZE);
@@ -115,6 +117,7 @@ void Crypto::aesCbcCfb128Decrypt(std::span<const CryptoPP::byte, 32> ivkey,
     CryptoPP::CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv.data());
 
     for (size_t i = 0; i < decrypted.size(); i += CryptoPP::AES::BLOCKSIZE) {
+    EMULATOR_TRACE;
         cbcDecryption.ProcessData(decrypted.data() + i, ciphertext.data() + i,
                                   CryptoPP::AES::BLOCKSIZE);
     }
@@ -133,6 +136,7 @@ void Crypto::aesCbcCfb128DecryptEntry(std::span<const CryptoPP::byte, 32> ivkey,
     CryptoPP::CBC_Mode_ExternalCipher::Decryption cbcDecryption(aesDecryption, iv.data());
 
     for (size_t i = 0; i < decrypted.size(); i += CryptoPP::AES::BLOCKSIZE) {
+    EMULATOR_TRACE;
         cbcDecryption.ProcessData(decrypted.data() + i, ciphertext.data() + i,
                                   CryptoPP::AES::BLOCKSIZE);
     }
@@ -157,6 +161,7 @@ void Crypto::decryptEFSM(std::span<CryptoPP::byte, 16> trophyKey,
     decrypt.SetKeyWithIV(trpKey.data(), trpKey.size(), efsmIv.data());
 
     for (size_t i = 0; i < decrypted.size(); i += CryptoPP::AES::BLOCKSIZE) {
+    EMULATOR_TRACE;
         decrypt.ProcessData(decrypted.data() + i, ciphertext.data() + i, CryptoPP::AES::BLOCKSIZE);
     }
 }
@@ -189,8 +194,10 @@ void Crypto::PfsGenCryptoKey(std::span<const CryptoPP::byte, 32> ekpfs,
 void Crypto::decryptPFS(std::span<const CryptoPP::byte, 16> dataKey,
                         std::span<const CryptoPP::byte, 16> tweakKey, std::span<const u8> src_image,
                         std::span<CryptoPP::byte> dst_image, u64 sector) {
+    EMULATOR_TRACE;
     // Start at 0x10000 to keep the header when decrypting the whole pfs_image.
     for (int i = 0; i < src_image.size(); i += 0x1000) {
+    EMULATOR_TRACE;
         const u64 current_sector = sector + (i / 0x1000);
         CryptoPP::ECB_Mode<CryptoPP::AES>::Encryption encrypt(tweakKey.data(), tweakKey.size());
         CryptoPP::ECB_Mode<CryptoPP::AES>::Decryption decrypt(dataKey.data(), dataKey.size());
@@ -204,6 +211,7 @@ void Crypto::decryptPFS(std::span<const CryptoPP::byte, 16> dataKey,
         encrypt.ProcessData(encryptedTweak.data(), tweak.data(), 16);
 
         for (int plaintextOffset = 0; plaintextOffset < 0x1000; plaintextOffset += 16) {
+    EMULATOR_TRACE;
             xtsXorBlock(xorBuffer.data(), src_image.data() + i + plaintextOffset,
                         encryptedTweak.data());                          // x, c, t
             decrypt.ProcessData(xorBuffer.data(), xorBuffer.data(), 16); // x, x

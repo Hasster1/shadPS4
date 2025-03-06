@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "common/logging/log.h"
@@ -30,11 +31,13 @@ s32 PS4_SYSV_ABI internal__malloc_init_lv2() {
 }
 
 s32 PS4_SYSV_ABI internal__malloc_postfork() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }
 
 s32 PS4_SYSV_ABI internal__malloc_prefork() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_LibcInternal, "(STUBBED) called");
     return ORBIS_OK;
 }

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "shader_recompiler/ir/ir_emitter.h"
@@ -17,7 +18,9 @@ void RingAccessElimination(const IR::Program& program, const RuntimeInfo& runtim
 
     const auto& ForEachInstruction = [&](auto func) {
         for (IR::Block* block : program.blocks) {
+    EMULATOR_TRACE;
             for (IR::Inst& inst : block->Instructions()) {
+    EMULATOR_TRACE;
                 IR::IREmitter ir{*block, IR::Block::InstructionList::s_iterator_to(inst)};
                 func(ir, inst);
             }
@@ -42,6 +45,7 @@ void RingAccessElimination(const IR::Program& program, const RuntimeInfo& runtim
                 }
                 IR::Value data = inst.Arg(1).Resolve();
                 for (s32 i = 0; i < num_components; i++) {
+    EMULATOR_TRACE;
                     const auto attrib = IR::Attribute::Param0 + (offset / 16);
                     const auto comp = (offset / 4) % 4;
                     const IR::U32 value = IR::U32{is_composite ? data.Inst()->Arg(i) : data};

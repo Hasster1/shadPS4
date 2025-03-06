@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/logging/log.h"
 #include "core/libraries/error_codes.h"
@@ -11,6 +12,7 @@
 namespace Libraries::Ngs2 {
 
 int PS4_SYSV_ABI sceNgs2CalcWaveformBlock() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Ngs2, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -56,6 +58,7 @@ int PS4_SYSV_ABI sceNgs2GeomResetSourceParam() {
 }
 
 int PS4_SYSV_ABI sceNgs2GetWaveformFrameInfo() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Ngs2, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -91,16 +94,19 @@ int PS4_SYSV_ABI sceNgs2PanInit() {
 }
 
 int PS4_SYSV_ABI sceNgs2ParseWaveformData() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Ngs2, "(STUBBED) called");
     return ORBIS_OK;
 }
 
 int PS4_SYSV_ABI sceNgs2ParseWaveformFile() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Ngs2, "(STUBBED) called");
     return ORBIS_OK;
 }
 
 int PS4_SYSV_ABI sceNgs2ParseWaveformUser() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_Ngs2, "(STUBBED) called");
     return ORBIS_OK;
 }

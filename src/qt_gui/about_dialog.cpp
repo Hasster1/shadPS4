@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <QDesktopServices>
 #include <QEvent>
@@ -41,9 +42,12 @@ void AboutDialog::preloadImages() {
     originalImages[4] = ui->image_5->pixmap().copy();
 
     for (int i = 0; i < 5; ++i) {
+    EMULATOR_TRACE;
         QImage image = originalImages[i].toImage();
         for (int y = 0; y < image.height(); ++y) {
+    EMULATOR_TRACE;
             for (int x = 0; x < image.width(); ++x) {
+    EMULATOR_TRACE;
                 QColor color = image.pixelColor(x, y);
                 color.setRed(255 - color.red());
                 color.setGreen(255 - color.green());

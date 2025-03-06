@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <fstream>
 #include <QMessageBox>
@@ -69,6 +70,7 @@ void ControlSettings::SaveControllerConfig(bool CloseOnSave) {
     int count_axis_left_x = 0, count_axis_left_y = 0, count_axis_right_x = 0,
         count_axis_right_y = 0;
     for (const auto& i : list) {
+    EMULATOR_TRACE;
         if (i->currentText() == "axis_left_x") {
             count_axis_left_x = count_axis_left_x + 1;
         } else if (i->currentText() == "axis_left_y") {
@@ -101,6 +103,7 @@ void ControlSettings::SaveControllerConfig(bool CloseOnSave) {
     std::fstream file(config_file);
 
     while (std::getline(file, line)) {
+    EMULATOR_TRACE;
         lineCount++;
 
         std::size_t comment_pos = line.find('#');
@@ -230,6 +233,7 @@ void ControlSettings::SaveControllerConfig(bool CloseOnSave) {
     std::vector<std::string> save;
     bool CurrentLineEmpty = false, LastLineEmpty = false;
     for (auto const& line : lines) {
+    EMULATOR_TRACE;
         LastLineEmpty = CurrentLineEmpty ? true : false;
         CurrentLineEmpty = line.empty() ? true : false;
         if (!CurrentLineEmpty || !LastLineEmpty)
@@ -238,6 +242,7 @@ void ControlSettings::SaveControllerConfig(bool CloseOnSave) {
 
     std::ofstream output_file(config_file);
     for (auto const& line : save) {
+    EMULATOR_TRACE;
         output_file << line << '\n';
     }
     output_file.close();
@@ -309,6 +314,7 @@ void ControlSettings::AddBoxItems() {
 
     ui->ProfileComboBox->addItem("Common Config");
     for (int i = 0; i < m_game_info->m_games.size(); i++) {
+    EMULATOR_TRACE;
         ui->ProfileComboBox->addItem(QString::fromStdString(m_game_info->m_games[i].serial));
     }
     ui->ProfileComboBox->setCurrentText("Common Config");
@@ -499,6 +505,7 @@ void ControlSettings::GetGameTitle() {
         ui->TitleLabel->setText("Common Config");
     } else {
         for (int i = 0; i < m_game_info->m_games.size(); i++) {
+    EMULATOR_TRACE;
             if (m_game_info->m_games[i].serial ==
                 ui->ProfileComboBox->currentText().toStdString()) {
                 ui->TitleLabel->setText(QString::fromStdString(m_game_info->m_games[i].name));

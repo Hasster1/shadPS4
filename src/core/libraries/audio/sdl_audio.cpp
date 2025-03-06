@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <thread>
 #include <SDL3/SDL_audio.h>
@@ -15,6 +16,7 @@ class SDLPortBackend : public PortBackend {
 public:
     explicit SDLPortBackend(const PortOut& port)
         : frame_size(port.format_info.FrameSize()), guest_buffer_size(port.BufferSize()) {
+    EMULATOR_TRACE;
         const SDL_AudioSpec fmt = {
             .format = port.format_info.is_float ? SDL_AUDIO_F32LE : SDL_AUDIO_S16LE,
             .channels = port.format_info.num_channels,
@@ -23,12 +25,14 @@ public:
         stream =
             SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &fmt, nullptr, nullptr);
         if (stream == nullptr) {
+    EMULATOR_TRACE;
             LOG_ERROR(Lib_AudioOut, "Failed to create SDL audio stream: {}", SDL_GetError());
             return;
         }
         CalculateQueueThreshold();
         if (!SDL_SetAudioStreamInputChannelMap(stream, port.format_info.channel_layout.data(),
                                                port.format_info.num_channels)) {
+    EMULATOR_TRACE;
             LOG_ERROR(Lib_AudioOut, "Failed to configure SDL audio stream channel map: {}",
                       SDL_GetError());
             SDL_DestroyAudioStream(stream);
@@ -59,6 +63,7 @@ public:
         // audio queue stalling, which may happen during device changes, for example.
         // Otherwise, latency may grow over time unbounded.
         if (const auto queued = SDL_GetAudioStreamQueued(stream); queued >= queue_threshold) {
+    EMULATOR_TRACE;
             LOG_WARNING(Lib_AudioOut,
                         "SDL audio queue backed up ({} queued, {} threshold), clearing.", queued,
                         queue_threshold);
@@ -78,6 +83,7 @@ public:
         // SDL does not have per-channel volumes, for now just take the maximum of the channels.
         const auto vol = *std::ranges::max_element(ch_volumes);
         if (!SDL_SetAudioStreamGain(stream, static_cast<float>(vol) / SCE_AUDIO_OUT_VOLUME_0DB)) {
+    EMULATOR_TRACE;
             LOG_WARNING(Lib_AudioOut, "Failed to change SDL audio stream volume: {}",
                         SDL_GetError());
         }

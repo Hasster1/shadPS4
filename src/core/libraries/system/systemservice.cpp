@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/config.h"
 #include "common/logging/log.h"
@@ -788,6 +789,7 @@ int PS4_SYSV_ABI sceShellCoreUtilGetCrashReportInfoStart() {
 }
 
 int PS4_SYSV_ABI sceShellCoreutilGetCrashReportProcessInformation() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_SystemService, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -923,11 +925,13 @@ int PS4_SYSV_ABI sceShellCoreUtilGetPbtcUserInfoList() {
 }
 
 int PS4_SYSV_ABI sceShellCoreUtilGetPlatformPrivacyDefinitionEventData() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_SystemService, "(STUBBED) called");
     return ORBIS_OK;
 }
 
 int PS4_SYSV_ABI sceShellCoreUtilGetPlatformPrivacySetting() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_SystemService, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -1894,6 +1898,7 @@ int PS4_SYSV_ABI sceSystemServiceNavigateToGoHome() {
 s32 PS4_SYSV_ABI sceSystemServiceParamGetInt(OrbisSystemServiceParamId param_id, int* value) {
     // TODO this probably should be stored in config for UI configuration
     LOG_INFO(Lib_SystemService, "called param_id {}", u32(param_id));
+    EMULATOR_TRACE;
     if (value == nullptr) {
         LOG_ERROR(Lib_SystemService, "value is null");
         return ORBIS_SYSTEM_SERVICE_ERROR_PARAMETER;
@@ -2180,6 +2185,7 @@ int PS4_SYSV_ABI sceSystemStateMgrIsBdDriveReady() {
 }
 
 int PS4_SYSV_ABI sceSystemStateMgrIsGpuPerformanceNormal() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_SystemService, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -2315,16 +2321,19 @@ int PS4_SYSV_ABI sceSystemServiceReenablePartyVoice() {
 }
 
 int PS4_SYSV_ABI sceSystemServiceGetPlatformPrivacyDefinitionData() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_SystemService, "(STUBBED) called");
     return ORBIS_OK;
 }
 
 int PS4_SYSV_ABI sceSystemServiceGetPlatformPrivacyDefinitionVersion() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_SystemService, "(STUBBED) called");
     return ORBIS_OK;
 }
 
 int PS4_SYSV_ABI sceSystemServiceGetPlatformPrivacySetting() {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_SystemService, "(STUBBED) called");
     return ORBIS_OK;
 }

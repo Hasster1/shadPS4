@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <deque>
 #include <mutex>
@@ -51,6 +52,7 @@ static void backup(const std::filesystem::path& dir_name) {
 
     std::vector<std::filesystem::path> backup_files;
     for (const auto& entry : fs::directory_iterator(dir_name)) {
+    EMULATOR_TRACE;
         const auto filename = entry.path().filename();
         if (filename != ::backup_dir) {
             backup_files.push_back(entry.path());
@@ -64,6 +66,7 @@ static void backup(const std::filesystem::path& dir_name) {
 
     fs::create_directory(backup_dir_tmp);
     for (const auto& file : backup_files) {
+    EMULATOR_TRACE;
         fs::copy(file, backup_dir_tmp / file.filename(), fs::copy_options::recursive);
         current_count++;
         g_backup_progress = current_count * 100 / total_count;
@@ -137,6 +140,7 @@ static void BackupThreadBody() {
 }
 
 void StartThread() {
+    EMULATOR_TRACE;
     if (g_backup_status != WorkerStatus::NotStarted) {
         return;
     }
@@ -155,6 +159,7 @@ void StartThread() {
 }
 
 void StopThread() {
+    EMULATOR_TRACE;
     if (g_backup_status == WorkerStatus::NotStarted || g_backup_status == WorkerStatus::Stopping) {
         return;
     }
@@ -179,6 +184,7 @@ bool NewRequest(OrbisUserServiceUserId user_id, std::string_view title_id,
     {
         std::scoped_lock lk{g_backup_queue_mutex};
         for (const auto& it : g_backup_queue) {
+    EMULATOR_TRACE;
             if (it.dir_name == dir_name) {
                 LOG_TRACE(Lib_SaveData, "Backup request to {} ignored. Already queued", dir_name);
                 return false;
@@ -198,11 +204,13 @@ bool NewRequest(OrbisUserServiceUserId user_id, std::string_view title_id,
 
 bool Restore(const std::filesystem::path& save_path) {
     LOG_INFO(Lib_SaveData, "Restoring backup for {}", fmt::UTF(save_path.u8string()));
+    EMULATOR_TRACE;
     std::unique_lock lk{g_backup_running_mutex};
     if (!fs::exists(save_path) || !fs::exists(save_path / backup_dir)) {
         return false;
     }
     for (const auto& entry : fs::directory_iterator(save_path)) {
+    EMULATOR_TRACE;
         const auto filename = entry.path().filename();
         if (filename != backup_dir) {
             fs::remove_all(entry.path());
@@ -210,6 +218,7 @@ bool Restore(const std::filesystem::path& save_path) {
     }
 
     for (const auto& entry : fs::directory_iterator(save_path / backup_dir)) {
+    EMULATOR_TRACE;
         const auto filename = entry.path().filename();
         fs::copy(entry.path(), save_path / filename, fs::copy_options::recursive);
     }

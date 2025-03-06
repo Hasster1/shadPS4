@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include <boost/container/static_vector.hpp>
@@ -35,6 +36,7 @@ namespace Shader::Gcn {
  **/
 
 std::optional<FetchShaderData> ParseFetchShader(const Shader::Info& info) {
+    EMULATOR_TRACE;
     if (!info.has_fetch_shader) {
         return std::nullopt;
     }

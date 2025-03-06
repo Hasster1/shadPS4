@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "common/singleton.h"
@@ -71,6 +72,7 @@ void TcbDtor(Core::Tcb* oldtls) {
     const u8* tls_base = (const u8*)oldtls - static_tls_size;
 
     for (int i = 1; i < num_dtvs; i++) {
+    EMULATOR_TRACE;
         u8* dtv_ptr = dtv_table[i + 1].pointer;
         if (dtv_ptr && (dtv_ptr < tls_base || (const u8*)oldtls < dtv_ptr)) {
             linker->FreeTlsForNonPrimaryThread(dtv_ptr);

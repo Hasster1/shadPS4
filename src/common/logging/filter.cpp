@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2014 Citra Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 
@@ -11,6 +12,7 @@ namespace {
 template <typename It>
 Level GetLevelByName(const It begin, const It end) {
     for (u8 i = 0; i < static_cast<u8>(Level::Count); ++i) {
+    EMULATOR_TRACE;
         const char* level_name = GetLevelName(static_cast<Level>(i));
         if (std::string_view(begin, end).compare(level_name) == 0) {
             return static_cast<Level>(i);
@@ -22,6 +24,7 @@ Level GetLevelByName(const It begin, const It end) {
 template <typename It>
 Class GetClassByName(const It begin, const It end) {
     for (u8 i = 0; i < static_cast<u8>(Class::Count); ++i) {
+    EMULATOR_TRACE;
         const char* level_name = GetLogClassName(static_cast<Class>(i));
         if (std::string_view(begin, end).compare(level_name) == 0) {
             return static_cast<Class>(i);
@@ -147,6 +150,7 @@ bool ParseFilterRule(Filter& instance, Iterator begin, Iterator end) {
 
 // GetClassName is a macro defined by Windows.h, grrr...
 const char* GetLogClassName(Class log_class) {
+    EMULATOR_TRACE;
     switch (log_class) {
 #define CLS(x)                                                                                     \
     case Class::x:                                                                                 \

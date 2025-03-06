@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <imgui.h>
 
@@ -72,6 +73,7 @@ void DebugStateImpl::PauseGuestThreads() {
     bool self_guest = false;
     ThreadID self_id = ThisThreadID();
     for (const auto& id : guest_threads) {
+    EMULATOR_TRACE;
         if (id == self_id) {
             self_guest = true;
         } else {
@@ -95,6 +97,7 @@ void DebugStateImpl::ResumeGuestThreads() {
     u64 delta_time = Libraries::Kernel::Dev::GetClock()->GetUptime() - pause_time;
     Libraries::Kernel::Dev::GetInitialPtc() += delta_time;
     for (const auto& id : guest_threads) {
+    EMULATOR_TRACE;
         ResumeThread(id);
     }
     is_guest_threads_paused = false;
@@ -107,6 +110,7 @@ void DebugStateImpl::RequestFrameDump(s32 count) {
     frame_dump_list.resize(count);
     const auto f = gnm_frame_count.load() + 1;
     for (size_t i = 0; i < count; ++i) {
+    EMULATOR_TRACE;
         frame_dump_list[i].frame_id = f + i;
     }
     waiting_submit_pause = true;
@@ -168,6 +172,7 @@ void DebugStateImpl::PushRegsDump(uintptr_t base_addr, uintptr_t header_addr,
     (*dump)->regs = regs;
 
     for (int i = 0; i < RegDump::MaxShaderStages; i++) {
+    EMULATOR_TRACE;
         if ((*dump)->regs.stage_enable.IsStageEnabled(i)) {
             auto stage = (*dump)->regs.ProgramForStage(i);
             if (stage->address_lo != 0) {

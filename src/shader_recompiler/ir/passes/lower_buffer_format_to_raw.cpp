@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2025 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "shader_recompiler/info.h"
 #include "shader_recompiler/ir/basic_block.h"
@@ -80,11 +81,13 @@ static IR::Value LoadBufferFormat(IR::IREmitter& ir, const AmdGpu::Buffer& buffe
     }
     default:
         UNREACHABLE_MSG("Unsupported buffer data format: {}", data_fmt);
+    EMULATOR_TRACE;
     }
 
     // Pad to 4 components and apply additional modifications.
     boost::container::static_vector<IR::Value, 4> components;
     for (u32 i = 0; i < 4; i++) {
+    EMULATOR_TRACE;
         if (i < num_components) {
             const auto component =
                 IR::F32{num_components == 1 ? interpreted : ir.CompositeExtract(interpreted, i)};
@@ -109,6 +112,7 @@ static void StoreBufferFormat(IR::IREmitter& ir, const AmdGpu::Buffer& buffer,
     const auto swizzled = ApplySwizzle(ir, value, buffer.DstSelect().Inverse());
     boost::container::static_vector<IR::Value, 4> components;
     for (u32 i = 0; i < num_components; i++) {
+    EMULATOR_TRACE;
         const auto component = IR::F32{ir.CompositeExtract(swizzled, i)};
         components.push_back(ApplyWriteNumberConversion(ir, component, num_conv));
     }
@@ -178,6 +182,7 @@ static void StoreBufferFormat(IR::IREmitter& ir, const AmdGpu::Buffer& buffer,
     }
     default:
         UNREACHABLE_MSG("Unsupported buffer data format: {}", data_fmt);
+    EMULATOR_TRACE;
     }
 }
 
@@ -200,7 +205,9 @@ static void LowerBufferFormatInst(IR::Block& block, IR::Inst& inst, Info& info) 
 void LowerBufferFormatToRaw(IR::Program& program) {
     auto& info = program.info;
     for (IR::Block* const block : program.blocks) {
+    EMULATOR_TRACE;
         for (IR::Inst& inst : block->Instructions()) {
+    EMULATOR_TRACE;
             if (IsBufferFormatLoad(inst) || IsBufferFormatStore(inst)) {
                 LowerBufferFormatInst(*block, inst, info);
             }

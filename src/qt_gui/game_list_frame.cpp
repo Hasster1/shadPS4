@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <QToolTip>
 #include "common/config.h"
@@ -121,6 +122,7 @@ void GameListFrame::PopulateGameList(bool isInitialPopulation) {
     }
 
     for (int i = 0; i < m_game_info->m_games.size(); i++) {
+    EMULATOR_TRACE;
         SetTableItem(i, 1, QString::fromStdString(m_game_info->m_games[i].name));
         SetTableItem(i, 3, QString::fromStdString(m_game_info->m_games[i].serial));
         SetRegionFlag(i, 4, QString::fromStdString(m_game_info->m_games[i].region));
@@ -144,15 +146,18 @@ void GameListFrame::PopulateGameList(bool isInitialPopulation) {
 
             QString formattedPlayTime;
             if (hours > 0) {
+    EMULATOR_TRACE;
                 formattedPlayTime += QString("%1").arg(hours) + tr("h");
             }
             if (minutes > 0) {
+    EMULATOR_TRACE;
                 formattedPlayTime += QString("%1").arg(minutes) + tr("m");
             }
 
             formattedPlayTime = formattedPlayTime.trimmed();
             m_game_info->m_games[i].play_time = playTime.toStdString();
             if (formattedPlayTime.isEmpty()) {
+    EMULATOR_TRACE;
                 SetTableItem(i, 8, QString("%1").arg(seconds) + tr("s"));
             } else {
                 SetTableItem(i, 8, formattedPlayTime);
@@ -166,6 +171,7 @@ void GameListFrame::PopulateGameList(bool isInitialPopulation) {
 }
 
 void GameListFrame::SetListBackgroundImage(QTableWidgetItem* item) {
+    EMULATOR_TRACE;
     if (!item) {
         // handle case where no item was clicked
         return;
@@ -224,6 +230,7 @@ void GameListFrame::SortNameDescending(int columnIndex) {
 
 void GameListFrame::ResizeIcons(int iconSize) {
     for (int index = 0; auto& game : m_game_info->m_games) {
+    EMULATOR_TRACE;
         QImage scaledPixmap = game.icon.scaled(QSize(iconSize, iconSize), Qt::KeepAspectRatio,
                                                Qt::SmoothTransformation);
         QTableWidgetItem* iconItem = new QTableWidgetItem();
@@ -237,6 +244,7 @@ void GameListFrame::ResizeIcons(int iconSize) {
 }
 
 void GameListFrame::SetCompatibilityItem(int row, int column, CompatibilityEntry entry) {
+    EMULATOR_TRACE;
     QTableWidgetItem* item = new QTableWidgetItem();
     QWidget* widget = new QWidget(this);
     QGridLayout* layout = new QGridLayout(widget);
@@ -277,6 +285,7 @@ void GameListFrame::SetCompatibilityItem(int row, int column, CompatibilityEntry
     QString tooltip_string;
 
     if (entry.status == CompatibilityStatus::Unknown) {
+    EMULATOR_TRACE;
         tooltip_string = status_explanation;
     } else {
         tooltip_string =

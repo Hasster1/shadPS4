@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 #include "common/assert.h"
 #include "shader_recompiler/info.h"
 #include "shader_recompiler/ir/attribute.h"
@@ -212,6 +213,7 @@ public:
         }
 
         for (IR::Use use : read_const_buffer->Uses()) {
+    EMULATOR_TRACE;
             MarkTessAttributeUsersHelper(use, inc);
         }
 
@@ -269,6 +271,7 @@ private:
         }
 
         for (IR::Use use : inst->Uses()) {
+    EMULATOR_TRACE;
             MarkTessAttributeUsersHelper(use, inc);
         }
     }
@@ -332,6 +335,7 @@ static IR::U32 TryOptimizeAddressModulo(IR::U32 addr, u32 stride, IR::IREmitter&
     if (TryOptimizeAddendInModulo(addr, stride, addends)) {
         addr = ir.Imm32(0);
         for (auto& addend : addends) {
+    EMULATOR_TRACE;
             addr = ir.IAdd(addr, addend);
         }
     }
@@ -362,10 +366,13 @@ static IR::F32 ReadTessControlPointAttribute(IR::U32 addr, const u32 stride, IR:
 } // namespace
 
 void HullShaderTransform(IR::Program& program, RuntimeInfo& runtime_info) {
+    EMULATOR_TRACE;
     const Info& info = program.info;
 
     for (IR::Block* block : program.blocks) {
+    EMULATOR_TRACE;
         for (IR::Inst& inst : block->Instructions()) {
+    EMULATOR_TRACE;
             const auto opcode = inst.GetOpcode();
             switch (opcode) {
             case IR::Opcode::StoreBufferU32:
@@ -427,6 +434,7 @@ void HullShaderTransform(IR::Program& program, RuntimeInfo& runtime_info) {
                                 inst->GetOpcode() == IR::Opcode::CompositeConstructU32x3 ||
                                 inst->GetOpcode() == IR::Opcode::CompositeConstructU32x4));
                 for (s32 i = 0; i < num_dwords; i++) {
+    EMULATOR_TRACE;
                     ir.SetPatch(get_factor_attr(gcn_factor_idx + i), GetValue(inst->Arg(i)));
                 }
                 break;
@@ -468,6 +476,7 @@ void HullShaderTransform(IR::Program& program, RuntimeInfo& runtime_info) {
                     SetOutput(addr, data, region, 0);
                 } else {
                     for (auto i = 0; i < num_dwords; i++) {
+    EMULATOR_TRACE;
                         SetOutput(addr, IR::U32{data.Inst()->Arg(i)}, region, i);
                     }
                 }
@@ -494,6 +503,7 @@ void HullShaderTransform(IR::Program& program, RuntimeInfo& runtime_info) {
                 } else {
                     boost::container::static_vector<IR::Value, 4> read_components;
                     for (auto i = 0; i < num_dwords; i++) {
+    EMULATOR_TRACE;
                         const IR::F32 component =
                             ReadTessControlPointAttribute(addr, stride, ir, i, is_tcs_output_read);
                         read_components.push_back(ir.BitCast<IR::U32>(component));
@@ -530,7 +540,9 @@ void HullShaderTransform(IR::Program& program, RuntimeInfo& runtime_info) {
         u32 num_attributes = Common::AlignUp(runtime_info.hs_info.ls_stride, 16) >> 4;
         const auto invocation_id = ir.GetAttributeU32(IR::Attribute::InvocationId);
         for (u32 attr_no = 0; attr_no < num_attributes; attr_no++) {
+    EMULATOR_TRACE;
             for (u32 comp = 0; comp < 4; comp++) {
+    EMULATOR_TRACE;
                 IR::F32 attr_read =
                     ir.GetTessGenericAttribute(invocation_id, ir.Imm32(attr_no), ir.Imm32(comp));
                 // InvocationId is implicit index for output control point writes
@@ -540,6 +552,7 @@ void HullShaderTransform(IR::Program& program, RuntimeInfo& runtime_info) {
         // We could wrap the rest of the program in an if stmt
         // CopyInputAttrsToOutputs(); // psuedocode
         // if (InvocationId == 0) {
+    EMULATOR_TRACE;
         //     PatchConstFunction();
         // }
         // But as long as we treat invocation ID as 0 for all threads, shouldn't matter functionally
@@ -547,10 +560,13 @@ void HullShaderTransform(IR::Program& program, RuntimeInfo& runtime_info) {
 }
 
 void DomainShaderTransform(IR::Program& program, RuntimeInfo& runtime_info) {
+    EMULATOR_TRACE;
     Info& info = program.info;
 
     for (IR::Block* block : program.blocks) {
+    EMULATOR_TRACE;
         for (IR::Inst& inst : block->Instructions()) {
+    EMULATOR_TRACE;
             IR::IREmitter ir{*block, IR::Block::InstructionList::s_iterator_to(inst)};
             const auto opcode = inst.GetOpcode();
             switch (inst.GetOpcode()) {
@@ -574,6 +590,7 @@ void DomainShaderTransform(IR::Program& program, RuntimeInfo& runtime_info) {
                 } else {
                     boost::container::static_vector<IR::Value, 4> read_components;
                     for (auto i = 0; i < num_dwords; i++) {
+    EMULATOR_TRACE;
                         const IR::F32 component = GetInput(addr, i);
                         read_components.push_back(ir.BitCast<IR::U32>(component));
                     }
@@ -591,11 +608,14 @@ void DomainShaderTransform(IR::Program& program, RuntimeInfo& runtime_info) {
 
 // Run before either hull or domain transform
 void TessellationPreprocess(IR::Program& program, RuntimeInfo& runtime_info) {
+    EMULATOR_TRACE;
     TessellationDataConstantBuffer tess_constants;
     Shader::Info& info = program.info;
     // Find the TessellationDataConstantBuffer V#
     for (IR::Block* block : program.blocks) {
+    EMULATOR_TRACE;
         for (IR::Inst& inst : block->Instructions()) {
+    EMULATOR_TRACE;
             auto found_tess_consts_sharp = [&]() -> bool {
                 switch (inst.GetOpcode()) {
                 case IR::Opcode::LoadSharedU32:
@@ -648,7 +668,9 @@ void TessellationPreprocess(IR::Program& program, RuntimeInfo& runtime_info) {
     TessConstantUseWalker walker;
 
     for (IR::Block* block : program.blocks) {
+    EMULATOR_TRACE;
         for (IR::Inst& inst : block->Instructions()) {
+    EMULATOR_TRACE;
             if (inst.GetOpcode() == IR::Opcode::ReadConstBuffer) {
                 auto sharp_location = FindTessConstantSharp(&inst);
                 if (sharp_location && sharp_location->ptr_base == info.tess_consts_ptr_base &&
@@ -701,9 +723,12 @@ void TessellationPreprocess(IR::Program& program, RuntimeInfo& runtime_info) {
     // PatchConst attributes and tess factors. PatchConst should be easy, turn those into a single
     // vec4 array like in/out attrs. Not sure about tess factors.
     if (info.l_stage == LogicalStage::TessellationControl) {
+    EMULATOR_TRACE;
         // Replace the BFEs on V1 (packed with patch id within VGT and output cp id)
         for (IR::Block* block : program.blocks) {
+    EMULATOR_TRACE;
             for (auto it = block->Instructions().begin(); it != block->Instructions().end(); it++) {
+    EMULATOR_TRACE;
                 IR::Inst& inst = *it;
                 if (M_BITFIELDUEXTRACT(
                         M_GETATTRIBUTEU32(MatchAttribute(IR::Attribute::PackedHullInvocationInfo),
@@ -728,6 +753,7 @@ void TessellationPreprocess(IR::Program& program, RuntimeInfo& runtime_info) {
                         // sense (in addr calculation for patchconst or tess factor write)
                         replacement = ir.Imm32(0);
                     } else {
+    EMULATOR_TRACE;
                         replacement = ir.GetAttributeU32(IR::Attribute::InvocationId);
                     }
                     inst.ReplaceUsesWithAndRemove(replacement);

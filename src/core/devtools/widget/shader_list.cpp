@@ -1,5 +1,6 @@
 //  SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 //  SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <fstream>
 
@@ -229,6 +230,7 @@ bool ShaderList::Selection::DrawShader(DebugStateType::ShaderDump& value) {
 
 void ShaderList::Draw() {
     for (auto it = open_shaders.begin(); it != open_shaders.end();) {
+    EMULATOR_TRACE;
         auto& selection = *it;
         auto& shader = DebugState.shader_dump_list[selection.index];
         if (!selection.DrawShader(shader)) {
@@ -256,6 +258,7 @@ void ShaderList::Draw() {
     auto width = GetContentRegionAvail().x;
     int i = 0;
     for (const auto& shader : DebugState.shader_dump_list) {
+    EMULATOR_TRACE;
         if (search_box[0] != '\0' && !shader.name.contains(search_box)) {
             i++;
             continue;

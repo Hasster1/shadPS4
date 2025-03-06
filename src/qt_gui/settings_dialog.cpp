@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <QCompleter>
 #include <QDirIterator>
@@ -77,6 +78,7 @@ SettingsDialog::SettingsDialog(std::span<const QString> physical_devices,
     // Add list of available GPUs
     ui->graphicsAdapterBox->addItem(tr("Auto Select")); // -1, auto selection
     for (const auto& device : physical_devices) {
+    EMULATOR_TRACE;
         ui->graphicsAdapterBox->addItem(device);
     }
 
@@ -466,6 +468,7 @@ void SettingsDialog::InitializeEmulatorLanguages() {
 
     int idx = 0;
     for (const auto& pair : languagesList) {
+    EMULATOR_TRACE;
         const QString& locale = pair.first;
         const QString& displayName = pair.second;
 
@@ -511,6 +514,7 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     // clang-format off
     // General
     if (elementName == "consoleLanguageGroupBox") {
+    EMULATOR_TRACE;
         text = tr("Console Language:\\nSets the language that the PS4 game uses.\\nIt's recommended to set this to a language the game supports, which will vary by region.");
     } else if (elementName == "emulatorLanguageGroupBox") {
         text = tr("Emulator Language:\\nSets the language of the emulator's user interface.");
@@ -519,19 +523,23 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     } else if (elementName == "separateUpdatesCheckBox") {
         text = tr("Enable Separate Update Folder:\\nEnables installing game updates into a separate folder for easy management.\\nThis can be manually created by adding the extracted update to the game folder with the name 'CUSA00000-UPDATE' where the CUSA ID matches the game's ID.");
     } else if (elementName == "showSplashCheckBox") {
+    EMULATOR_TRACE;
         text = tr("Show Splash Screen:\\nShows the game's splash screen (a special image) while the game is starting.");
     } else if (elementName == "discordRPCCheckbox") {
         text = tr("Enable Discord Rich Presence:\\nDisplays the emulator icon and relevant information on your Discord profile.");
     } else if (elementName == "userName") {
+    EMULATOR_TRACE;
         text = tr("Username:\\nSets the PS4's account username, which may be displayed by some games.");
     } else if (elementName == "label_Trophy" || elementName == "trophyKeyLineEdit") {
         text = tr("Trophy Key:\\nKey used to decrypt trophies. Must be obtained from your jailbroken console.\\nMust contain only hex characters.");
     } else if (elementName == "logTypeGroupBox") {
         text = tr("Log Type:\\nSets whether to synchronize the output of the log window for performance. May have adverse effects on emulation.");
     } else if (elementName == "logFilter") {
+    EMULATOR_TRACE;
         text = tr("Log Filter:\nFilters the log to only print specific information.\nExamples: 'Core:Trace' 'Lib.Pad:Debug Common.Filesystem:Error' '*:Critical'\\nLevels: Trace, Debug, Info, Warning, Error, Critical - in this order, a specific level silences all levels preceding it in the list and logs every level after it.");
 #ifdef ENABLE_UPDATER
     } else if (elementName == "updaterGroupBox") {
+    EMULATOR_TRACE;
         text = tr("Update:\\nRelease: Official versions released every month that may be very outdated, but are more reliable and tested.\\nNightly: Development versions that have all the latest features and fixes, but may contain bugs and are less stable.");
 #endif
     } else if (elementName == "GUIBackgroundImageGroupBox") {
@@ -541,10 +549,12 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     } else if (elementName == "enableHDRCheckBox") {
         text = tr("Enable HDR:\\nEnables HDR in games that support it.\\nYour monitor must have support for the BT2020 PQ color space and the RGB10A2 swapchain format.");
     } else if (elementName == "disableTrophycheckBox") {
+    EMULATOR_TRACE;
         text = tr("Disable Trophy Pop-ups:\\nDisable in-game trophy notifications. Trophy progress can still be tracked using the Trophy Viewer (right-click the game in the main window).");
     } else if (elementName == "enableCompatibilityCheckBox") {
         text = tr("Display Compatibility Data:\\nDisplays game compatibility information in table view. Enable 'Update Compatibility On Startup' to get up-to-date information.");
     } else if (elementName == "checkCompatibilityOnStartupCheckBox") {
+    EMULATOR_TRACE;
         text = tr("Update Compatibility On Startup:\\nAutomatically update the compatibility database when shadPS4 starts.");
     } else if (elementName == "updateCompatibilityButton") {
         text = tr("Update Compatibility Database:\\nImmediately update the compatibility database.");
@@ -554,6 +564,7 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     if (elementName == "hideCursorGroupBox") {
         text = tr("Hide Cursor:\\nChoose when the cursor will disappear:\\nNever: You will always see the mouse.\\nidle: Set a time for it to disappear after being idle.\\nAlways: you will never see the mouse.");
     } else if (elementName == "idleTimeoutGroupBox") {
+    EMULATOR_TRACE;
         text = tr("Hide Idle Cursor Timeout:\\nThe duration (seconds) after which the cursor that has been idle hides itself.");
     } else if (elementName == "backButtonBehaviorGroupBox") {
         text = tr("Back Button Behavior:\\nSets the controller's back button to emulate tapping the specified position on the PS4 touchpad.");
@@ -576,6 +587,7 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
     if (elementName == "gameFoldersGroupBox" || elementName == "gameFoldersListWidget") {
         text = tr("Game Folders:\\nThe list of folders to check for installed games.");
     } else if (elementName == "addFolderButton") {
+    EMULATOR_TRACE;
         text = tr("Add:\\nAdd a folder to the list.");
     } else if (elementName == "removeFolderButton") {
         text = tr("Remove:\\nRemove a folder from the list.");
@@ -590,20 +602,27 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
 
     // Debug
     if (elementName == "debugDump") {
+    EMULATOR_TRACE;
         text = tr("Enable Debug Dumping:\\nSaves the import and export symbols and file header information of the currently running PS4 program to a directory.");
     } else if (elementName == "vkValidationCheckBox") {
+    EMULATOR_TRACE;
         text = tr("Enable Vulkan Validation Layers:\\nEnables a system that validates the state of the Vulkan renderer and logs information about its internal state.\\nThis will reduce performance and likely change the behavior of emulation.");
     } else if (elementName == "vkSyncValidationCheckBox") {
+    EMULATOR_TRACE;
         text = tr("Enable Vulkan Synchronization Validation:\\nEnables a system that validates the timing of Vulkan rendering tasks.\\nThis will reduce performance and likely change the behavior of emulation.");
     } else if (elementName == "rdocCheckBox") {
+    EMULATOR_TRACE;
         text = tr("Enable RenderDoc Debugging:\\nIf enabled, the emulator will provide compatibility with Renderdoc to allow capture and analysis of the currently rendered frame.");
     } else if (elementName == "crashDiagnosticsCheckBox") {
         text = tr("Crash Diagnostics:\\nCreates a .yaml file with info about the Vulkan state at the time of crashing.\\nUseful for debugging 'Device lost' errors. If you have this enabled, you should enable Host AND Guest Debug Markers.\\nDoes not work on Intel GPUs.\\nYou need Vulkan Validation Layers enabled and the Vulkan SDK for this to work.");
     } else if (elementName == "guestMarkersCheckBox") {
+    EMULATOR_TRACE;
         text = tr("Guest Debug Markers:\\nInserts any debug markers the game itself has added to the command buffer.\\nIf you have this enabled, you should enable Crash Diagnostics.\\nUseful for programs like RenderDoc.");
     } else if (elementName == "hostMarkersCheckBox") {
+    EMULATOR_TRACE;
         text = tr("Host Debug Markers:\\nInserts emulator-side information like markers for specific AMDGPU commands around Vulkan commands, as well as giving resources debug names.\\nIf you have this enabled, you should enable Crash Diagnostics.\\nUseful for programs like RenderDoc.");
     } else if (elementName == "copyGPUBuffersCheckBox") {
+    EMULATOR_TRACE;
         text = tr("Copy GPU Buffers:\\nGets around race conditions involving GPU submits.\\nMay or may not help with PM4 type 0 crashes.");
     } else if (elementName == "collectShaderCheckBox") {
         text = tr("Collect Shaders:\\nYou need this enabled to edit shaders with the debug menu (Ctrl + F10).");
@@ -613,6 +632,7 @@ void SettingsDialog::updateNoteTextEdit(const QString& elementName) {
 }
 
 bool SettingsDialog::eventFilter(QObject* obj, QEvent* event) {
+    EMULATOR_TRACE;
     if (event->type() == QEvent::Enter || event->type() == QEvent::Leave) {
         if (qobject_cast<QWidget*>(obj)) {
             bool hovered = (event->type() == QEvent::Enter);
@@ -701,6 +721,7 @@ void SettingsDialog::ResetInstallFolders() {
         std::vector<std::filesystem::path> settings_install_dirs_config = {};
 
         for (const auto& dir : install_dir_array) {
+    EMULATOR_TRACE;
             if (std::find(settings_install_dirs_config.begin(), settings_install_dirs_config.end(),
                           dir) == settings_install_dirs_config.end()) {
                 settings_install_dirs_config.push_back(dir);
@@ -708,6 +729,7 @@ void SettingsDialog::ResetInstallFolders() {
         }
 
         for (const auto& dir : settings_install_dirs_config) {
+    EMULATOR_TRACE;
             QString path_string;
             Common::FS::PathToQString(path_string, dir);
             QListWidgetItem* item = new QListWidgetItem(path_string);

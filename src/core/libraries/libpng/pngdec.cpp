@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <png.h>
 #include "common/assert.h"
@@ -150,6 +151,7 @@ s32 PS4_SYSV_ABI scePngDecDecode(OrbisPngDecHandle handle, const OrbisPngDecDeco
         png_set_gray_to_rgb(pngh->png_ptr);
     }
     if (param->pixel_format == OrbisPngDecPixelFormat::B8G8R8A8) {
+    EMULATOR_TRACE;
         png_set_bgr(pngh->png_ptr);
     }
     if (color_type == OrbisPngDecColorSpace::Rgb ||
@@ -166,8 +168,10 @@ s32 PS4_SYSV_ABI scePngDecDecode(OrbisPngDecHandle handle, const OrbisPngDecDeco
     const s32 stride = param->image_pitch > 0 ? param->image_pitch : horizontal_bytes;
 
     for (int j = 0; j < pass; j++) {
+    EMULATOR_TRACE;
         auto ptr = reinterpret_cast<png_bytep>(param->image_mem_addr);
         for (int y = 0; y < height; y++) {
+    EMULATOR_TRACE;
             png_read_row(pngh->png_ptr, ptr, nullptr);
             ptr += stride;
         }

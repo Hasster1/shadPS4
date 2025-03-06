@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <sirit/sirit.h>
 #include "shader_recompiler/backend/spirv/emit_spirv_quad_rect.h"
@@ -44,15 +45,18 @@ struct QuadRectListEmitter : public Sirit::Module {
 
     /// Emits tessellation control shader for interpolating the 4th vertex of rectange primitive
     void EmitRectListTCS() {
+    EMULATOR_TRACE;
         DefineEntry(spv::ExecutionModel::TessellationControl);
 
         // Set passthrough tessellation factors
         const Id output_float_id{TypePointer(spv::StorageClass::Output, float_id)};
         for (int i = 0; i < 4; i++) {
+    EMULATOR_TRACE;
             const Id ptr{OpAccessChain(output_float_id, gl_tess_level_outer, Int(i))};
             OpStore(ptr, float_one);
         }
         for (int i = 0; i < 2; i++) {
+    EMULATOR_TRACE;
             const Id ptr{OpAccessChain(output_float_id, gl_tess_level_inner, Int(i))};
             OpStore(ptr, float_one);
         }
@@ -64,11 +68,13 @@ struct QuadRectListEmitter : public Sirit::Module {
         // Load positions
         std::array<Id, 3> pos;
         for (int i = 0; i < 3; i++) {
+    EMULATOR_TRACE;
             pos[i] = OpLoad(vec4_id, OpAccessChain(input_vec4, gl_in, Int(i), int_zero));
         }
 
         std::array<Id, 3> point_coord_equal;
         for (int i = 0; i < 3; i++) {
+    EMULATOR_TRACE;
             // point_coord_equal[i] = equal(gl_in[i].gl_Position.xy, gl_in[(i + 1) %
             // 3].gl_Position.xy);
             const Id pos_l_xy{OpVectorShuffle(vec2_id, pos[i], pos[i], 0, 1)};
@@ -79,6 +85,7 @@ struct QuadRectListEmitter : public Sirit::Module {
         std::array<Id, 3> bary_coord;
         std::array<Id, 3> is_edge_vertex;
         for (int i = 0; i < 3; i++) {
+    EMULATOR_TRACE;
             // bool xy_equal = point_coord_equal[i].x && point_coord_equal[(i + 2) % 3].y;
             const Id xy_equal{
                 OpLogicalAnd(bool_id, OpCompositeExtract(bool_id, point_coord_equal[i], 0),
@@ -118,6 +125,7 @@ struct QuadRectListEmitter : public Sirit::Module {
 
         // Set attributes
         for (int i = 0; i < inputs.size(); i++) {
+    EMULATOR_TRACE;
             // vec4 in_paramN3 = interpolate(bary_coord, in_paramN[0], in_paramN[1], in_paramN[2]);
             const Id v0{OpLoad(vec4_id, OpAccessChain(input_vec4, inputs[i], Int(0)))};
             const Id v1{OpLoad(vec4_id, OpAccessChain(input_vec4, inputs[i], Int(1)))};
@@ -144,10 +152,12 @@ struct QuadRectListEmitter : public Sirit::Module {
         // Set passthrough tessellation factors
         const Id output_float{TypePointer(spv::StorageClass::Output, float_id)};
         for (int i = 0; i < 4; i++) {
+    EMULATOR_TRACE;
             const Id ptr{OpAccessChain(output_float, gl_tess_level_outer, Int(i))};
             OpStore(ptr, float_one);
         }
         for (int i = 0; i < 2; i++) {
+    EMULATOR_TRACE;
             const Id ptr{OpAccessChain(output_float, gl_tess_level_inner, Int(i))};
             OpStore(ptr, float_one);
         }
@@ -163,6 +173,7 @@ struct QuadRectListEmitter : public Sirit::Module {
         OpStore(OpAccessChain(output_vec4, gl_out, invocation_id, Int(0)), in_position);
 
         for (int i = 0; i < inputs.size(); i++) {
+    EMULATOR_TRACE;
             // out_paramN[gl_InvocationID] = in_paramN[gl_InvocationID];
             const Id in_param{OpLoad(vec4_id, OpAccessChain(input_vec4, inputs[i], index))};
             OpStore(OpAccessChain(output_vec4, outputs[i], invocation_id), in_param);
@@ -191,6 +202,7 @@ struct QuadRectListEmitter : public Sirit::Module {
 
         // out_paramN = in_paramN[index];
         for (int i = 0; i < inputs.size(); i++) {
+    EMULATOR_TRACE;
             const Id param{OpLoad(vec4_id, OpAccessChain(input_vec4, inputs[i], index))};
             OpStore(outputs[i], param);
         }
@@ -254,6 +266,7 @@ private:
             gl_per_vertex = AddOutput(gl_per_vertex_type);
         }
         for (int i = 0; i < fs_info.num_inputs; i++) {
+    EMULATOR_TRACE;
             const auto& input = fs_info.inputs[i];
             if (input.IsDefault()) {
                 continue;
@@ -277,6 +290,7 @@ private:
         gl_in = AddInput(gl_per_vertex_array);
         const Id float_arr{TypeArray(vec4_id, Int(32))};
         for (int i = 0; i < fs_info.num_inputs; i++) {
+    EMULATOR_TRACE;
             const auto& input = fs_info.inputs[i];
             if (input.IsDefault()) {
                 continue;

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include "common/alignment.h"
@@ -45,11 +46,19 @@ BufferCache::BufferCache(const Vulkan::Instance& instance_, Vulkan::Scheduler& s
 BufferCache::~BufferCache() = default;
 
 void BufferCache::InvalidateMemory(VAddr device_addr, u64 size) {
+
+    //CRASH
+
+    
+
+    EMULATOR_TRACE;
     const bool is_tracked = IsRegionRegistered(device_addr, size);
     if (is_tracked) {
         // Mark the page as CPU modified to stop tracking writes.
         memory_tracker.MarkRegionAsCpuModified(device_addr, size);
     }
+
+    
 }
 
 void BufferCache::DownloadBufferMemory(Buffer& buffer, VAddr device_addr, u64 size) {
@@ -76,6 +85,7 @@ void BufferCache::DownloadBufferMemory(Buffer& buffer, VAddr device_addr, u64 si
     }
     const auto [staging, offset] = staging_buffer.Map(total_size_bytes);
     for (auto& copy : copies) {
+    EMULATOR_TRACE;
         // Modify copies to have the staging offset in mind
         copy.dstOffset += offset;
     }
@@ -85,6 +95,7 @@ void BufferCache::DownloadBufferMemory(Buffer& buffer, VAddr device_addr, u64 si
     cmdbuf.copyBuffer(buffer.buffer, staging_buffer.Handle(), copies);
     scheduler.Finish();
     for (const auto& copy : copies) {
+    EMULATOR_TRACE;
         const VAddr copy_device_addr = buffer.CpuAddr() + copy.srcOffset;
         const u64 dst_offset = copy.dstOffset - offset;
         std::memcpy(std::bit_cast<u8*>(copy_device_addr), staging + dst_offset, copy.size);
@@ -122,6 +133,7 @@ void BufferCache::BindVertexBuffers(const Vulkan::GraphicsPipeline& pipeline) {
     // Build list of ranges covering the requested buffers
     Vulkan::VertexInputs<BufferRange> ranges{};
     for (const auto& buffer : guest_buffers) {
+    EMULATOR_TRACE;
         if (buffer.GetSize() > 0) {
             ranges.emplace_back(buffer.base_address, buffer.base_address + buffer.GetSize());
         }
@@ -135,6 +147,7 @@ void BufferCache::BindVertexBuffers(const Vulkan::GraphicsPipeline& pipeline) {
         });
         ranges_merged.emplace_back(ranges[0]);
         for (auto range : ranges) {
+    EMULATOR_TRACE;
             auto& prev_range = ranges_merged.back();
             if (prev_range.end_address < range.base_address) {
                 ranges_merged.emplace_back(range);
@@ -146,6 +159,7 @@ void BufferCache::BindVertexBuffers(const Vulkan::GraphicsPipeline& pipeline) {
 
     // Map buffers for merged ranges
     for (auto& range : ranges_merged) {
+    EMULATOR_TRACE;
         const auto [buffer, offset] = ObtainBuffer(range.base_address, range.GetSize(), false);
         range.vk_buffer = buffer->buffer;
         range.offset = offset;
@@ -159,6 +173,7 @@ void BufferCache::BindVertexBuffers(const Vulkan::GraphicsPipeline& pipeline) {
     const auto null_buffer =
         instance.IsNullDescriptorSupported() ? VK_NULL_HANDLE : GetBuffer(NULL_BUFFER_ID).Handle();
     for (const auto& buffer : guest_buffers) {
+    EMULATOR_TRACE;
         if (buffer.GetSize() > 0) {
             const auto host_buffer_info =
                 std::ranges::find_if(ranges_merged, [&](const BufferRange& range) {
@@ -266,6 +281,7 @@ std::pair<Buffer*, u32> BufferCache::ObtainBuffer(VAddr device_addr, u32 size, b
     static constexpr u64 StreamThreshold = CACHING_PAGESIZE;
     const bool is_gpu_dirty = memory_tracker.IsRegionGpuModified(device_addr, size);
     if (!is_written && size <= StreamThreshold && !is_gpu_dirty) {
+    EMULATOR_TRACE;
         const u64 offset = stream_buffer.Copy(device_addr, size, instance.UniformMinAlignment());
         return {&stream_buffer, offset};
     }
@@ -308,6 +324,7 @@ bool BufferCache::IsRegionRegistered(VAddr addr, size_t size) {
     const VAddr end_addr = addr + size;
     const u64 page_end = Common::DivCeil(end_addr, CACHING_PAGESIZE);
     for (u64 page = addr >> CACHING_PAGEBITS; page < page_end;) {
+    EMULATOR_TRACE;
         const BufferId buffer_id = page_table[page];
         if (!buffer_id) {
             ++page;
@@ -384,6 +401,7 @@ BufferCache::OverlapResult BufferCache::ResolveOverlaps(VAddr device_addr, u32 w
     }
     for (; device_addr >> CACHING_PAGEBITS < Common::DivCeil(end, CACHING_PAGESIZE);
          device_addr += CACHING_PAGESIZE) {
+    EMULATOR_TRACE;
         const BufferId overlap_id = page_table[device_addr >> CACHING_PAGEBITS];
         if (!overlap_id) {
             continue;
@@ -495,6 +513,7 @@ BufferId BufferCache::CreateBuffer(VAddr device_addr, u32 wanted_size) {
     scheduler.EndRendering();
     cmdbuf.fillBuffer(new_buffer.buffer, 0, size_bytes, 0);
     for (const BufferId overlap_id : overlap.ids) {
+    EMULATOR_TRACE;
         JoinOverlap(new_buffer_id, overlap_id, !overlap.has_stream_leap);
     }
     Register(new_buffer_id);
@@ -518,6 +537,7 @@ void BufferCache::ChangeRegister(BufferId buffer_id) {
     const u64 page_begin = device_addr_begin / CACHING_PAGESIZE;
     const u64 page_end = Common::DivCeil(device_addr_end, CACHING_PAGESIZE);
     for (u64 page = page_begin; page != page_end; ++page) {
+    EMULATOR_TRACE;
         if constexpr (insert) {
             page_table[page] = buffer_id;
         } else {
@@ -551,6 +571,7 @@ void BufferCache::SynchronizeBuffer(Buffer& buffer, VAddr device_addr, u32 size,
     if (total_size_bytes < StagingBufferSize) {
         const auto [staging, offset] = staging_buffer.Map(total_size_bytes);
         for (auto& copy : copies) {
+    EMULATOR_TRACE;
             u8* const src_pointer = staging + copy.srcOffset;
             const VAddr device_addr = buffer.CpuAddr() + copy.dstOffset;
             std::memcpy(src_pointer, std::bit_cast<const u8*>(device_addr), copy.size);
@@ -570,6 +591,7 @@ void BufferCache::SynchronizeBuffer(Buffer& buffer, VAddr device_addr, u32 size,
         src_buffer = temp_buffer.Handle();
         u8* const staging = temp_buffer.mapped_data.data();
         for (auto& copy : copies) {
+    EMULATOR_TRACE;
             u8* const src_pointer = staging + copy.srcOffset;
             const VAddr device_addr = buffer.CpuAddr() + copy.dstOffset;
             std::memcpy(src_pointer, std::bit_cast<const u8*>(device_addr), copy.size);
@@ -632,6 +654,7 @@ bool BufferCache::SynchronizeBufferFromImage(Buffer& buffer, VAddr device_addr, 
     const u32 num_layers = image.info.resources.layers;
     const u32 max_offset = offset + size;
     for (u32 m = 0; m < image.info.resources.levels; m++) {
+    EMULATOR_TRACE;
         const u32 width = std::max(image.info.size.width >> m, 1u);
         const u32 height = std::max(image.info.size.height >> m, 1u);
         const u32 depth =
@@ -698,10 +721,15 @@ bool BufferCache::SynchronizeBufferFromImage(Buffer& buffer, VAddr device_addr, 
 }
 
 void BufferCache::DeleteBuffer(BufferId buffer_id) {
+
+    //MOPE
+
     Buffer& buffer = slot_buffers[buffer_id];
     Unregister(buffer_id);
     scheduler.DeferOperation([this, buffer_id] { slot_buffers.erase(buffer_id); });
     buffer.is_deleted = true;
+
+    
 }
 
 } // namespace VideoCore

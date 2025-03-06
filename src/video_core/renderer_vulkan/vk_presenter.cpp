@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/config.h"
 #include "common/debug.h"
@@ -26,6 +27,7 @@
 namespace Vulkan {
 
 bool CanBlitToSwapchain(const vk::PhysicalDevice physical_device, vk::Format format) {
+    EMULATOR_TRACE;
     const vk::FormatProperties props{physical_device.getFormatProperties(format)};
     return static_cast<bool>(props.optimalTilingFeatures & vk::FormatFeatureFlagBits::eBlitDst);
 }
@@ -305,6 +307,7 @@ Presenter::Presenter(Frontend::WindowSDL& window_, AmdGpu::Liverpool* liverpool_
     // Create presentation frames.
     present_frames.resize(num_images);
     for (u32 i = 0; i < num_images; i++) {
+    EMULATOR_TRACE;
         Frame& frame = present_frames[i];
         auto [fence_result, fence] =
             device.createFence({.flags = vk::FenceCreateFlagBits::eSignaled});
@@ -324,6 +327,7 @@ Presenter::~Presenter() {
     draw_scheduler.Finish();
     const vk::Device device = instance.GetDevice();
     for (auto& frame : present_frames) {
+    EMULATOR_TRACE;
         vmaDestroyImage(instance.GetAllocator(), frame.image, frame.allocation);
         device.destroyImageView(frame.image_view);
         device.destroyFence(frame.present_done);
@@ -481,6 +485,7 @@ bool Presenter::ShowSplash(Frame* frame /*= nullptr*/) {
             info.type = vk::ImageType::e2D;
             info.size =
                 VideoCore::Extent3D{splash->GetImageInfo().width, splash->GetImageInfo().height, 1};
+    EMULATOR_TRACE;
             info.pitch = splash->GetImageInfo().width;
             info.guest_address = VAddr(splash->GetImageData().data());
             info.guest_size = splash->GetImageData().size();
@@ -576,6 +581,7 @@ Frame* Presenter::PrepareFrameInternal(VideoCore::ImageId image_id, bool is_eop)
     scheduler.EndRendering();
     const auto cmdbuf = scheduler.CommandBuffer();
     if (Config::getVkHostMarkersEnabled()) {
+    EMULATOR_TRACE;
         const auto label = fmt::format("PrepareFrameInternal:{}", image_id.index);
         cmdbuf.beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT{
             .pLabelName = label.c_str(),
@@ -721,6 +727,7 @@ Frame* Presenter::PrepareFrameInternal(VideoCore::ImageId image_id, bool is_eop)
 void Presenter::Present(Frame* frame, bool is_reusing_frame) {
     // Free the frame for reuse
     const auto free_frame = [&] {
+    EMULATOR_TRACE;
         if (!is_reusing_frame) {
             last_submit_frame = frame;
             std::scoped_lock fl{free_mutex};
@@ -758,6 +765,7 @@ void Presenter::Present(Frame* frame, bool is_reusing_frame) {
     const auto cmdbuf = scheduler.CommandBuffer();
 
     if (Config::getVkHostMarkersEnabled()) {
+    EMULATOR_TRACE;
         cmdbuf.beginDebugUtilsLabelEXT(vk::DebugUtilsLabelEXT{
             .pLabelName = "Present",
         });
@@ -887,6 +895,7 @@ Frame* Presenter::GetRenderFrame() {
     // Wait for free presentation frames
     Frame* frame;
     {
+    EMULATOR_TRACE;
         std::unique_lock lock{free_mutex};
         free_cv.wait(lock, [this] { return !free_queue.empty(); });
         LOG_DEBUG(Render_Vulkan, "Got render frame, remaining {}", free_queue.size() - 1);
@@ -906,10 +915,12 @@ Frame* Presenter::GetRenderFrame() {
 
     // Wait for the presentation to be finished so all frame resources are free
     while (wait() != vk::Result::eSuccess) {
+    EMULATOR_TRACE;
         ASSERT_MSG(result != vk::Result::eErrorDeviceLost,
                    "Device lost during waiting for a frame");
         // Retry if the waiting times out
         if (result == vk::Result::eTimeout) {
+    EMULATOR_TRACE;
             continue;
         }
     }

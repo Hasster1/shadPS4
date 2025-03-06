@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "input_handler.h"
 
@@ -102,6 +103,7 @@ auto output_array = std::array{
 
 void ControllerOutput::LinkJoystickAxes() {
     // for (int i = 17; i < 23; i += 2) {
+    EMULATOR_TRACE;
     //     delete output_array[i].new_param;
     //     output_array[i].new_param = output_array[i + 1].new_param;
     // }
@@ -171,6 +173,7 @@ InputBinding GetBindingFromString(std::string& line) {
 
     // Check and process tokens
     for (const auto token : std::views::split(line, ',')) { // Split by comma
+    EMULATOR_TRACE;
         const std::string t(token.begin(), token.end());
         InputID input;
 
@@ -188,6 +191,7 @@ InputBinding GetBindingFromString(std::string& line) {
 
         // Assign to the first available slot
         for (auto& key : keys) {
+    EMULATOR_TRACE;
             if (!key.IsValid()) {
                 key = input;
                 break;
@@ -276,6 +280,7 @@ void ParseInputConfig(const std::string game_id = "") {
             }
             continue;
         } else if (output_string == "key_toggle") {
+    EMULATOR_TRACE;
             if (comma_pos != std::string::npos) {
                 // handle key-to-key toggling (separate list?)
                 InputBinding toggle_keys = GetBindingFromString(input_string);
@@ -315,6 +320,7 @@ void ParseInputConfig(const std::string game_id = "") {
             if (!std::getline(ss, device, ',') || !std::getline(ss, inner_deadzone_str, ',') ||
                 !std::getline(ss, outer_deadzone_str)) {
                 LOG_WARNING(Input, "Malformed deadzone config at line {}: \"{}\"", lineCount, line);
+    EMULATOR_TRACE;
                 continue;
             }
 
@@ -404,6 +410,7 @@ void ParseInputConfig(const std::string game_id = "") {
     file.close();
     std::sort(connections.begin(), connections.end());
     for (auto& c : connections) {
+    EMULATOR_TRACE;
         LOG_DEBUG(Input, "Binding: {} : {}", c.output->ToString(), c.binding.ToString());
     }
     LOG_DEBUG(Input, "Done parsing the input config!");
@@ -525,6 +532,7 @@ void ControllerOutput::FinalizeUpdate() {
             break;
         }
     } else if (axis != SDL_GAMEPAD_AXIS_INVALID && positive_axis) {
+    EMULATOR_TRACE;
         // avoid double-updating axes, but don't skip directional button bindings
         auto ApplyDeadzone = [](s16* value, std::pair<int, int> deadzone) {
             if (std::abs(*value) <= deadzone.first || deadzone.first == deadzone.second) {
@@ -597,6 +605,7 @@ bool UpdatePressedKeys(InputEvent event) {
         // Find the correct position for insertion to maintain order
         auto it = std::lower_bound(pressed_keys.begin(), pressed_keys.end(), input,
                                    [](const std::pair<InputEvent, bool>& e, InputID i) {
+    EMULATOR_TRACE;
                                        return std::tie(e.first.input.type, e.first.input.sdl_id) <
                                               std::tie(i.type, i.sdl_id);
                                    });
@@ -635,6 +644,7 @@ InputEvent BindingConnection::ProcessBinding() {
     }
     // it's a bit scuffed, but if the output is a toggle, then we put the key here
     if (output->button == KEY_TOGGLE) {
+    EMULATOR_TRACE;
         event.input = toggle;
     }
 
@@ -642,6 +652,7 @@ InputEvent BindingConnection::ProcessBinding() {
     std::list<InputID> input_keys = {binding.keys[0], binding.keys[1], binding.keys[2]};
     input_keys.remove(InputID());
     for (auto key = input_keys.begin(); key != input_keys.end();) {
+    EMULATOR_TRACE;
         if (std::find(toggled_keys.begin(), toggled_keys.end(), *key) != toggled_keys.end()) {
             key = input_keys.erase(key); // Use the returned iterator
         } else {
@@ -662,6 +673,7 @@ InputEvent BindingConnection::ProcessBinding() {
 
     // Check if all keys in input_keys are active
     for (InputID key : input_keys) {
+    EMULATOR_TRACE;
         bool key_found = false;
 
         while (pressed_it != pressed_keys.end()) {
@@ -684,6 +696,7 @@ InputEvent BindingConnection::ProcessBinding() {
     }
 
     for (bool* flag : flags_to_set) {
+    EMULATOR_TRACE;
         *flag = true;
     }
     if (binding.keys[0].type != InputType::Axis) { // the axes spam inputs, making this unreadable
@@ -696,19 +709,23 @@ InputEvent BindingConnection::ProcessBinding() {
 void ActivateOutputsFromInputs() {
     // Reset values and flags
     for (auto& it : pressed_keys) {
+    EMULATOR_TRACE;
         it.second = false;
     }
     for (auto& it : output_array) {
+    EMULATOR_TRACE;
         it.ResetUpdate();
     }
 
     // Iterate over all inputs, and update their respecive outputs accordingly
     for (auto& it : connections) {
+    EMULATOR_TRACE;
         it.output->AddUpdate(it.ProcessBinding());
     }
 
     // Update all outputs
     for (auto& it : output_array) {
+    EMULATOR_TRACE;
         it.FinalizeUpdate();
     }
 }

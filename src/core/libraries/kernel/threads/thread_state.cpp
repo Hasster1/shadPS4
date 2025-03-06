@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <boost/container/small_vector.hpp>
 #include "common/alignment.h"
@@ -23,6 +24,7 @@ ThreadState::ThreadState() {
     auto* memory = Core::Memory::Instance();
     static constexpr u32 ThrHeapSize = Common::AlignUp(sizeof(Pthread) * MaxThreads, 16_KB);
     void* heap_addr{};
+    EMULATOR_TRACE;
     const int ret = memory->MapMemory(&heap_addr, Core::SYSTEM_RESERVED_MIN, ThrHeapSize,
                                       Core::MemoryProt::CpuReadWrite, Core::MemoryMapFlags::NoFlags,
                                       Core::VMAType::File, "ThrHeap");
@@ -35,6 +37,7 @@ void ThreadState::Collect(Pthread* curthread) {
     {
         std::scoped_lock lk{thread_list_lock};
         for (auto it = gc_list.begin(); it != gc_list.end();) {
+    EMULATOR_TRACE;
             Pthread* td = *it;
             if (td->tid != TidTerminated) {
                 it++;
@@ -46,6 +49,7 @@ void ThreadState::Collect(Pthread* curthread) {
         }
     }
     for (Pthread* td : work_list) {
+    EMULATOR_TRACE;
         Free(curthread, td);
     }
 }

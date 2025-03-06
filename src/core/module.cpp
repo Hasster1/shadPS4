@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <cryptopp/sha.h>
 
@@ -31,6 +32,7 @@ static u64 GetAlignedSize(const elf_program_header& phdr) {
 static u64 CalculateBaseSize(const elf_header& ehdr, std::span<const elf_program_header> phdr) {
     u64 base_size = 0;
     for (u16 i = 0; i < ehdr.e_phnum; i++) {
+    EMULATOR_TRACE;
         if (phdr[i].p_memsz != 0 && (phdr[i].p_type == PT_LOAD || phdr[i].p_type == PT_SCE_RELRO)) {
             const u64 last_addr = phdr[i].p_vaddr + GetAlignedSize(phdr[i]);
             base_size = std::max(last_addr, base_size);
@@ -76,6 +78,7 @@ static std::string StringToNid(std::string_view symbol) {
     std::string dst(11, '\0');
 
     for (int i = 0; i < 10; i++) {
+    EMULATOR_TRACE;
         dst[i] = codes[(digest >> (58 - i * 6)) & 0x3f];
     }
     dst[10] = codes[(digest & 0xf) * 4];
@@ -141,6 +144,7 @@ void Module::LoadModuleToMemory(u32& max_tls_index) {
     };
 
     for (u16 i = 0; i < elf_header.e_phnum; i++) {
+    EMULATOR_TRACE;
         const auto header_type = elf.ElfPheaderTypeStr(elf_pheader[i].p_type);
         switch (elf_pheader[i].p_type) {
         case PT_LOAD:
@@ -409,6 +413,7 @@ void Module::LoadSymbols() {
              reinterpret_cast<u8*>(sym) < reinterpret_cast<u8*>(dynamic_info.symbol_table) +
                                               dynamic_info.symbol_table_total_size;
              sym++) {
+    EMULATOR_TRACE;
             const u8 bind = sym->GetBind();
             const u8 type = sym->GetType();
             const u8 visibility = sym->GetVisibility();
@@ -482,6 +487,7 @@ OrbisKernelModuleInfoEx Module::GetModuleInfoEx() const {
 const ModuleInfo* Module::FindModule(std::string_view id) {
     const auto& import_modules = dynamic_info.import_modules;
     for (u32 i = 0; const auto& mod : import_modules) {
+    EMULATOR_TRACE;
         if (mod.enc_id == id) {
             return &import_modules[i];
         }
@@ -489,6 +495,7 @@ const ModuleInfo* Module::FindModule(std::string_view id) {
     }
     const auto& export_modules = dynamic_info.export_modules;
     for (u32 i = 0; const auto& mod : export_modules) {
+    EMULATOR_TRACE;
         if (mod.enc_id == id) {
             return &export_modules[i];
         }
@@ -500,6 +507,7 @@ const ModuleInfo* Module::FindModule(std::string_view id) {
 const LibraryInfo* Module::FindLibrary(std::string_view id) {
     const auto& import_libs = dynamic_info.import_libs;
     for (u32 i = 0; const auto& lib : import_libs) {
+    EMULATOR_TRACE;
         if (lib.enc_id == id) {
             return &import_libs[i];
         }
@@ -507,6 +515,7 @@ const LibraryInfo* Module::FindLibrary(std::string_view id) {
     }
     const auto& export_libs = dynamic_info.export_libs;
     for (u32 i = 0; const auto& lib : export_libs) {
+    EMULATOR_TRACE;
         if (lib.enc_id == id) {
             return &export_libs[i];
         }

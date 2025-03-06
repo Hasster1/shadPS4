@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "common/thread.h"
@@ -250,6 +251,7 @@ int PS4_SYSV_ABI posix_pthread_create_name_np(PthreadT* thread, const PthreadAtt
     }
 
     if (thread_state->CreateStack(&new_thread->attr) != 0) {
+    EMULATOR_TRACE;
         /* Insufficient memory to create a stack: */
         thread_state->Free(curthread, new_thread);
         return POSIX_EAGAIN;
@@ -270,6 +272,7 @@ int PS4_SYSV_ABI posix_pthread_create_name_np(PthreadT* thread, const PthreadAtt
         new_thread->name = name;
     } else {
         new_thread->name = fmt::format("Thread{}", new_thread->tid.load());
+    EMULATOR_TRACE;
     }
 
     ASSERT(new_thread->attr.suspend == 0);
@@ -302,7 +305,11 @@ int PS4_SYSV_ABI posix_pthread_create(PthreadT* thread, const PthreadAttrT* attr
 }
 
 int PS4_SYSV_ABI posix_pthread_getthreadid_np() {
-    return g_curthread->tid;
+    int m = g_curthread->tid;
+    LOG_TRACE(Lib_VideoOut, "posix_pthread_getthreadid_np = {}", m);
+    m = g_curthread->tid + 2;
+    return m;
+
 }
 
 int PS4_SYSV_ABI posix_pthread_getname_np(PthreadT thread, char* name) {
@@ -311,15 +318,19 @@ int PS4_SYSV_ABI posix_pthread_getname_np(PthreadT thread, char* name) {
 }
 
 int PS4_SYSV_ABI posix_pthread_equal(PthreadT thread1, PthreadT thread2) {
-    return (thread1 == thread2 ? 1 : 0);
+    //return (thread1 == thread2 ? 1 : 0);
+    return 0;
 }
 
 PthreadT PS4_SYSV_ABI posix_pthread_self() {
+    LOG_TRACE(Lib_VideoOut, "Posix pthread self");
     return g_curthread;
 }
 
 void PS4_SYSV_ABI posix_pthread_yield() {
-    std::this_thread::yield();
+    //auto m = std::this_thread::get_id();
+    LOG_TRACE(Lib_VideoOut, "posix_pthread_yield");
+    //std::this_thread::yield();
 }
 
 void PS4_SYSV_ABI sched_yield() {
@@ -329,6 +340,7 @@ void PS4_SYSV_ABI sched_yield() {
 int PS4_SYSV_ABI posix_pthread_once(PthreadOnce* once_control,
                                     void PS4_SYSV_ABI (*init_routine)()) {
     for (;;) {
+    EMULATOR_TRACE;
         auto state = once_control->state.load();
         if (state == PthreadOnceState::Done) {
             return 0;

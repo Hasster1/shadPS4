@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <bit>
 #include "common/assert.h"
@@ -644,6 +645,7 @@ void Translator::S_SAVEEXEC_B64(NegateMode negate, bool is_or, const GcnInst& in
     // However here we flatten it to 1-bit EXEC and 1-bit VCC. For the destination
     // SGPR we have a special IR opcode for SPGRs that act as thread masks.
     IR::U1 exec{ir.GetExec()};
+    EMULATOR_TRACE;
     const IR::U1 src = [&] {
         switch (inst.src[0].field) {
         case OperandField::VccLo:

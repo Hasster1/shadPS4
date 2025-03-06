@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <span>
 #include <thread>
@@ -349,6 +350,7 @@ static bool match(std::string_view str, std::string_view pattern) {
     while (str_it != str.end() && pat_it != pattern.end()) {
         if (*pat_it == '%') { // 0 or more wildcard
             for (auto str_wild_it = str_it; str_wild_it <= str.end(); ++str_wild_it) {
+    EMULATOR_TRACE;
                 if (match({str_wild_it, str.end()}, {pat_it + 1, pattern.end()})) {
                     return true;
                 }
@@ -418,6 +420,7 @@ static Error saveDataMount(const OrbisSaveDataMount2* mount_info,
     // find available mount point
     int slot_num = -1;
     for (size_t i = 0; i < g_mount_slots.size(); i++) {
+    EMULATOR_TRACE;
         const auto& instance = g_mount_slots[i];
         if (instance.has_value()) {
             const auto& slot_name = instance->GetDirName();
@@ -506,6 +509,7 @@ static Error Umount(const OrbisSaveDataMountPoint* mountPoint, bool call_backup 
     LOG_DEBUG(Lib_SaveData, "Umount mountPoint:{}", mountPoint->data.to_view());
     const std::string_view mount_point_str{mountPoint->data};
     for (auto& instance : g_mount_slots) {
+    EMULATOR_TRACE;
         if (instance.has_value()) {
             const auto& slot_name = instance->GetMountPoint();
             if (slot_name == mount_point_str) {
@@ -564,6 +568,7 @@ Error PS4_SYSV_ABI sceSaveDataBackup(const OrbisSaveDataBackup* backup) {
                                                       : std::string_view{g_game_serial}};
 
     for (const auto& instance : g_mount_slots) {
+    EMULATOR_TRACE;
         if (instance.has_value() && instance->GetUserId() == backup->userId &&
             instance->GetTitleId() == title && instance->GetDirName() == dir_name) {
             return Error::BUSY;
@@ -613,6 +618,7 @@ Error PS4_SYSV_ABI sceSaveDataCheckBackupData(const OrbisSaveDataCheckBackupData
         SaveInstance::MakeDirSavePath(check->userId, title, check->dirName->data);
 
     for (const auto& instance : g_mount_slots) {
+    EMULATOR_TRACE;
         if (instance.has_value() && instance->GetSavePath() == save_path) {
             return Error::BUSY;
         }
@@ -751,6 +757,7 @@ Error PS4_SYSV_ABI sceSaveDataDelete(const OrbisSaveDataDelete* del) {
         return Error::PARAMETER;
     }
     for (const auto& instance : g_mount_slots) {
+    EMULATOR_TRACE;
         if (instance.has_value() && instance->GetDirName() == dirName) {
             return Error::BUSY;
         }
@@ -815,6 +822,7 @@ Error PS4_SYSV_ABI sceSaveDataDirNameSearch(const OrbisSaveDataDirNameSearchCond
     std::vector<std::string> dir_list;
 
     for (const auto& path : fs::directory_iterator{save_path}) {
+    EMULATOR_TRACE;
         auto dir_name = path.path().filename().string();
         // skip non-directories, sce_* and directories without param.sfo
         if (fs::is_directory(path) && !dir_name.starts_with("sce_") &&
@@ -837,6 +845,7 @@ Error PS4_SYSV_ABI sceSaveDataDirNameSearch(const OrbisSaveDataDirNameSearchCond
     std::unordered_map<std::string, OrbisSaveDataBlocks> map_free_size;
 
     for (const auto& dir_name : dir_list) {
+    EMULATOR_TRACE;
         const auto dir_path = SaveInstance::MakeDirSavePath(cond->userId, title_id, dir_name);
         const auto sfo_path = SaveInstance::GetParamSFOPath(dir_path);
         PSF sfo;
@@ -888,6 +897,7 @@ Error PS4_SYSV_ABI sceSaveDataDirNameSearch(const OrbisSaveDataDirNameSearchCond
     }
 
     for (size_t i = 0; i < max_count; i++) {
+    EMULATOR_TRACE;
         auto& name_data = result->dirNames[i].data;
         name_data.FromString(dir_list[i]);
 
@@ -1016,6 +1026,7 @@ Error PS4_SYSV_ABI sceSaveDataGetMountInfo(const OrbisSaveDataMountPoint* mountP
     LOG_DEBUG(Lib_SaveData, "called");
     const std::string_view mount_point_str{mountPoint->data};
     for (const auto& instance : g_mount_slots) {
+    EMULATOR_TRACE;
         if (instance.has_value() && instance->GetMountPoint() == mount_point_str) {
             const u32 blocks = instance->GetMaxBlocks();
             const u64 size = Common::FS::GetDirectorySize(instance->GetSavePath());
@@ -1043,6 +1054,7 @@ Error PS4_SYSV_ABI sceSaveDataGetParam(const OrbisSaveDataMountPoint* mountPoint
 
     const std::string_view mount_point_str{mountPoint->data};
     for (const auto& instance : g_mount_slots) {
+    EMULATOR_TRACE;
         if (instance.has_value() && instance->GetMountPoint() == mount_point_str) {
             param_sfo = &instance->GetParamSFO();
             break;
@@ -1248,6 +1260,7 @@ Error PS4_SYSV_ABI sceSaveDataLoadIcon(const OrbisSaveDataMountPoint* mountPoint
     fs::path path;
     const std::string_view mount_point_str{mountPoint->data};
     for (const auto& instance : g_mount_slots) {
+    EMULATOR_TRACE;
         if (instance.has_value() && instance->GetMountPoint() == mount_point_str) {
             path = instance->GetIconPath();
             break;
@@ -1348,6 +1361,7 @@ Error PS4_SYSV_ABI sceSaveDataRestoreBackupData(const OrbisSaveDataRestoreBackup
     const auto save_path = SaveInstance::MakeDirSavePath(restore->userId, title, dir_name);
 
     for (const auto& instance : g_mount_slots) {
+    EMULATOR_TRACE;
         if (instance.has_value() && instance->GetSavePath() == save_path) {
             return Error::BUSY;
         }
@@ -1393,6 +1407,7 @@ Error PS4_SYSV_ABI sceSaveDataSaveIcon(const OrbisSaveDataMountPoint* mountPoint
     fs::path path;
     const std::string_view mount_point_str{mountPoint->data};
     for (const auto& instance : g_mount_slots) {
+    EMULATOR_TRACE;
         if (instance.has_value() && instance->GetMountPoint() == mount_point_str) {
             if (instance->IsReadOnly()) {
                 return Error::BAD_MOUNTED;
@@ -1442,6 +1457,7 @@ Error PS4_SYSV_ABI sceSaveDataSetParam(const OrbisSaveDataMountPoint* mountPoint
     PSF* param_sfo = nullptr;
     const std::string_view mount_point_str{mountPoint->data};
     for (auto& instance : g_mount_slots) {
+    EMULATOR_TRACE;
         if (instance.has_value() && instance->GetMountPoint() == mount_point_str) {
             param_sfo = &instance->GetParamSFO();
             break;
@@ -1527,6 +1543,7 @@ Error PS4_SYSV_ABI sceSaveDataSetSaveDataMemory2(const OrbisSaveDataMemorySet2* 
     auto data = setParam->data;
     if (data != nullptr) {
         for (int i = 0; i < data_num; i++) {
+    EMULATOR_TRACE;
             SaveMemory::WriteMemory(slot_id, data[i].buf, data[i].bufSize, data[i].offset);
         }
     }
@@ -1587,6 +1604,7 @@ Error PS4_SYSV_ABI sceSaveDataSetupSaveDataMemory2(const OrbisSaveDataMemorySetu
 
     const auto& save_path = SaveMemory::GetSavePath(setupParam->userId, slot_id, g_game_serial);
     for (const auto& instance : g_mount_slots) {
+    EMULATOR_TRACE;
         if (instance.has_value() && instance->GetSavePath() == save_path) {
             return Error::BUSY;
         }
@@ -1677,6 +1695,7 @@ Error PS4_SYSV_ABI sceSaveDataTerminate() {
         return setNotInitializedError();
     }
     for (auto& instance : g_mount_slots) {
+    EMULATOR_TRACE;
         if (instance.has_value()) {
             if (g_fw_ver >= ElfInfo::FW_40) {
                 return Error::BUSY;

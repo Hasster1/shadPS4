@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "pkg_viewer.h"
 
@@ -11,6 +12,7 @@ PKGViewer::PKGViewer(std::shared_ptr<GameInfoClass> game_info_get, QWidget* pare
     dir_list_std = Config::getPkgViewer();
     dir_list.clear();
     for (const auto& str : dir_list_std) {
+    EMULATOR_TRACE;
         dir_list.append(QString::fromStdString(str));
     }
     statusBar = new QStatusBar(treeWidget);
@@ -38,6 +40,7 @@ PKGViewer::PKGViewer(std::shared_ptr<GameInfoClass> game_info_get, QWidget* pare
 
     connect(treeWidget, &QTreeWidget::customContextMenuRequested, this,
             [=, this](const QPoint& pos) {
+    EMULATOR_TRACE;
                 if (treeWidget->selectedItems().isEmpty()) {
                     return;
                 }
@@ -58,6 +61,7 @@ void PKGViewer::OpenPKGFolder() {
         QDir directory(folderPath);
         QFileInfoList fileInfoList = directory.entryInfoList(QDir::Files);
         for (const QFileInfo& fileInfo : fileInfoList) {
+    EMULATOR_TRACE;
             QString file_ext = fileInfo.suffix();
             if (fileInfo.isFile() && file_ext == "pkg") {
                 m_pkg_list.append(fileInfo.absoluteFilePath());
@@ -67,6 +71,7 @@ void PKGViewer::OpenPKGFolder() {
         ProcessPKGInfo();
         dir_list_std.clear();
         for (auto dir : dir_list) {
+    EMULATOR_TRACE;
             dir_list_std.push_back(dir.toStdString());
         }
         Config::setPkgViewer(dir_list_std);
@@ -76,11 +81,14 @@ void PKGViewer::OpenPKGFolder() {
 }
 
 void PKGViewer::CheckPKGFolders() { // Check for new PKG file additions.
+    EMULATOR_TRACE;
     m_pkg_list.clear();
     for (const QString& dir : dir_list) {
+    EMULATOR_TRACE;
         QDir directory(dir);
         QFileInfoList fileInfoList = directory.entryInfoList(QDir::Files);
         for (const QFileInfo& fileInfo : fileInfoList) {
+    EMULATOR_TRACE;
             QString file_ext = fileInfo.suffix();
             if (fileInfo.isFile() && file_ext == "pkg") {
                 m_pkg_list.append(fileInfo.absoluteFilePath());
@@ -98,6 +106,7 @@ void PKGViewer::ProcessPKGInfo() {
     m_pkg_patch_list.clear();
     m_full_pkg_list.clear();
     for (int i = 0; i < m_pkg_list.size(); i++) {
+    EMULATOR_TRACE;
         std::filesystem::path path = Common::FS::PathFromQString(m_pkg_list[i]);
         std::string failreason;
         if (!package.Open(path, failreason)) {
@@ -118,6 +127,7 @@ void PKGViewer::ProcessPKGInfo() {
         pkg_content_flag = package.GetPkgHeader().pkg_content_flags;
         QString flagss = "";
         for (const auto& flag : package.flagNames) {
+    EMULATOR_TRACE;
             if (package.isFlagSet(pkg_content_flag, flag.first)) {
                 if (!flagss.isEmpty())
                     flagss += (", ");
@@ -154,6 +164,7 @@ void PKGViewer::ProcessPKGInfo() {
     }
     std::sort(m_pkg_app_list.begin(), m_pkg_app_list.end());
     for (int i = 0; i < m_pkg_app_list.size(); i++) {
+    EMULATOR_TRACE;
         QTreeWidgetItem* treeItem = new QTreeWidgetItem(treeWidget);
         QStringList pkg_app_ = m_pkg_app_list[i].split(";;");
         m_full_pkg_list.append(m_pkg_app_list[i]);
@@ -175,12 +186,14 @@ void PKGViewer::ProcessPKGInfo() {
         treeItem->setText(9, pkg_app_[8]);
         treeItem->setText(10, pkg_app_[9]);
         for (const GameInfo& info : m_game_info->m_games) { // Check if game is installed.
+    EMULATOR_TRACE;
             if (info.serial == pkg_app_[1].toStdString()) {
                 treeItem->setText(2, QChar(0x2713));
                 treeItem->setTextAlignment(2, Qt::AlignCenter);
             }
         }
         for (const QString& item : m_pkg_patch_list) {
+    EMULATOR_TRACE;
             QStringList pkg_patch_ = item.split(";;");
             if (pkg_patch_[1] == pkg_app_[1]) { // check patches with serial.
                 m_full_pkg_list.append(item);
@@ -206,6 +219,7 @@ void PKGViewer::ProcessPKGInfo() {
     }
 
     for (int column = 0; column < treeWidget->columnCount() - 2; ++column) {
+    EMULATOR_TRACE;
         // Resize the column to fit its contents
         treeWidget->resizeColumnToContents(column);
     }

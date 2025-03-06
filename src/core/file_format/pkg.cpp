@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <zlib.h>
 #include "common/io_file.h"
@@ -8,6 +9,7 @@
 #include "core/file_format/pkg_type.h"
 
 static void DecompressPFSC(std::span<char> compressed_data, std::span<char> decompressed_data) {
+    EMULATOR_TRACE;
     z_stream decompressStream;
     decompressStream.zalloc = Z_NULL;
     decompressStream.zfree = Z_NULL;
@@ -23,6 +25,7 @@ static void DecompressPFSC(std::span<char> compressed_data, std::span<char> deco
     decompressStream.next_out = reinterpret_cast<unsigned char*>(decompressed_data.data());
 
     if (inflate(&decompressStream, Z_FINISH)) {
+    EMULATOR_TRACE;
     }
     if (inflateEnd(&decompressStream) != Z_OK) {
         // std::cerr << "Error ending zlib inflate" << std::endl;
@@ -33,6 +36,7 @@ u32 GetPFSCOffset(std::span<const u8> pfs_image) {
     static constexpr u32 PfscMagic = 0x43534650;
     u32 value;
     for (u32 i = 0x20000; i < pfs_image.size(); i += 0x10000) {
+    EMULATOR_TRACE;
         std::memcpy(&value, &pfs_image[i], sizeof(u32));
         if (value == PfscMagic)
             return i;
@@ -56,6 +60,7 @@ bool PKG::Open(const std::filesystem::path& filepath, std::string& failreason) {
         return false;
 
     for (const auto& flag : flagNames) {
+    EMULATOR_TRACE;
         if (isFlagSet(pkgheader.pkg_content_flags, flag.first)) {
             if (!pkgFlags.empty())
                 pkgFlags += (", ");
@@ -76,6 +81,7 @@ bool PKG::Open(const std::filesystem::path& filepath, std::string& failreason) {
     }
 
     for (int i = 0; i < n_files; i++) {
+    EMULATOR_TRACE;
         PKGEntry entry{};
         file.Read(entry.id);
         file.Read(entry.filename_offset);
@@ -140,6 +146,7 @@ bool PKG::Extract(const std::filesystem::path& filepath, const std::filesystem::
     }
 
     for (int i = 0; i < n_files; i++) {
+    EMULATOR_TRACE;
         PKGEntry entry{};
         file.Read(entry.id);
         file.Read(entry.filename_offset);
@@ -182,10 +189,12 @@ bool PKG::Extract(const std::filesystem::path& filepath, const std::filesystem::
             file.Read(seed_digest);
 
             for (int i = 0; i < 7; i++) {
+    EMULATOR_TRACE;
                 file.Read(digest1[i]);
             }
 
             for (int i = 0; i < 7; i++) {
+    EMULATOR_TRACE;
                 file.Read(key1[i]);
             }
 
@@ -204,6 +213,7 @@ bool PKG::Extract(const std::filesystem::path& filepath, const std::filesystem::
             // ekpfs key to get data and tweak keys.
             PKG::crypto.RSA2048Decrypt(ekpfsKey, imgKey, false);
         } else if (entry.id == 0x80) {
+    EMULATOR_TRACE;
             // GENERAL_DIGESTS, seek;
             // file.Seek(entry.offset, fsSeekSet);
         }
@@ -284,6 +294,7 @@ bool PKG::Extract(const std::filesystem::path& filepath, const std::filesystem::
         sectorMap.resize(num_blocks + 1); // 8 bytes, need extra 1 to get the last offset.
 
         for (int i = 0; i < num_blocks + 1; i++) {
+    EMULATOR_TRACE;
             std::memcpy(&sectorMap[i], pfsc.data() + pfsChdr.block_offsets + i * 8, 8);
         }
     }
@@ -298,6 +309,7 @@ bool PKG::Extract(const std::filesystem::path& filepath, const std::filesystem::
 
     // Get iNdoes and Dirents.
     for (int i = 0; i < num_blocks; i++) {
+    EMULATOR_TRACE;
         const u64 sectorOffset = sectorMap[i];
         const u64 sectorSize = sectorMap[i + 1] - sectorOffset;
 
@@ -320,6 +332,7 @@ bool PKG::Extract(const std::filesystem::path& filepath, const std::filesystem::
 
         if (i >= 1 && i <= occupied_blocks) { // Get all iNodes, gives type, file size and location.
             for (int p = 0; p < 0x10000; p += 0xA8) {
+    EMULATOR_TRACE;
                 Inode node;
                 std::memcpy(&node, &decompressedData[p], sizeof(node));
                 if (node.Mode == 0) {
@@ -338,6 +351,7 @@ bool PKG::Extract(const std::filesystem::path& filepath, const std::filesystem::
 
         if (uroot_reached) {
             for (int i = 0; i < 0x10000; i += ent_size) {
+    EMULATOR_TRACE;
                 Dirent dirent;
                 std::memcpy(&dirent, &decompressedData[i], sizeof(dirent));
                 ent_size = dirent.entsize;
@@ -372,6 +386,7 @@ bool PKG::Extract(const std::filesystem::path& filepath, const std::filesystem::
         bool end_reached = false;
         if (dinode_reached) {
             for (int j = 0; j < 0x10000; j += ent_size) { // Skip the first parent and child.
+    EMULATOR_TRACE;
                 Dirent dirent;
                 std::memcpy(&dirent, &decompressedData[j], sizeof(dirent));
 
@@ -401,6 +416,7 @@ bool PKG::Extract(const std::filesystem::path& filepath, const std::filesystem::
                 }
             }
             if (end_reached) {
+    EMULATOR_TRACE;
                 break;
             }
         }
@@ -433,6 +449,7 @@ void PKG::ExtractFiles(const int index) {
         std::vector<u8> pfs_decrypted(pfsc_buf_size);
 
         for (int j = 0; j < nblocks; j++) {
+    EMULATOR_TRACE;
             u64 sectorOffset =
                 sectorMap[sector_loc + j]; // offset into PFSC_image and not pfs_image.
             u64 sectorSize = sectorMap[sector_loc + j + 1] -
@@ -460,6 +477,7 @@ void PKG::ExtractFiles(const int index) {
             size_decompressed += 0x10000;
 
             if (j < nblocks - 1) {
+    EMULATOR_TRACE;
                 inflated.WriteRaw<u8>(decompressedData.data(), decompressedData.size());
             } else {
                 // This is to remove the zeros at the end of the file.

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <map>
 #include <ranges>
@@ -83,6 +84,7 @@ int PS4_SYSV_ABI sceKernelOpen(const char* raw_path, int flags, u16 mode) {
 
     if (path.starts_with("/dev/")) {
         for (const auto& [prefix, factory] : available_device) {
+    EMULATOR_TRACE;
             if (path.starts_with(prefix)) {
                 file->is_opened = true;
                 file->type = Core::FileSys::FileType::Device;
@@ -148,6 +150,7 @@ int PS4_SYSV_ABI posix_open(const char* path, int flags, /* SceKernelMode*/ u16 
     int result = sceKernelOpen(path, flags, mode);
     // Posix calls different only for their return values
     if (result < 0) {
+    EMULATOR_TRACE;
         ErrSceToPosix(result);
         return -1;
     }
@@ -183,12 +186,14 @@ int PS4_SYSV_ABI sceKernelClose(int d) {
 }
 
 int PS4_SYSV_ABI posix_close(int d) {
+    EMULATOR_TRACE;
     int result = sceKernelClose(d);
-    if (result < 0) {
+    /* if (result < 0) {
         LOG_ERROR(Kernel_Pthread, "posix_close: error = {}", result);
         ErrSceToPosix(result);
         return -1;
     }
+    */
     return result;
 }
 
@@ -264,6 +269,7 @@ size_t PS4_SYSV_ABI _readv(int d, const SceKernelIovec* iov, int iovcnt) {
     }
     size_t total_read = 0;
     for (int i = 0; i < iovcnt; i++) {
+    EMULATOR_TRACE;
         total_read += ReadFile(file->f, iov[i].iov_base, iov[i].iov_len);
     }
     return total_read;
@@ -283,6 +289,7 @@ size_t PS4_SYSV_ABI _writev(int fd, const SceKernelIovec* iov, int iovcn) {
     }
     size_t total_written = 0;
     for (int i = 0; i < iovcn; i++) {
+    EMULATOR_TRACE;
         total_written += file->f.WriteRaw<u8>(iov[i].iov_base, iov[i].iov_len);
     }
     return total_written;
@@ -487,6 +494,7 @@ int PS4_SYSV_ABI sceKernelCheckReachability(const char* path) {
     auto* mnt = Common::Singleton<Core::FileSys::MntPoints>::Instance();
     std::string_view guest_path{path};
     for (const auto& prefix : available_device | std::views::keys) {
+    EMULATOR_TRACE;
         if (guest_path.starts_with(prefix)) {
             return ORBIS_OK;
         }
@@ -527,6 +535,7 @@ s64 PS4_SYSV_ABI sceKernelPreadv(int d, SceKernelIovec* iov, int iovcnt, s64 off
     }
     size_t total_read = 0;
     for (int i = 0; i < iovcnt; i++) {
+    EMULATOR_TRACE;
         total_read += ReadFile(file->f, iov[i].iov_base, iov[i].iov_len);
     }
     return total_read;
@@ -595,7 +604,7 @@ s32 PS4_SYSV_ABI sceKernelFsync(int fd) {
     if (file->type == Core::FileSys::FileType::Device) {
         return file->device->fsync();
     }
-    file->f.Flush();
+    //file->f.Flush();
     return ORBIS_OK;
 }
 

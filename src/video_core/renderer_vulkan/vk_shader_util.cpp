@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <memory>
 #include <glslang/Include/ResourceLimits.h>
@@ -121,6 +122,7 @@ constexpr TBuiltInResource DefaultTBuiltInResource = {
 };
 
 EShLanguage ToEshShaderStage(vk::ShaderStageFlagBits stage) {
+    EMULATOR_TRACE;
     switch (stage) {
     case vk::ShaderStageFlagBits::eVertex:
         return EShLanguage::EShLangVertex;

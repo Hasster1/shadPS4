@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "common/config.h"
@@ -15,6 +16,7 @@ using Libraries::VideoOut::TilingMode;
 using VideoOutFormat = Libraries::VideoOut::PixelFormat;
 
 static vk::Format ConvertPixelFormat(const VideoOutFormat format) {
+    EMULATOR_TRACE;
     switch (format) {
     case VideoOutFormat::A8R8G8B8Srgb:
         return vk::Format::eB8G8R8A8Srgb;
@@ -63,6 +65,7 @@ ImageInfo::ImageInfo(const Libraries::VideoOut::BufferAttributeGroup& group,
 
     guest_address = cpu_address;
     if (!props.is_tiled) {
+    EMULATOR_TRACE;
         guest_size = pitch * size.height * 4;
     } else {
         if (Libraries::Kernel::sceKernelIsNeoMode()) {
@@ -101,6 +104,7 @@ ImageInfo::ImageInfo(const AmdGpu::Liverpool::ColorBuffer& buffer,
 ImageInfo::ImageInfo(const AmdGpu::Liverpool::DepthBuffer& buffer, u32 num_slices,
                      VAddr htile_address, const AmdGpu::Liverpool::CbDbExtent& hint,
                      bool write_buffer) noexcept {
+    EMULATOR_TRACE;
     props.is_tiled = false;
     pixel_format = LiverpoolToVK::DepthFormat(buffer.z_info.format, buffer.stencil_info.format);
     type = vk::ImageType::e2D;
@@ -123,10 +127,12 @@ ImageInfo::ImageInfo(const AmdGpu::Liverpool::DepthBuffer& buffer, u32 num_slice
 }
 
 ImageInfo::ImageInfo(const AmdGpu::Image& image, const Shader::ImageResource& desc) noexcept {
+    EMULATOR_TRACE;
     tiling_mode = image.GetTilingMode();
     pixel_format = LiverpoolToVK::SurfaceFormat(image.GetDataFmt(), image.GetNumberFmt());
     // Override format if image is forced to be a depth target
     if (desc.is_depth) {
+    EMULATOR_TRACE;
         pixel_format = LiverpoolToVK::PromoteFormatToDepth(pixel_format);
     }
     type = ConvertImageType(image.GetType());
@@ -152,10 +158,12 @@ ImageInfo::ImageInfo(const AmdGpu::Image& image, const Shader::ImageResource& de
 }
 
 void ImageInfo::UpdateSize() {
+    EMULATOR_TRACE;
     mips_layout.clear();
     MipInfo mip_info{};
     guest_size = 0;
     for (auto mip = 0u; mip < resources.levels; ++mip) {
+    EMULATOR_TRACE;
         auto bpp = num_bits;
         auto mip_w = pitch >> mip;
         auto mip_h = size.height >> mip;
@@ -237,6 +245,7 @@ int ImageInfo::IsMipOf(const ImageInfo& info) const {
     // Find mip
     auto mip = -1;
     for (auto m = 0; m < info.mips_layout.size(); ++m) {
+    EMULATOR_TRACE;
         if (guest_address == (info.guest_address + info.mips_layout[m].offset)) {
             mip = m;
             break;
@@ -287,6 +296,7 @@ int ImageInfo::IsSliceOf(const ImageInfo& info) const {
     // Check for size alignment.
     const bool slice_size = info.guest_size / info.resources.layers;
     if (guest_size % slice_size != 0) {
+    EMULATOR_TRACE;
         return -1;
     }
 

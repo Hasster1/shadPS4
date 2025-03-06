@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "core/libraries/ajm/ajm.h"
 #include "core/libraries/ajm/ajm_instance_statistics.h"
@@ -11,6 +12,7 @@ void AjmInstanceStatistics::ExecuteJob(AjmJob& job) {
         job.output.p_engine->usage_batch = 0.01;
         const auto ic = job.input.statistics_engine_parameters->interval_count;
         for (u32 idx = 0; idx < ic; ++idx) {
+    EMULATOR_TRACE;
             job.output.p_engine->usage_interval[idx] = 0.01;
         }
     }

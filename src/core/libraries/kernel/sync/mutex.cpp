@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "mutex.h"
 
@@ -23,13 +24,15 @@ TimedMutex::~TimedMutex() {
 void TimedMutex::lock() {
 #ifdef _WIN64
     for (;;) {
+    EMULATOR_TRACE;
         u64 res = WaitForSingleObjectEx(mtx, INFINITE, true);
         if (res == WAIT_OBJECT_0) {
             return;
         }
     }
 #else
-    mtx.lock();
+    return;
+    //mtx.lock();
 #endif
 }
 

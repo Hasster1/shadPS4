@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <array>
 #include "common/assert.h"
@@ -112,6 +113,7 @@ std::string_view NameOf(NumberFormat fmt) {
 }
 
 int NumComponents(DataFormat format) {
+    EMULATOR_TRACE;
     constexpr std::array num_components_per_element = {
         0,  1,  1,  2,  1,  2,  3,  3,  4,  4,  4,  2, 4, 3, 4, -1, 3, 4, 4, 4, 2,
         2,  2,  -1, -1, -1, -1, -1, -1, -1, -1, -1, 3, 3, 3, 4, 4,  4, 1, 2, 3, 4,
@@ -119,12 +121,14 @@ int NumComponents(DataFormat format) {
 
     const u32 index = static_cast<u32>(format);
     if (index >= num_components_per_element.size()) {
+    EMULATOR_TRACE;
         return 0;
     }
     return num_components_per_element[index];
 }
 
 int NumBits(DataFormat format) {
+    EMULATOR_TRACE;
     const std::array num_bits_per_element = {
         0,  8,  16, 16, 32, 32, 32, 32, 32, 32, 32, 64, 64, 96, 128, -1, 16, 16, 16, 16, 32,
         32, 64, -1, -1, -1, -1, -1, -1, -1, -1, -1, 16, 16, 32, 4,   8,  8,  4,  8,  8,  8,
@@ -132,6 +136,7 @@ int NumBits(DataFormat format) {
 
     const u32 index = static_cast<u32>(format);
     if (index >= num_bits_per_element.size()) {
+    EMULATOR_TRACE;
         return 0;
     }
     return num_bits_per_element[index];
@@ -183,8 +188,10 @@ static constexpr std::array component_bits = {
 };
 
 u32 ComponentBits(DataFormat format, u32 comp) {
+    EMULATOR_TRACE;
     const u32 index = static_cast<u32>(format);
     if (index >= component_bits.size() || comp >= 4) {
+    EMULATOR_TRACE;
         return 0;
     }
     return component_bits[index][comp];
@@ -236,8 +243,10 @@ static constexpr std::array component_offset = {
 };
 
 s32 ComponentOffset(DataFormat format, u32 comp) {
+    EMULATOR_TRACE;
     const u32 index = static_cast<u32>(format);
     if (index >= component_offset.size() || comp >= 4) {
+    EMULATOR_TRACE;
         return -1;
     }
     return component_offset[index][comp];

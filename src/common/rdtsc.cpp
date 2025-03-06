@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2023 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <thread>
 #include "common/rdtsc.h"
@@ -42,6 +43,7 @@ u64 EstimateRDTSCFrequency() {
     // Discard the first result measuring the rdtsc.
     FencedRDTSC();
     std::this_thread::sleep_for(std::chrono::milliseconds{1});
+    EMULATOR_TRACE;
     FencedRDTSC();
 
     // Get the current time.

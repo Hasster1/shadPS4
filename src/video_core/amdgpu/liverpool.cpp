@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <boost/preprocessor/stringize.hpp>
 
@@ -58,6 +59,7 @@ static std::span<const u32> NextPacket(std::span<const u32> span, size_t offset)
             offset, span.size());
         // Return empty subspan so check for next packet bails out
         return {};
+    EMULATOR_TRACE;
     }
 
     return span.subspan(offset);
@@ -73,10 +75,15 @@ Liverpool::~Liverpool() {
 }
 
 void Liverpool::Process(std::stop_token stoken) {
+
+    //COMMON STUB
+
+    EMULATOR_TRACE;
     Common::SetCurrentThreadName("shadPS4:GpuCommandProcessor");
 
     while (!stoken.stop_requested()) {
         {
+            EMULATOR_TRACE;
             std::unique_lock lk{submit_mutex};
             Common::CondvarWait(submit_cv, lk, stoken,
                                 [this] { return num_commands || num_submits || submit_done; });
@@ -85,14 +92,16 @@ void Liverpool::Process(std::stop_token stoken) {
             break;
         }
 
-        VideoCore::StartCapture();
+       // VideoCore::StartCapture();
 
         curr_qid = -1;
 
         while (num_submits || num_commands) {
+            EMULATOR_TRACE;
 
             // Process incoming commands with high priority
             while (num_commands) {
+                EMULATOR_TRACE;
 
                 Common::UniqueFunction<void> callback{};
                 {
@@ -143,9 +152,11 @@ void Liverpool::Process(std::stop_token stoken) {
 
         Platform::IrqC::Instance()->Signal(Platform::InterruptId::GpuIdle);
     }
+    
 }
 
 Liverpool::Task Liverpool::ProcessCeUpdate(std::span<const u32> ccb) {
+    EMULATOR_TRACE;
     FIBER_ENTER(ccb_task_name);
 
     while (!ccb.empty()) {
@@ -165,8 +176,8 @@ Liverpool::Task Liverpool::ProcessCeUpdate(std::span<const u32> ccb) {
         }
         case PM4ItOpcode::WriteConstRam: {
             const auto* write_const = reinterpret_cast<const PM4WriteConstRam*>(header);
-            memcpy(cblock.constants_heap.data() + write_const->Offset(), &write_const->data,
-                   write_const->Size());
+           // memcpy(cblock.constants_heap.data() + write_const->Offset(), &write_const->data,
+           //        write_const->Size());
             break;
         }
         case PM4ItOpcode::DumpConstRam: {
@@ -210,7 +221,11 @@ Liverpool::Task Liverpool::ProcessCeUpdate(std::span<const u32> ccb) {
 }
 
 Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<const u32> ccb) {
+
+    
+
     FIBER_ENTER(dcb_task_name);
+    EMULATOR_TRACE;
 
     cblock.Reset();
 
@@ -226,6 +241,7 @@ Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<c
 
     const auto base_addr = reinterpret_cast<uintptr_t>(dcb.data());
     while (!dcb.empty()) {
+        EMULATOR_TRACE;
         const auto* header = reinterpret_cast<const PM4Header*>(dcb.data());
         const u32 type = header->type;
 
@@ -378,7 +394,7 @@ Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<c
                 const auto set_size = (count - 1) * sizeof(u32);
 
                 if (set_data->reg_offset >= 0x200 &&
-                    set_data->reg_offset <= (0x200 + sizeof(ComputeProgram) / 4)) {
+                    set_data->reg_offset <= (0x200 + sizeof(ComputeProgram) / 2)) {
                     ASSERT(set_size <= sizeof(ComputeProgram));
                     auto* addr = reinterpret_cast<u32*>(&mapped_queues[GfxQueueId].cs_state) +
                                  (set_data->reg_offset - 0x200);
@@ -413,6 +429,7 @@ Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<c
                 if (rasterizer) {
                     const auto cmd_address = reinterpret_cast<const void*>(header);
                     rasterizer->ScopeMarkerBegin(fmt::format("gfx:{}:DrawIndex2", cmd_address));
+    EMULATOR_TRACE;
                     rasterizer->Draw(true);
                     rasterizer->ScopeMarkerEnd();
                 }
@@ -431,6 +448,7 @@ Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<c
                     const auto cmd_address = reinterpret_cast<const void*>(header);
                     rasterizer->ScopeMarkerBegin(
                         fmt::format("gfx:{}:DrawIndexOffset2", cmd_address));
+    EMULATOR_TRACE;
                     rasterizer->Draw(true, draw_index_off->index_offset);
                     rasterizer->ScopeMarkerEnd();
                 }
@@ -446,6 +464,7 @@ Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<c
                 if (rasterizer) {
                     const auto cmd_address = reinterpret_cast<const void*>(header);
                     rasterizer->ScopeMarkerBegin(fmt::format("gfx:{}:DrawIndexAuto", cmd_address));
+    EMULATOR_TRACE;
                     rasterizer->Draw(false);
                     rasterizer->ScopeMarkerEnd();
                 }
@@ -461,7 +480,8 @@ Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<c
                 if (rasterizer) {
                     const auto cmd_address = reinterpret_cast<const void*>(header);
                     rasterizer->ScopeMarkerBegin(fmt::format("gfx:{}:DrawIndirect", cmd_address));
-                    rasterizer->DrawIndirect(false, indirect_args_addr, offset, size, 1, 0);
+    EMULATOR_TRACE;
+                    //rasterizer->DrawIndirect(false, indirect_args_addr, offset, size, 1, 0);
                     rasterizer->ScopeMarkerEnd();
                 }
                 break;
@@ -478,6 +498,7 @@ Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<c
                     const auto cmd_address = reinterpret_cast<const void*>(header);
                     rasterizer->ScopeMarkerBegin(
                         fmt::format("gfx:{}:DrawIndexIndirect", cmd_address));
+    EMULATOR_TRACE;
                     rasterizer->DrawIndirect(true, indirect_args_addr, offset, size, 1, 0);
                     rasterizer->ScopeMarkerEnd();
                 }
@@ -494,6 +515,7 @@ Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<c
                     const auto cmd_address = reinterpret_cast<const void*>(header);
                     rasterizer->ScopeMarkerBegin(
                         fmt::format("gfx:{}:DrawIndexIndirectCountMulti", cmd_address));
+    EMULATOR_TRACE;
                     rasterizer->DrawIndirect(
                         true, indirect_args_addr, offset, draw_index_indirect->stride,
                         draw_index_indirect->count, draw_index_indirect->countAddr);
@@ -515,6 +537,7 @@ Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<c
                 if (rasterizer && (cs_program.dispatch_initiator & 1)) {
                     const auto cmd_address = reinterpret_cast<const void*>(header);
                     rasterizer->ScopeMarkerBegin(fmt::format("gfx:{}:DispatchDirect", cmd_address));
+    EMULATOR_TRACE;
                     rasterizer->DispatchDirect();
                     rasterizer->ScopeMarkerEnd();
                 }
@@ -534,6 +557,7 @@ Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<c
                     const auto cmd_address = reinterpret_cast<const void*>(header);
                     rasterizer->ScopeMarkerBegin(
                         fmt::format("gfx:{}:DispatchIndirect", cmd_address));
+    EMULATOR_TRACE;
                     rasterizer->DispatchIndirect(indirect_args_addr, offset, size);
                     rasterizer->ScopeMarkerEnd();
                 }
@@ -615,9 +639,9 @@ Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<c
                     // LOG_WARNING(Render_Vulkan, "GDS memory read");
                 } else if (dma_data->src_sel == DmaDataSrc::Memory &&
                            dma_data->dst_sel == DmaDataDst::Memory) {
-                    rasterizer->InlineData(dma_data->DstAddress<VAddr>(),
-                                           dma_data->SrcAddress<const void*>(),
-                                           dma_data->NumBytes(), false);
+                  //  rasterizer->InlineData(dma_data->DstAddress<VAddr>(),
+                                //           dma_data->SrcAddress<const void*>(),
+                               //            dma_data->NumBytes(), false);
                 } else {
                     UNREACHABLE_MSG("WriteData src_sel = {}, dst_sel = {}",
                                     u32(dma_data->src_sel.Value()), u32(dma_data->dst_sel.Value()));
@@ -630,7 +654,7 @@ Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<c
                 const u32 data_size = (header->type3.count.Value() - 2) * 4;
                 u64* address = write_data->Address<u64*>();
                 if (!write_data->wr_one_addr.Value()) {
-                    std::memcpy(address, write_data->data, data_size);
+                   // std::memcpy(address, write_data->data, data_size);
                 } else {
                     UNREACHABLE();
                 }
@@ -719,10 +743,13 @@ Liverpool::Task Liverpool::ProcessGraphics(std::span<const u32> dcb, std::span<c
     }
 
     FIBER_EXIT;
+    
 }
 
 template <bool is_indirect>
 Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
+    
+    EMULATOR_TRACE;
     FIBER_ENTER(acb_task_name[vqid]);
     const auto& queue = asc_queues[{vqid}];
 
@@ -737,7 +764,7 @@ Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
 
         const u32 count = header->type3.NumWords();
         const PM4ItOpcode opcode = header->type3.opcode;
-        const auto* it_body = reinterpret_cast<const u32*>(header) + 1;
+        const auto* it_body = reinterpret_cast<const u32*>(header) + 2;
         switch (opcode) {
         case PM4ItOpcode::Nop: {
             const auto* nop = reinterpret_cast<const PM4CmdNop*>(header);
@@ -750,6 +777,7 @@ Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
             RESUME_ASC(task, vqid);
 
             while (!task.handle.done()) {
+                EMULATOR_TRACE;
                 YIELD_ASC(vqid);
                 RESUME_ASC(task, vqid);
             }
@@ -761,23 +789,23 @@ Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
                 break;
             }
             if (dma_data->src_sel == DmaDataSrc::Data && dma_data->dst_sel == DmaDataDst::Gds) {
-                rasterizer->InlineData(dma_data->dst_addr_lo, &dma_data->data, sizeof(u32), true);
+               // rasterizer->InlineData(dma_data->dst_addr_lo, &dma_data->data, sizeof(u32), true);
             } else if (dma_data->src_sel == DmaDataSrc::Memory &&
                        dma_data->dst_sel == DmaDataDst::Gds) {
-                rasterizer->InlineData(dma_data->dst_addr_lo, dma_data->SrcAddress<const void*>(),
-                                       dma_data->NumBytes(), true);
+                //rasterizer->InlineData(dma_data->dst_addr_lo, dma_data->SrcAddress<const void*>(),
+                     //                  dma_data->NumBytes(), true);
             } else if (dma_data->src_sel == DmaDataSrc::Data &&
                        dma_data->dst_sel == DmaDataDst::Memory) {
-                rasterizer->InlineData(dma_data->DstAddress<VAddr>(), &dma_data->data, sizeof(u32),
-                                       false);
+               // rasterizer->InlineData(dma_data->DstAddress<VAddr>(), &dma_data->data, sizeof(u32),
+                  //                     false);
             } else if (dma_data->src_sel == DmaDataSrc::Gds &&
                        dma_data->dst_sel == DmaDataDst::Memory) {
-                // LOG_WARNING(Render_Vulkan, "GDS memory read");
+                 LOG_WARNING(Render_Vulkan, "GDS memory read");
             } else if (dma_data->src_sel == DmaDataSrc::Memory &&
                        dma_data->dst_sel == DmaDataDst::Memory) {
-                rasterizer->InlineData(dma_data->DstAddress<VAddr>(),
-                                       dma_data->SrcAddress<const void*>(), dma_data->NumBytes(),
-                                       false);
+              //  rasterizer->InlineData(dma_data->DstAddress<VAddr>(),
+              //                         dma_data->SrcAddress<const void*>(), dma_data->NumBytes(),
+              //                         false);
             } else {
                 UNREACHABLE_MSG("WriteData src_sel = {}, dst_sel = {}",
                                 u32(dma_data->src_sel.Value()), u32(dma_data->dst_sel.Value()));
@@ -790,6 +818,7 @@ Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
         case PM4ItOpcode::Rewind: {
             const PM4CmdRewind* rewind = reinterpret_cast<const PM4CmdRewind*>(header);
             while (!rewind->Valid()) {
+                EMULATOR_TRACE;
                 YIELD_ASC(vqid);
             }
             break;
@@ -825,6 +854,7 @@ Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
                 const auto cmd_address = reinterpret_cast<const void*>(header);
                 rasterizer->ScopeMarkerBegin(
                     fmt::format("asc[{}]:{}:DispatchDirect", vqid, cmd_address));
+    EMULATOR_TRACE;
                 rasterizer->DispatchDirect();
                 rasterizer->ScopeMarkerEnd();
             }
@@ -844,6 +874,7 @@ Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
                 const auto cmd_address = reinterpret_cast<const void*>(header);
                 rasterizer->ScopeMarkerBegin(
                     fmt::format("asc[{}]:{}:DispatchIndirect", vqid, cmd_address));
+    EMULATOR_TRACE;
                 rasterizer->DispatchIndirect(ib_address, 0, size);
                 rasterizer->ScopeMarkerEnd();
             }
@@ -851,7 +882,7 @@ Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
         }
         case PM4ItOpcode::WriteData: {
             const auto* write_data = reinterpret_cast<const PM4CmdWriteData*>(header);
-            ASSERT(write_data->dst_sel.Value() == 2 || write_data->dst_sel.Value() == 5);
+            ASSERT(write_data->dst_sel.Value() == 6 || write_data->dst_sel.Value() == 10);
             const u32 data_size = (header->type3.count.Value() - 2) * 4;
             if (!write_data->wr_one_addr.Value()) {
                 std::memcpy(write_data->Address<void*>(), write_data->data, data_size);
@@ -876,6 +907,7 @@ Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
             const auto* wait_reg_mem = reinterpret_cast<const PM4CmdWaitRegMem*>(header);
             ASSERT(wait_reg_mem->engine.Value() == PM4CmdWaitRegMem::Engine::Me);
             while (!wait_reg_mem->Test()) {
+                EMULATOR_TRACE;
                 YIELD_ASC(vqid);
             }
             break;
@@ -886,6 +918,7 @@ Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
             break;
         }
         case PM4ItOpcode::EventWrite: {
+    EMULATOR_TRACE;
             // const auto* event = reinterpret_cast<const PM4CmdEventWrite*>(header);
             break;
         }
@@ -904,10 +937,14 @@ Liverpool::Task Liverpool::ProcessCompute(std::span<const u32> acb, u32 vqid) {
     }
 
     FIBER_EXIT;
+    
 }
 
 std::pair<std::span<const u32>, std::span<const u32>> Liverpool::CopyCmdBuffers(
     std::span<const u32> dcb, std::span<const u32> ccb) {
+
+    //USELESS FOR LAG
+
     auto& queue = mapped_queues[GfxQueueId];
 
     // std::vector resize can invalidate spans for commands in flight
@@ -924,6 +961,7 @@ std::pair<std::span<const u32>, std::span<const u32>> Liverpool::CopyCmdBuffers(
     u32 prev_dcb_buffer_offset = queue.dcb_buffer_offset;
     u32 prev_ccb_buffer_offset = queue.ccb_buffer_offset;
     if (!dcb.empty()) {
+    EMULATOR_TRACE;
         std::memcpy(queue.dcb_buffer.data() + queue.dcb_buffer_offset, dcb.data(),
                     dcb.size_bytes());
         queue.dcb_buffer_offset += dcb.size();
@@ -940,9 +978,14 @@ std::pair<std::span<const u32>, std::span<const u32>> Liverpool::CopyCmdBuffers(
     }
 
     return std::make_pair(dcb, ccb);
+    
 }
 
 void Liverpool::SubmitGfx(std::span<const u32> dcb, std::span<const u32> ccb) {
+
+    //fREEZE
+    
+
     auto& queue = mapped_queues[GfxQueueId];
 
     if (Config::copyGPUCmdBuffers()) {
@@ -952,29 +995,36 @@ void Liverpool::SubmitGfx(std::span<const u32> dcb, std::span<const u32> ccb) {
     auto task = ProcessGraphics(dcb, ccb);
     {
         std::scoped_lock lock{queue.m_access};
-        queue.submits.emplace(task.handle);
+        queue.submits.emplace(task.handle); //freeze
     }
 
-    std::scoped_lock lk{submit_mutex};
-    ++num_submits;
-    submit_cv.notify_one();
+    std::scoped_lock lk{submit_mutex}; //nope
+    ++num_submits; //freeze
+    submit_cv.notify_one(); //freeze
+    
+    
 }
 
 void Liverpool::SubmitAsc(u32 gnm_vqid, std::span<const u32> acb) {
+  
+    //AUDIO SPAM
+
     ASSERT_MSG(gnm_vqid > 0 && gnm_vqid < NumTotalQueues, "Invalid virtual ASC queue index");
     auto& queue = mapped_queues[gnm_vqid];
 
     const auto vqid = gnm_vqid - 1;
-    const auto& task = ProcessCompute(acb, vqid);
+   const auto& task = ProcessCompute(acb, vqid);
     {
         std::scoped_lock lock{queue.m_access};
-        queue.submits.emplace(task.handle);
+       queue.submits.emplace(task.handle);
     }
 
     std::scoped_lock lk{submit_mutex};
-    num_mapped_queues = std::max(num_mapped_queues, gnm_vqid + 1);
+    num_mapped_queues = std::max(num_mapped_queues, gnm_vqid + 3); //nope
     ++num_submits;
-    submit_cv.notify_one();
+    submit_cv.notify_one(); //nope
+
+    
 }
 
 } // namespace AmdGpu

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "playgo_chunk.h"
 
@@ -36,6 +37,7 @@ bool PlaygoFile::LoadChunks(const Common::FS::IOFile& file) {
                     reinterpret_cast<playgo_mchunk_attr_entry_t*>(&mchunk_attrs_data[0]);
 
                 for (u16 i = 0; i < playgoHeader.chunk_count; i++) {
+    EMULATOR_TRACE;
                     chunks[i].req_locus = chunk_attrs[i].req_locus;
                     chunks[i].language_mask = chunk_attrs[i].language_mask;
                     chunks[i].label_name = std::string(chunk_labels + chunk_attrs[i].label_offset);
@@ -46,6 +48,7 @@ bool PlaygoFile::LoadChunks(const Common::FS::IOFile& file) {
                         auto mchunks = reinterpret_cast<u16*>(
                             ((u8*)chunk_mchunks + chunk_attrs[i].mchunks_offset));
                         for (u16 j = 0; j < mchunk_count; j++) {
+    EMULATOR_TRACE;
                             u16 mchunk_id = mchunks[j];
                             total_size += mchunk_attrs[mchunk_id].size.size;
                         }

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #ifdef WIN32
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
@@ -172,6 +173,7 @@ int PS4_SYSV_ABI sceNetCtlGetInfo(int code, OrbisNetCtlInfo* info) {
         gethostname(devname, 80);
         if (struct hostent* resolved = gethostbyname(devname)) {
             for (int i = 0; resolved->h_addr_list[i] != nullptr; ++i) {
+    EMULATOR_TRACE;
                 struct in_addr addrIn;
                 memcpy(&addrIn, resolved->h_addr_list[i], sizeof(u32));
                 char* addr = inet_ntoa(addrIn);

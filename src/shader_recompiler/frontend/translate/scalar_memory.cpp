@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "shader_recompiler/frontend/translate/translate.h"
 
@@ -53,6 +54,7 @@ void Translator::S_LOAD_DWORD(int num_dwords, const GcnInst& inst) {
         ir.CompositeConstruct(ir.GetScalarReg(sbase), ir.GetScalarReg(sbase + 1));
     IR::ScalarReg dst_reg{inst.dst[0].code};
     for (u32 i = 0; i < num_dwords; i++) {
+    EMULATOR_TRACE;
         ir.SetScalarReg(dst_reg++, ir.ReadConst(base, ir.Imm32(dword_offset + i)));
     }
 }
@@ -74,6 +76,7 @@ void Translator::S_BUFFER_LOAD_DWORD(int num_dwords, const GcnInst& inst) {
                               ir.GetScalarReg(sbase + 2), ir.GetScalarReg(sbase + 3));
     IR::ScalarReg dst_reg{inst.dst[0].code};
     for (u32 i = 0; i < num_dwords; i++) {
+    EMULATOR_TRACE;
         const IR::U32 index = ir.IAdd(dword_offset, ir.Imm32(i));
         ir.SetScalarReg(dst_reg++, ir.ReadConstBuffer(vsharp, index));
     }

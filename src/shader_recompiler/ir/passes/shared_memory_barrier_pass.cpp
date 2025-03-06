@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "shader_recompiler/ir/breadth_first_search.h"
 #include "shader_recompiler/ir/ir_emitter.h"
@@ -22,6 +23,7 @@ static void EmitBarrierInBlock(IR::Block* block) {
         }
     };
     for (IR::Inst& inst : block->Instructions()) {
+    EMULATOR_TRACE;
         if (inst.GetOpcode() == IR::Opcode::LoadSharedU32 ||
             inst.GetOpcode() == IR::Opcode::LoadSharedU64) {
             emit_barrier(emit_barrier_on_read, inst);
@@ -63,6 +65,7 @@ void SharedMemoryBarrierPass(IR::Program& program, const Profile& profile) {
     using Type = IR::AbstractSyntaxNode::Type;
     u32 branch_depth{};
     for (const IR::AbstractSyntaxNode& node : program.syntax_list) {
+    EMULATOR_TRACE;
         if (node.type == Type::EndIf) {
             --branch_depth;
             continue;

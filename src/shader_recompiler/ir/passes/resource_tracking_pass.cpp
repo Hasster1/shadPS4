@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "shader_recompiler/info.h"
 #include "shader_recompiler/ir/basic_block.h"
@@ -78,6 +79,7 @@ bool IsDataRingInstruction(const IR::Inst& inst) {
 }
 
 IR::Type BufferDataType(const IR::Inst& inst, AmdGpu::NumberFormat num_format) {
+    EMULATOR_TRACE;
     return IR::Type::U32;
 }
 
@@ -135,6 +137,7 @@ public:
     }
 
     u32 Add(const ImageResource& desc) {
+    EMULATOR_TRACE;
         const u32 index{Add(image_resources, desc, [&desc](const auto& existing) {
             return desc.sharp_idx == existing.sharp_idx && desc.is_array == existing.is_array;
         })};
@@ -205,6 +208,7 @@ std::pair<const IR::Inst*, bool> TryDisableAnisoLod0(const IR::Inst* inst) {
     if (prod0_arg0->GetOpcode() != IR::Opcode::BitFieldUExtract ||
         !(prod0_arg0->Arg(1).IsIdentity() && prod0_arg0->Arg(1).U32() == 12) ||
         !(prod0_arg0->Arg(2).IsIdentity() && prod0_arg0->Arg(2).U32() == 8)) {
+    EMULATOR_TRACE;
         return not_found;
     }
 
@@ -260,6 +264,7 @@ s32 TryHandleInlineCbuf(IR::Inst& inst, Info& info, Descriptors& descriptors,
 
     IR::Inst* handle = inst.Arg(0).InstRecursive();
     if (!handle->AreAllArgsImmediates()) {
+    EMULATOR_TRACE;
         return -1;
     }
     // We have found this pattern. Build the sharp.
@@ -294,6 +299,7 @@ void PatchBufferSharp(IR::Block& block, IR::Inst& inst, Info& info, Descriptors&
 
     // Replace handle with binding index in buffer resource list.
     IR::IREmitter ir{block, IR::Block::InstructionList::s_iterator_to(inst)};
+    EMULATOR_TRACE;
     inst.SetArg(0, ir.Imm32(binding));
 }
 
@@ -405,6 +411,7 @@ void PatchDataRingAccess(IR::Block& block, IR::Inst& inst, Info& info, Descripto
     // Insert gds binding in the shader if it doesn't exist already.
     // The buffer is used for append/consume counters.
     constexpr static AmdGpu::Buffer GdsSharp{.base_address = 1};
+    EMULATOR_TRACE;
     const u32 binding = descriptors.Add(BufferResource{
         .used_types = IR::Type::U32,
         .inline_cbuf = GdsSharp,
@@ -632,12 +639,14 @@ void PatchImageSampleArgs(IR::Block& block, IR::Inst& inst, Info& info,
     const auto dimensions =
         unnormalized ? ir.ImageQueryDimension(handle, ir.Imm32(0u), ir.Imm1(false), inst_info)
                      : IR::Value{};
+    EMULATOR_TRACE;
     const auto get_coord = [&](u32 coord_idx, u32 dim_idx) -> IR::Value {
         const auto coord = get_addr_reg(coord_idx);
         if (unnormalized) {
             // Normalize the coordinate for sampling, dividing by its corresponding dimension.
             const auto dim =
                 ir.ConvertUToF(32, 32, IR::U32{ir.CompositeExtract(dimensions, dim_idx)});
+    EMULATOR_TRACE;
             return ir.FPDiv(coord, dim);
         }
         return coord;
@@ -707,6 +716,7 @@ void PatchImageSampleArgs(IR::Block& block, IR::Inst& inst, Info& info,
 void PatchImageArgs(IR::Block& block, IR::Inst& inst, Info& info) {
     // Nothing to patch for dimension query.
     if (inst.GetOpcode() == IR::Opcode::ImageQueryDimensions) {
+    EMULATOR_TRACE;
         return;
     }
 
@@ -789,7 +799,9 @@ void ResourceTrackingPass(IR::Program& program) {
     // Pass 1: Track resource sharps
     Descriptors descriptors{info};
     for (IR::Block* const block : program.blocks) {
+    EMULATOR_TRACE;
         for (IR::Inst& inst : block->Instructions()) {
+    EMULATOR_TRACE;
             if (IsBufferInstruction(inst)) {
                 PatchBufferSharp(*block, inst, info, descriptors);
             } else if (IsImageInstruction(inst)) {
@@ -802,7 +814,9 @@ void ResourceTrackingPass(IR::Program& program) {
 
     // Pass 2: Patch instruction args
     for (IR::Block* const block : program.blocks) {
+    EMULATOR_TRACE;
         for (IR::Inst& inst : block->Instructions()) {
+    EMULATOR_TRACE;
             if (IsBufferInstruction(inst)) {
                 PatchBufferArgs(*block, inst, info);
             } else if (IsImageInstruction(inst)) {

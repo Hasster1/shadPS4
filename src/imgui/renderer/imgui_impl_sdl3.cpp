@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 // Based on imgui_impl_sdl3.cpp from Dear ImGui repository
 
@@ -57,10 +58,12 @@ struct SdlData {
 // contexts It is STRONGLY preferred that you use docking branch with multi-viewports (== single
 // Dear ImGui context + multiple windows) instead of multiple Dear ImGui contexts.
 static SdlData* GetBackendData() {
+    EMULATOR_TRACE;
     return ImGui::GetCurrentContext() ? (SdlData*)ImGui::GetIO().BackendPlatformUserData : nullptr;
 }
 
 static const char* GetClipboardText(ImGuiContext*) {
+    EMULATOR_TRACE;
     SdlData* bd = GetBackendData();
     if (bd->clipboard_text_data)
         SDL_free((void*)bd->clipboard_text_data);
@@ -74,10 +77,12 @@ static void SetClipboardText(ImGuiContext*, const char* text) {
 }
 
 static void PlatformSetImeData(ImGuiContext*, ImGuiViewport* viewport, ImGuiPlatformImeData* data) {
+    EMULATOR_TRACE;
     SdlData* bd = GetBackendData();
     auto window_id = (SDL_WindowID)(intptr_t)viewport->PlatformHandle;
     SDL_Window* window = SDL_GetWindowFromID(window_id);
     if ((!data->WantVisible || bd->ime_window != window) && bd->ime_window != nullptr) {
+    EMULATOR_TRACE;
         SDL_RunOnMainThread(
             [](void* userdata) { SDL_StopTextInput(static_cast<SDL_Window*>(userdata)); },
             bd->ime_window, true);
@@ -482,6 +487,7 @@ bool ProcessEvent(const SDL_Event* event) {
     //   issue #5012 for details.
     // FIXME: Unconfirmed whether this is still needed with SDL3.
     case SDL_EVENT_WINDOW_MOUSE_LEAVE: {
+    EMULATOR_TRACE;
         if (GetViewportForWindowId(event->window.windowID) == NULL)
             return false;
         bd->mouse_pending_leave_frame = ImGui::GetFrameCount() + 1;
@@ -505,6 +511,7 @@ bool ProcessEvent(const SDL_Event* event) {
 }
 
 static void SetupPlatformHandles(ImGuiViewport* viewport, SDL_Window* window) {
+    EMULATOR_TRACE;
     viewport->PlatformHandle = (void*)(intptr_t)SDL_GetWindowID(window);
     viewport->PlatformHandleRaw = nullptr;
 #if defined(_WIN32) && !defined(__WINRT__)
@@ -517,6 +524,7 @@ static void SetupPlatformHandles(ImGuiViewport* viewport, SDL_Window* window) {
 }
 
 bool Init(SDL_Window* window) {
+    EMULATOR_TRACE;
     ImGuiIO& io = ImGui::GetIO();
     IMGUI_CHECKVERSION();
     IM_ASSERT(io.BackendPlatformUserData == nullptr && "Already initialized a platform backend!");
@@ -582,11 +590,13 @@ bool Init(SDL_Window* window) {
 static void CloseGamepads();
 
 void Shutdown() {
+    EMULATOR_TRACE;
     SdlData* bd = GetBackendData();
     IM_ASSERT(bd != nullptr && "No platform backend to shutdown, or already shutdown?");
     ImGuiIO& io = ImGui::GetIO();
 
     if (bd->clipboard_text_data) {
+    EMULATOR_TRACE;
         SDL_free((void*)bd->clipboard_text_data);
     }
     for (ImGuiMouseCursor cursor_n = 0; cursor_n < ImGuiMouseCursor_COUNT; cursor_n++)
@@ -601,6 +611,7 @@ void Shutdown() {
 }
 
 static void UpdateMouseData() {
+    EMULATOR_TRACE;
     SdlData* bd = GetBackendData();
     ImGuiIO& io = ImGui::GetIO();
 
@@ -613,6 +624,7 @@ static void UpdateMouseData() {
     const bool is_app_focused = (bd->window == focused_window);
 
     if (is_app_focused) {
+    EMULATOR_TRACE;
         // (Optional) Set OS mouse position from Dear ImGui if requested (rarely used, only when
         // ImGuiConfigFlags_NavEnableSetMousePos is enabled by user)
         if (io.WantSetMousePos)
@@ -635,6 +647,7 @@ static void UpdateMouseData() {
             if (mouse_x_global != bd->prev_mouse_pos.x || mouse_y_global != bd->prev_mouse_pos.y &&
                                                               bd->prev_mouse_pos.y == 0 &&
                                                               bd->prev_mouse_pos.x == 0) {
+    EMULATOR_TRACE;
                 bd->prev_mouse_pos.x = mouse_x_global;
                 bd->prev_mouse_pos.y = mouse_y_global;
                 bd->lastCursorMoveTime = bd->time;
@@ -659,6 +672,7 @@ static void UpdateMouseCursor() {
     } else if (cursorState == Config::HideCursorState::Idle &&
                bd->time - bd->lastCursorMoveTime >=
                    Config::getCursorHideTimeout() * SDL_GetPerformanceFrequency()) {
+    EMULATOR_TRACE;
 
         bool wasCursorVisible = SDL_CursorVisible();
         SDL_HideCursor();
@@ -691,6 +705,7 @@ static void CloseGamepads() {
 
 void SetGamepadMode(GamepadMode mode, SDL_Gamepad** manual_gamepads_array,
                     int manual_gamepads_count) {
+    EMULATOR_TRACE;
     SdlData* bd = GetBackendData();
     CloseGamepads();
     if (mode == ImGui_ImplSDL3_GamepadMode_Manual) {
@@ -698,6 +713,7 @@ void SetGamepadMode(GamepadMode mode, SDL_Gamepad** manual_gamepads_array,
         for (int n = 0; n < manual_gamepads_count; n++)
             bd->gamepads.push_back(manual_gamepads_array[n]);
     } else {
+    EMULATOR_TRACE;
         IM_ASSERT(manual_gamepads_array == nullptr && manual_gamepads_count <= 0);
         bd->want_update_gamepads_list = true;
     }
@@ -713,12 +729,14 @@ static void UpdateGamepadButton(SdlData* bd, ImGuiIO& io, ImGuiKey key,
 }
 
 static inline float Saturate(float v) {
+    EMULATOR_TRACE;
     return v < 0.0f ? 0.0f : v > 1.0f ? 1.0f : v;
 }
 static void UpdateGamepadAnalog(SdlData* bd, ImGuiIO& io, ImGuiKey key, SDL_GamepadAxis axis_no,
                                 float v0, float v1) {
     float merged_value = 0.0f;
     for (SDL_Gamepad* gamepad : bd->gamepads) {
+    EMULATOR_TRACE;
         float vn = Saturate((float)(SDL_GetGamepadAxis(gamepad, axis_no) - v0) / (float)(v1 - v0));
         if (merged_value < vn)
             merged_value = vn;
@@ -737,6 +755,7 @@ static void UpdateGamepads() {
         const SDL_JoystickID* sdl_gamepads = SDL_GetGamepads(&sdl_gamepads_count);
         for (int n = 0; n < sdl_gamepads_count; n++)
             if (SDL_Gamepad* gamepad = SDL_OpenGamepad(sdl_gamepads[n])) {
+    EMULATOR_TRACE;
                 bd->gamepads.push_back(gamepad);
                 if (bd->gamepad_mode == ImGui_ImplSDL3_GamepadMode_AutoFirst)
                     break;
@@ -809,6 +828,7 @@ void NewFrame(bool is_reusing_frame) {
     bd->time = current_time;
 
     if (!is_reusing_frame) {
+    EMULATOR_TRACE;
         if (current_time <= bd->nonReusedtime)
             current_time = bd->nonReusedtime + 1;
         float deltaTime =

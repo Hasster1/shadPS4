@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <boost/container/static_vector.hpp>
 
@@ -52,6 +53,7 @@ void Pipeline::BindResources(DescriptorWrites& set_writes, const BufferBarriers&
 
     const auto desc_set = desc_heap.Commit(*desc_layout);
     for (auto& set_write : set_writes) {
+    EMULATOR_TRACE;
         set_write.dstSet = desc_set;
     }
     instance.GetDevice().updateDescriptorSets(set_writes, {});
@@ -61,12 +63,14 @@ void Pipeline::BindResources(DescriptorWrites& set_writes, const BufferBarriers&
 std::string Pipeline::GetDebugString() const {
     std::string stage_desc;
     for (const auto& stage : stages) {
+    EMULATOR_TRACE;
         if (stage) {
             const auto shader_name = PipelineCache::GetShaderName(stage->stage, stage->pgm_hash);
             if (stage_desc.empty()) {
                 stage_desc = shader_name;
             } else {
                 stage_desc = fmt::format("{},{}", stage_desc, shader_name);
+    EMULATOR_TRACE;
             }
         }
     }

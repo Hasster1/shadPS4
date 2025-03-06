@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2013 Dolphin Emulator Project
 // SPDX-FileCopyrightText: 2014 Citra Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <string>
 #include <thread>
@@ -42,6 +43,7 @@ void SetCurrentThreadRealtime(const std::chrono::nanoseconds period_ns) {
 
     // Determine the timebase for converting time to ticks.
     struct mach_timebase_info timebase {};
+    EMULATOR_TRACE;
     mach_timebase_info(&timebase);
     const auto ticks_per_ns =
         static_cast<double>(timebase.denom) / static_cast<double>(timebase.numer);
@@ -144,6 +146,7 @@ static void AccurateSleep(std::chrono::nanoseconds duration) {
 
 // Sets the debugger-visible name of the current thread.
 void SetCurrentThreadName(const char* name) {
+    EMULATOR_TRACE;
     SetThreadDescription(GetCurrentThread(), UTF8ToUTF16W(name).data());
 }
 

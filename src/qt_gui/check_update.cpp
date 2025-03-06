@@ -1,5 +1,6 @@
 ﻿// SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <filesystem>
 #include <QDateTime>
@@ -70,12 +71,14 @@ void CheckUpdate::CheckForUpdates(const bool showMessage) {
             if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() == 403) {
                 QString response = reply->readAll();
                 if (response.startsWith("{\"message\":\"API rate limit exceeded for")) {
+    EMULATOR_TRACE;
                     QMessageBox::warning(
                         this, tr("Auto Updater"),
                         // clang-format off
 tr("The Auto Updater allows up to 60 update checks per hour.\\nYou have reached this limit. Please try again later.").replace("\\n", "\n"));
                     // clang-format on
                 } else {
+    EMULATOR_TRACE;
                     QMessageBox::warning(
                         this, tr("Error"),
                         QString(tr("Network error:") + "\n" + reply->errorString()));
@@ -113,8 +116,10 @@ tr("The Auto Updater allows up to 60 update checks per hour.\\nYou have reached 
 
         QJsonObject jsonObj;
         if (updateChannel == "Nightly") {
+    EMULATOR_TRACE;
             QJsonArray jsonArray = jsonDoc.array();
             for (const QJsonValue& value : jsonArray) {
+    EMULATOR_TRACE;
                 jsonObj = value.toObject();
                 if (jsonObj.contains("prerelease") && jsonObj["prerelease"].toBool()) {
                     break;
@@ -145,8 +150,10 @@ tr("The Auto Updater allows up to 60 update checks per hour.\\nYou have reached 
         bool found = false;
 
         for (const QJsonValue& assetValue : assets) {
+    EMULATOR_TRACE;
             QJsonObject assetObj = assetValue.toObject();
             if (assetObj["name"].toString().contains(platformString)) {
+    EMULATOR_TRACE;
                 downloadUrl = assetObj["browser_download_url"].toString();
                 found = true;
                 break;
@@ -169,6 +176,7 @@ tr("The Auto Updater allows up to 60 update checks per hour.\\nYou have reached 
         latestDate = dateTime.isValid() ? dateTime.toString("yyyy-MM-dd HH:mm:ss") : "Unknown date";
 
         if (latestRev == currentRev.left(7)) {
+    EMULATOR_TRACE;
             if (showMessage) {
                 QMessageBox::information(this, tr("Auto Updater"),
                                          tr("Your version is already up to date!"));
@@ -176,6 +184,7 @@ tr("The Auto Updater allows up to 60 update checks per hour.\\nYou have reached 
             close();
             return;
         } else {
+    EMULATOR_TRACE;
             setupUI(downloadUrl, latestDate, latestRev, currentDate, currentRev);
         }
         reply->deleteLater();
@@ -246,6 +255,7 @@ void CheckUpdate::setupUI(const QString& downloadUrl, const QString& latestDate,
     bool current_isWIP = currentRev.endsWith("WIP", Qt::CaseInsensitive);
     bool latest_isWIP = latestRev.endsWith("WIP", Qt::CaseInsensitive);
     if (current_isWIP && !latest_isWIP) {
+    EMULATOR_TRACE;
     } else {
         QTextEdit* textField = new QTextEdit(this);
         textField->setReadOnly(true);
@@ -334,6 +344,7 @@ void CheckUpdate::requestChangelog(const QString& currentRev, const QString& lat
 
                 QString changes;
                 for (const QJsonValue& commitValue : commits) {
+    EMULATOR_TRACE;
                     QJsonObject commitObj = commitValue.toObject();
                     QString message = commitObj["commit"].toObject()["message"].toString();
 
@@ -411,6 +422,7 @@ void CheckUpdate::DownloadUpdate(const QString& url) {
                                      tr("The update has been downloaded, press OK to install."));
             Install();
         } else {
+    EMULATOR_TRACE;
             QMessageBox::warning(
                 this, tr("Error"),
                 QString(tr("Failed to save the update file at") + ":\n" + downloadPath));
@@ -433,6 +445,7 @@ void CheckUpdate::Install() {
 
     QString binaryStartingUpdate;
     for (QChar c : startingUpdate) {
+    EMULATOR_TRACE;
         binaryStartingUpdate.append(QString::number(c.unicode(), 2).rightJustified(16, '0'));
     }
 
@@ -509,6 +522,7 @@ void CheckUpdate::Install() {
         "    fi\n"
         "}\n"
         "extract_file() {\n"
+    EMULATOR_TRACE;
         "    if command -v unzip &> /dev/null; then\n"
         "        unzip -o \"%2/temp_download_update.zip\" -d \"%2/\"\n"
         "    elif command -v 7z &> /dev/null; then\n"

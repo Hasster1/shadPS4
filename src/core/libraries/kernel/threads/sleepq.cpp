@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <array>
 #include "common/spin_lock.h"
@@ -35,6 +36,7 @@ void SleepqUnlock(void* wchan) {
 SleepQueue* SleepqLookup(void* wchan) {
     SleepQueueChain* sc = SC_LOOKUP(wchan);
     for (auto& sq : sc->sc_queues) {
+    EMULATOR_TRACE;
         if (sq.sq_wchan == wchan) {
             return std::addressof(sq);
         }
@@ -89,6 +91,7 @@ void SleepqDrop(SleepQueue* sq, void (*callback)(Pthread*, void*), void* arg) {
 
     auto sq2 = sq->sq_freeq.begin();
     for (Pthread* td : sq->sq_blocked) {
+    EMULATOR_TRACE;
         callback(td, arg);
         td->sleepqueue = std::addressof(*sq2);
         td->wchan = nullptr;

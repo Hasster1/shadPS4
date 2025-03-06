@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <vector>
 #include "shader_recompiler/ir/program.h"
@@ -9,9 +10,12 @@ namespace Shader::Optimization {
 void IdentityRemovalPass(IR::BlockList& program) {
     std::vector<IR::Inst*> to_invalidate;
     for (IR::Block* const block : program) {
+    EMULATOR_TRACE;
         for (auto inst = block->begin(); inst != block->end();) {
+    EMULATOR_TRACE;
             const size_t num_args{inst->NumArgs()};
             for (size_t i = 0; i < num_args; ++i) {
+    EMULATOR_TRACE;
                 IR::Value arg;
                 while ((arg = inst->Arg(i)).IsIdentity()) {
                     inst->SetArg(i, arg.Inst()->Arg(0));
@@ -27,6 +31,7 @@ void IdentityRemovalPass(IR::BlockList& program) {
         }
     }
     for (IR::Inst* const inst : to_invalidate) {
+    EMULATOR_TRACE;
         inst->Invalidate();
     }
 }

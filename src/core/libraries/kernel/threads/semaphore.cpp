@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <condition_variable>
 #include <list>
@@ -56,6 +57,7 @@ public:
         // Perform the wait.
         const s32 result = waiter.Wait(lk, timeout);
         if (result == ORBIS_KERNEL_ERROR_ETIMEDOUT) {
+    EMULATOR_TRACE;
             wait_list.erase(it);
         }
         return result;
@@ -70,6 +72,7 @@ public:
 
         // Wake up threads in order of priority.
         for (auto it = wait_list.begin(); it != wait_list.end();) {
+    EMULATOR_TRACE;
             auto* waiter = *it;
             if (waiter->need_count > token_count) {
                 ++it;
@@ -90,6 +93,7 @@ public:
             *num_waiters = wait_list.size();
         }
         for (auto* waiter : wait_list) {
+    EMULATOR_TRACE;
             waiter->was_cancled = true;
             waiter->sem.release();
         }
@@ -101,6 +105,7 @@ public:
     void Delete() {
         std::scoped_lock lk{mutex};
         for (auto* waiter : wait_list) {
+    EMULATOR_TRACE;
             waiter->was_deleted = true;
             waiter->sem.release();
         }
@@ -121,6 +126,7 @@ public:
             : sem{0}, priority{0}, need_count{need_count} {
             // Retrieve calling thread priority for sorting into waiting threads list.
             if (!is_fifo) {
+    EMULATOR_TRACE;
                 priority = g_curthread->attr.prio;
             }
 
@@ -156,6 +162,7 @@ public:
                 std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
             lk.lock();
             if (was_signaled) {
+    EMULATOR_TRACE;
                 *timeout -= time;
             } else {
                 *timeout = 0;
@@ -169,12 +176,14 @@ public:
     WaitList::iterator AddWaiter(WaitingThread* waiter) {
         // Insert at the end of the list for FIFO order.
         if (is_fifo) {
+    EMULATOR_TRACE;
             wait_list.push_back(waiter);
             return --wait_list.end();
         }
         // Find the first with priority less then us and insert right before it.
         auto it = wait_list.begin();
         while (it != wait_list.end() && (*it)->priority > waiter->priority) {
+    EMULATOR_TRACE;
             ++it;
         }
         return wait_list.insert(it, waiter);

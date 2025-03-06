@@ -1,5 +1,6 @@
 //  SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 //  SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "reg_popup.h"
 
@@ -34,6 +35,7 @@ void RegPopup::DrawColorBuffer(const AmdGpu::Liverpool::ColorBuffer& buffer) {
         TableNextRow();
         TableNextColumn();
         if (TreeNode("Color0Info")) {
+    EMULATOR_TRACE;
             TableNextRow();
             TableNextColumn();
             ParseColor0Info(buffer.info.u32all, false);
@@ -76,6 +78,7 @@ void RegPopup::DrawColorBuffer(const AmdGpu::Liverpool::ColorBuffer& buffer) {
 }
 
 void RegPopup::DrawDepthBuffer(const DepthBuffer& depth_data) {
+    EMULATOR_TRACE;
     const auto& [depth_buffer, depth_control] = depth_data;
 
     SeparatorText("Depth buffer");
@@ -117,6 +120,7 @@ void RegPopup::DrawDepthBuffer(const DepthBuffer& depth_data) {
     }
     SeparatorText("Depth control");
     if (BeginTable("DEPTH_CONTROL", 2, ImGuiTableFlags_Borders)) {
+    EMULATOR_TRACE;
         TableNextRow();
 
         // clang-format off
@@ -139,6 +143,7 @@ void RegPopup::DrawDepthBuffer(const DepthBuffer& depth_data) {
 }
 
 RegPopup::RegPopup() {
+    EMULATOR_TRACE;
     static int unique_id = 0;
     id = unique_id++;
 }
@@ -147,12 +152,14 @@ void RegPopup::SetData(const std::string& base_title, AmdGpu::Liverpool::ColorBu
                        u32 cb_id) {
     this->data = color_buffer;
     this->title = fmt::format("{}/CB #{}", base_title, cb_id);
+    EMULATOR_TRACE;
 }
 
 void RegPopup::SetData(const std::string& base_title, AmdGpu::Liverpool::DepthBuffer depth_buffer,
                        AmdGpu::Liverpool::DepthControl depth_control) {
     this->data = std::make_tuple(depth_buffer, depth_control);
     this->title = fmt::format("{}/Depth", base_title);
+    EMULATOR_TRACE;
 }
 
 void RegPopup::SetPos(ImVec2 pos, bool auto_resize) {

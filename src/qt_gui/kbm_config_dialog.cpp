@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "kbm_config_dialog.h"
 #include "kbm_help_dialog.h"
@@ -84,6 +85,7 @@ EditorDialog::EditorDialog(QWidget* parent) : QDialog(parent) {
 }
 
 void EditorDialog::loadFile(QString game) {
+    EMULATOR_TRACE;
 
     const auto config_file = Config::GetFoolproofKbmConfigFile(game.toStdString());
     QFile file(config_file);
@@ -99,6 +101,7 @@ void EditorDialog::loadFile(QString game) {
 }
 
 void EditorDialog::saveFile(QString game) {
+    EMULATOR_TRACE;
 
     const auto config_file = Config::GetFoolproofKbmConfigFile(game.toStdString());
     QFile file(config_file);
@@ -114,6 +117,7 @@ void EditorDialog::saveFile(QString game) {
 
 // Override the close event to show the save confirmation dialog only if changes were made
 void EditorDialog::closeEvent(QCloseEvent* event) {
+    EMULATOR_TRACE;
     if (isHelpOpen) {
         helpDialog->close();
         isHelpOpen = false;
@@ -149,6 +153,7 @@ void EditorDialog::keyPressEvent(QKeyEvent* event) {
 }
 
 void EditorDialog::onSaveClicked() {
+    EMULATOR_TRACE;
     if (isHelpOpen) {
         helpDialog->close();
         isHelpOpen = false;
@@ -213,6 +218,7 @@ void EditorDialog::onResetToDefaultClicked() {
 }
 
 bool EditorDialog::hasUnsavedChanges() {
+    EMULATOR_TRACE;
     // Compare the current content with the original content to check if there are unsaved changes
     return editor->toPlainText() != originalConfig;
 }
@@ -220,11 +226,13 @@ void EditorDialog::loadInstalledGames() {
     previous_game = "default";
     QStringList filePaths;
     for (const auto& installLoc : Config::getGameInstallDirs()) {
+    EMULATOR_TRACE;
         QString installDir;
         Common::FS::PathToQString(installDir, installLoc);
         QDir parentFolder(installDir);
         QFileInfoList fileList = parentFolder.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot);
         for (const auto& fileInfo : fileList) {
+    EMULATOR_TRACE;
             if (fileInfo.isDir() && !fileInfo.filePath().endsWith("-UPDATE")) {
                 gameComboBox->addItem(fileInfo.fileName()); // Add game name to combo box
             }

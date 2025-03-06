@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <condition_variable>
 #include <mutex>
@@ -131,6 +132,7 @@ s32 PS4_SYSV_ABI sceZlibWaitForDone(u64* request_id, const u32* timeout) {
         const auto pred = [] { return !done_queue.empty(); };
         if (timeout) {
             if (!done_queue_cv.wait_for(lock, std::chrono::milliseconds(*timeout), pred)) {
+    EMULATOR_TRACE;
                 return ORBIS_ZLIB_ERROR_TIMEDOUT;
             }
         } else {

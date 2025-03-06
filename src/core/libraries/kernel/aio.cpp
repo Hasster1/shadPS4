@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <thread>
 
@@ -38,6 +39,7 @@ s32 PS4_SYSV_ABI sceKernelAioDeleteRequests(OrbisKernelAioSubmitId id[], s32 num
         return ORBIS_KERNEL_ERROR_EFAULT;
     }
     for (s32 i = 0; i < num; i++) {
+    EMULATOR_TRACE;
         id_state[id[i]] = ORBIS_KERNEL_AIO_STATE_ABORTED;
         ret[i] = 0;
     }
@@ -57,6 +59,7 @@ s32 PS4_SYSV_ABI sceKernelAioPollRequests(OrbisKernelAioSubmitId id[], s32 num, 
         return ORBIS_KERNEL_ERROR_EFAULT;
     }
     for (s32 i = 0; i < num; i++) {
+    EMULATOR_TRACE;
         state[i] = id_state[id[i]];
     }
 
@@ -81,6 +84,7 @@ s32 PS4_SYSV_ABI sceKernelAioCancelRequests(OrbisKernelAioSubmitId id[], s32 num
         return ORBIS_KERNEL_ERROR_EFAULT;
     }
     for (s32 i = 0; i < num; i++) {
+    EMULATOR_TRACE;
         if (id[i]) {
             id_state[id[i]] = ORBIS_KERNEL_AIO_STATE_ABORTED;
             state[i] = ORBIS_KERNEL_AIO_STATE_ABORTED;
@@ -129,6 +133,7 @@ s32 PS4_SYSV_ABI sceKernelAioWaitRequests(OrbisKernelAioSubmitId id[], s32 num, 
     s32 completion = 0;
 
     for (s32 i = 0; i < num; i++) {
+    EMULATOR_TRACE;
         if (!completion && !timeout) {
             while (id_state[id[i]] == ORBIS_KERNEL_AIO_STATE_PROCESSING) {
                 sceKernelUsleep(10);
@@ -168,6 +173,7 @@ s32 PS4_SYSV_ABI sceKernelAioSubmitReadCommands(OrbisKernelAioRWRequest req[], s
     id_state[id_index] = ORBIS_KERNEL_AIO_STATE_PROCESSING;
 
     for (s32 i = 0; i < size; i++) {
+    EMULATOR_TRACE;
 
         s64 ret = sceKernelPread(req[i].fd, req[i].buf, req[i].nbyte, req[i].offset);
 
@@ -202,6 +208,7 @@ s32 PS4_SYSV_ABI sceKernelAioSubmitReadCommandsMultiple(OrbisKernelAioRWRequest 
         return ORBIS_KERNEL_ERROR_EFAULT;
     }
     for (s32 i = 0; i < size; i++) {
+    EMULATOR_TRACE;
         id_state[id_index] = ORBIS_KERNEL_AIO_STATE_PROCESSING;
 
         s64 ret = sceKernelPread(req[i].fd, req[i].buf, req[i].nbyte, req[i].offset);
@@ -239,6 +246,7 @@ s32 PS4_SYSV_ABI sceKernelAioSubmitWriteCommands(OrbisKernelAioRWRequest req[], 
         return ORBIS_KERNEL_ERROR_EFAULT;
     }
     for (s32 i = 0; i < size; i++) {
+    EMULATOR_TRACE;
         id_state[id_index] = ORBIS_KERNEL_AIO_STATE_PROCESSING;
 
         s64 ret = sceKernelPwrite(req[i].fd, req[i].buf, req[i].nbyte, req[i].offset);
@@ -278,6 +286,7 @@ s32 PS4_SYSV_ABI sceKernelAioSubmitWriteCommandsMultiple(OrbisKernelAioRWRequest
         return ORBIS_KERNEL_ERROR_EFAULT;
     }
     for (s32 i = 0; i < size; i++) {
+    EMULATOR_TRACE;
         id_state[id_index] = ORBIS_KERNEL_AIO_STATE_PROCESSING;
         s64 ret = sceKernelPwrite(req[i].fd, req[i].buf, req[i].nbyte, req[i].offset);
 

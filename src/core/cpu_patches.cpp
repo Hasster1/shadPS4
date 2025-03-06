@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <map>
 #include <memory>
@@ -122,6 +123,7 @@ static bool IsRegisterAllocated(
 static Xbyak::Reg AllocateScratchRegister(
     const std::initializer_list<const Xbyak::Operand*> allocated_registers, const u32 bits) {
     for (int index = Xbyak::Operand::R8; index <= Xbyak::Operand::R15; index++) {
+    EMULATOR_TRACE;
         if (!IsRegisterAllocated(allocated_registers, index)) {
             return Xbyak::Reg32e(index, static_cast<int>(bits));
         }
@@ -145,6 +147,7 @@ static void FreePatchStack(void* patch_stack) {
 }
 
 static void InitializePatchContextSlots() {
+    EMULATOR_TRACE;
     ASSERT_MSG(pthread_key_create(&stack_pointer_slot, nullptr) == 0,
                "Unable to allocate thread-local register for stack pointer.");
     ASSERT_MSG(pthread_key_create(&patch_stack_slot, FreePatchStack) == 0,
@@ -152,6 +155,7 @@ static void InitializePatchContextSlots() {
 }
 
 void InitializeThreadPatchStack() {
+    EMULATOR_TRACE;
     std::call_once(patch_context_slots_init_flag, InitializePatchContextSlots);
 
     pthread_setspecific(patch_stack_slot,
@@ -204,6 +208,7 @@ static void RestoreStack(Xbyak::CodeGenerator& c) {
 static void SaveRegisters(Xbyak::CodeGenerator& c, const std::initializer_list<Xbyak::Reg> regs) {
     SaveStack(c);
     for (const auto& reg : regs) {
+    EMULATOR_TRACE;
         c.push(reg.cvt64());
     }
     RestoreStack(c);
@@ -214,6 +219,7 @@ static void RestoreRegisters(Xbyak::CodeGenerator& c,
                              const std::initializer_list<Xbyak::Reg> regs) {
     SaveStack(c);
     for (const auto& reg : regs) {
+    EMULATOR_TRACE;
         c.pop(reg.cvt64());
     }
     RestoreStack(c);
@@ -223,9 +229,11 @@ static void RestoreRegisters(Xbyak::CodeGenerator& c,
 static void SaveContext(Xbyak::CodeGenerator& c, bool save_flags = false) {
     SaveStack(c);
     for (int reg = Xbyak::Operand::RAX; reg <= Xbyak::Operand::R15; reg++) {
+    EMULATOR_TRACE;
         c.push(Xbyak::Reg64(reg));
     }
     for (int reg = 0; reg <= 7; reg++) {
+    EMULATOR_TRACE;
         c.lea(rsp, ptr[rsp - 32]);
         c.vmovdqu(ptr[rsp], Xbyak::Ymm(reg));
     }
@@ -242,12 +250,14 @@ static void RestoreContext(Xbyak::CodeGenerator& c, const Xbyak::Operand& dst,
         c.popfq();
     }
     for (int reg = 7; reg >= 0; reg--) {
+    EMULATOR_TRACE;
         if ((!dst.isXMM() && !dst.isYMM()) || dst.getIdx() != reg) {
             c.vmovdqu(Xbyak::Ymm(reg), ptr[rsp]);
         }
         c.lea(rsp, ptr[rsp + 32]);
     }
     for (int reg = Xbyak::Operand::R15; reg >= Xbyak::Operand::RAX; reg--) {
+    EMULATOR_TRACE;
         if (!dst.isREG() || dst.getIdx() != reg) {
             c.pop(Xbyak::Reg64(reg));
         } else {
@@ -341,6 +351,7 @@ static void GenerateBLSI(const ZydisDecodedOperand* operands, Xbyak::CodeGenerat
     c.mov(dst, scratch);
 
     RestoreRegisters(c, {scratch});
+    EMULATOR_TRACE;
 }
 
 static void GenerateBLSMSK(const ZydisDecodedOperand* operands, Xbyak::CodeGenerator& c) {
@@ -372,6 +383,7 @@ static void GenerateBLSMSK(const ZydisDecodedOperand* operands, Xbyak::CodeGener
     c.mov(dst, scratch);
 
     RestoreRegisters(c, {scratch});
+    EMULATOR_TRACE;
 }
 
 static void GenerateBLSR(const ZydisDecodedOperand* operands, Xbyak::CodeGenerator& c) {
@@ -403,11 +415,14 @@ static void GenerateBLSR(const ZydisDecodedOperand* operands, Xbyak::CodeGenerat
     c.mov(dst, scratch);
 
     RestoreRegisters(c, {scratch});
+    EMULATOR_TRACE;
 }
 
 static __attribute__((sysv_abi)) void PerformVCVTPH2PS(float* out, const half_float::half* in,
                                                        const u32 count) {
+    EMULATOR_TRACE;
     for (u32 i = 0; i < count; i++) {
+    EMULATOR_TRACE;
         out[i] = half_float::half_cast<float>(in[i]);
     }
 }
@@ -426,6 +441,7 @@ static void GenerateVCVTPH2PS(const ZydisDecodedOperand* operands, Xbyak::CodeGe
     c.mov(rdi, rsp);
 
     if (src->isXMM()) {
+    EMULATOR_TRACE;
         // Allocate stack space for inputs and load into second parameter.
         c.sub(rsp, byte_count);
         c.mov(rsi, rsp);
@@ -433,6 +449,7 @@ static void GenerateVCVTPH2PS(const ZydisDecodedOperand* operands, Xbyak::CodeGe
         // Move input to the allocated space.
         c.movdqu(ptr[rsp], *reinterpret_cast<Xbyak::Xmm*>(src.get()));
     } else {
+    EMULATOR_TRACE;
         c.lea(rsi, src->getAddress());
     }
 
@@ -443,6 +460,7 @@ static void GenerateVCVTPH2PS(const ZydisDecodedOperand* operands, Xbyak::CodeGe
     c.call(rax);
 
     if (src->isXMM()) {
+    EMULATOR_TRACE;
         // Clean up after inputs space.
         c.add(rsp, byte_count);
     }
@@ -468,9 +486,11 @@ static const SingleToHalfFloatConverter SingleToHalfFloatConverters[4] = {
 
 static __attribute__((sysv_abi)) void PerformVCVTPS2PH(half_float::half* out, const float* in,
                                                        const u32 count, const u8 rounding_mode) {
+    EMULATOR_TRACE;
     const auto conversion_func = SingleToHalfFloatConverters[rounding_mode];
 
     for (u32 i = 0; i < count; i++) {
+    EMULATOR_TRACE;
         out[i] = conversion_func(in[i]);
     }
 }
@@ -490,6 +510,7 @@ static void GenerateVCVTPS2PH(const ZydisDecodedOperand* operands, Xbyak::CodeGe
         c.sub(rsp, byte_count);
         c.mov(rdi, rsp);
     } else {
+    EMULATOR_TRACE;
         c.lea(rdi, dst->getAddress());
     }
 
@@ -499,6 +520,7 @@ static void GenerateVCVTPS2PH(const ZydisDecodedOperand* operands, Xbyak::CodeGe
 
     // Move input to the allocated space.
     if (src.isYMM()) {
+    EMULATOR_TRACE;
         c.vmovdqu(ptr[rsp], *reinterpret_cast<const Xbyak::Ymm*>(&src));
     } else {
         c.movdqu(ptr[rsp], *reinterpret_cast<const Xbyak::Xmm*>(&src));
@@ -525,6 +547,7 @@ static void GenerateVCVTPS2PH(const ZydisDecodedOperand* operands, Xbyak::CodeGe
     c.add(rsp, byte_count);
 
     if (dst->isXMM()) {
+    EMULATOR_TRACE;
         // Load outputs into destination register and clean up space.
         c.movdqu(*reinterpret_cast<Xbyak::Xmm*>(dst.get()), ptr[rsp]);
         c.add(rsp, byte_count);
@@ -612,6 +635,7 @@ static void GenerateEXTRQ(const ZydisDecodedOperand* operands, Xbyak::CodeGenera
         u8 index = operands[2].imm.value.u & 0x3F;
 
         LOG_DEBUG(Core, "Patching immediate form EXTRQ, length: {}, index: {}", length, index);
+    EMULATOR_TRACE;
 
         const Xbyak::Reg64 scratch1 = rax;
         const Xbyak::Reg64 scratch2 = rcx;
@@ -624,9 +648,11 @@ static void GenerateEXTRQ(const ZydisDecodedOperand* operands, Xbyak::CodeGenera
 
         u64 mask;
         if (length == 0) {
+    EMULATOR_TRACE;
             length = 64; // for the check below
             mask = 0xFFFF'FFFF'FFFF'FFFF;
         } else {
+    EMULATOR_TRACE;
             mask = (1ULL << length) - 1;
         }
 
@@ -715,6 +741,7 @@ static void GenerateEXTRQ(const ZydisDecodedOperand* operands, Xbyak::CodeGenera
 }
 
 static void GenerateINSERTQ(const ZydisDecodedOperand* operands, Xbyak::CodeGenerator& c) {
+    EMULATOR_TRACE;
     bool immediateForm = operands[2].type == ZYDIS_OPERAND_TYPE_IMMEDIATE &&
                          operands[3].type == ZYDIS_OPERAND_TYPE_IMMEDIATE;
 
@@ -747,9 +774,11 @@ static void GenerateINSERTQ(const ZydisDecodedOperand* operands, Xbyak::CodeGene
 
         u64 mask_value;
         if (length == 0) {
+    EMULATOR_TRACE;
             length = 64; // for the check below
             mask_value = 0xFFFF'FFFF'FFFF'FFFF;
         } else {
+    EMULATOR_TRACE;
             mask_value = (1ULL << length) - 1;
         }
 
@@ -880,6 +909,7 @@ static const std::unordered_map<ZydisMnemonic, PatchInfo> Patches = {
     // Patches for instruction sets not supported by Rosetta 2.
     // BMI1
     {ZYDIS_MNEMONIC_ANDN, {FilterRosetta2Only, GenerateANDN, true}},
+    EMULATOR_TRACE;
     {ZYDIS_MNEMONIC_BEXTR, {FilterRosetta2Only, GenerateBEXTR, true}},
     {ZYDIS_MNEMONIC_BLSI, {FilterRosetta2Only, GenerateBLSI, true}},
     {ZYDIS_MNEMONIC_BLSMSK, {FilterRosetta2Only, GenerateBLSMSK, true}},
@@ -1031,9 +1061,11 @@ static bool TryExecuteIllegalInstruction(void* ctx, void* code_address) {
             u64 length = lowQWordSrc & 0x3F;
             u64 mask;
             if (length == 0) {
+    EMULATOR_TRACE;
                 length = 64; // for the check below
                 mask = 0xFFFF'FFFF'FFFF'FFFF;
             } else {
+    EMULATOR_TRACE;
                 mask = (1ULL << length) - 1;
             }
 
@@ -1091,9 +1123,11 @@ static bool TryExecuteIllegalInstruction(void* ctx, void* code_address) {
             u64 length = highQWordSrc & 0x3F;
             u64 mask;
             if (length == 0) {
+    EMULATOR_TRACE;
                 length = 64; // for the check below
                 mask = 0xFFFF'FFFF'FFFF'FFFF;
             } else {
+    EMULATOR_TRACE;
                 mask = (1ULL << length) - 1;
             }
 
@@ -1132,6 +1166,7 @@ static bool TryExecuteIllegalInstruction(void* ctx, void* code_address) {
 // These functions shouldn't be needed for ARM as it will use a JIT so there's no need to patch
 // instructions.
 static bool TryExecuteIllegalInstruction(void*, void*) {
+    EMULATOR_TRACE;
     return false;
 }
 #else
@@ -1204,6 +1239,7 @@ void RegisterPatchModule(void* module_ptr, u64 module_size, void* trampoline_are
 }
 
 void PrePatchInstructions(u64 segment_addr, u64 segment_size) {
+    EMULATOR_TRACE;
 #if defined(__APPLE__)
     // HACK: For some reason patching in the signal handler at the start of a page does not work
     // under Rosetta 2. Patch any instructions at the start of a page ahead of time.
@@ -1219,6 +1255,7 @@ void PrePatchInstructions(u64 segment_addr, u64 segment_size) {
     // Linux and others have an FS segment pointing to valid memory, so continue to do full
     // ahead-of-time patching for now until a better solution is worked out.
     if (!Patches.empty()) {
+    EMULATOR_TRACE;
         TryPatchAot(reinterpret_cast<void*>(segment_addr), segment_size);
     }
 #endif

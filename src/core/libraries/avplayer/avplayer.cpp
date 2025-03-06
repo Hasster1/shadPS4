@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/logging/log.h"
 #include "core/libraries/avplayer/avplayer.h"
@@ -134,6 +135,7 @@ SceAvPlayerHandle PS4_SYSV_ABI sceAvPlayerInit(SceAvPlayerInitData* data) {
 
 s32 PS4_SYSV_ABI sceAvPlayerInitEx(const SceAvPlayerInitDataEx* p_data,
                                    SceAvPlayerHandle* p_player) {
+    EMULATOR_TRACE;
     LOG_TRACE(Lib_AvPlayer, "called");
     if (p_data == nullptr || p_player == nullptr) {
         return ORBIS_AVPLAYER_ERROR_INVALID_PARAMS;
@@ -197,6 +199,7 @@ s32 PS4_SYSV_ABI sceAvPlayerPostInit(SceAvPlayerHandle handle, SceAvPlayerPostIn
 }
 
 s32 PS4_SYSV_ABI sceAvPlayerPrintf(const char* format, ...) {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_AvPlayer, "(STUBBED) called");
     return ORBIS_OK;
 }
@@ -274,6 +277,7 @@ s32 PS4_SYSV_ABI sceAvPlayerStreamCount(SceAvPlayerHandle handle) {
 }
 
 s32 PS4_SYSV_ABI sceAvPlayerVprintf(const char* format, va_list args) {
+    EMULATOR_TRACE;
     LOG_ERROR(Lib_AvPlayer, "(STUBBED) called");
     return ORBIS_OK;
 }

@@ -7,6 +7,7 @@
 #include <fmt/core.h>
 #include "common/types.h"
 #include "core/libraries/kernel/orbis_error.h"
+#include "core/libraries/libs.h"
 
 namespace Core::Loader {
 class SymbolsResolver;
@@ -36,7 +37,7 @@ struct WrapperImpl<name, PS4_SYSV_ABI R (*)(Args...), f> {
     static R PS4_SYSV_ABI wrap(Args... args) {
         u32 ret = f(args...);
         if (ret != 0) {
-            // LOG_ERROR(Lib_Kernel, "Function {} returned {}", std::string_view{name.value}, ret);
+            LOG_TRACE(Lib_VideoOut, "Function {} returned {}", std::string_view{name.value}, ret);
             ret += ORBIS_KERNEL_ERROR_UNKNOWN;
         }
         return ret;

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2021 yuzu Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/arch.h"
 #include "common/assert.h"
@@ -14,16 +15,19 @@
 #endif
 
 void assert_fail_impl() {
-    Common::Log::Stop();
-    std::fflush(stdout);
-    Crash();
+    EMULATOR_TRACE;
+    //Common::Log::Stop();
+    //std::fflush(stdout);
+    //Crash();
 }
 
 [[noreturn]] void unreachable_impl() {
+    
     Common::Log::Stop();
     std::fflush(stdout);
     Crash();
     throw std::runtime_error("Unreachable code");
+    
 }
 
 void assert_fail_debug_msg(const char* msg) {

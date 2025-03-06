@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <array>
 #include <half.hpp>
@@ -17,6 +18,7 @@
 #define F32_INFINITY 0x7f800000
 
 namespace NumberUtils {
+    EMULATOR_TRACE;
 
 float Uf11ToF32(u16 val) {
     union {

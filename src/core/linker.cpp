@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/alignment.h"
 #include "common/arch.h"
@@ -63,6 +64,7 @@ void Linker::Execute(const std::vector<std::string> args) {
 
     // Relocate all modules
     for (const auto& m : m_modules) {
+    EMULATOR_TRACE;
         Relocate(m.get());
     }
 
@@ -112,6 +114,7 @@ void Linker::Execute(const std::vector<std::string> args) {
         if (!args.empty()) {
             params.argc = args.size() + 1;
             for (int i = 0; i < args.size() && i < 32; i++) {
+    EMULATOR_TRACE;
                 params.argv[i + 1] = args[i].c_str();
             }
         }
@@ -141,6 +144,7 @@ s32 Linker::LoadModule(const std::filesystem::path& elf_name, bool is_dynamic) {
 
 Module* Linker::FindByAddress(VAddr address) {
     for (auto& module : m_modules) {
+    EMULATOR_TRACE;
         const VAddr base = module->GetBaseAddress();
         if (address >= base && address < base + module->aligned_base_size) {
             return module.get();
@@ -337,6 +341,7 @@ void* Linker::TlsGetAddr(u64 module_index, u64 offset) {
 }
 
 void* Linker::AllocateTlsForThread(bool is_primary) {
+    EMULATOR_TRACE;
     static constexpr size_t TcbSize = 0x40;
     static constexpr size_t TlsAllocAlign = 0x20;
     const size_t total_tls_size = Common::AlignUp(static_tls_size, TlsAllocAlign) + TcbSize;
@@ -356,6 +361,7 @@ void* Linker::AllocateTlsForThread(bool is_primary) {
             &addr_out, tls_aligned, 3, 0, "SceKernelPrimaryTcbTls");
         ASSERT_MSG(ret == 0, "Unable to allocate TLS+TCB for the primary thread");
     } else {
+    EMULATOR_TRACE;
         if (heap_api) {
             addr_out = Core::ExecuteGuest(heap_api->heap_malloc, total_tls_size);
         } else {
@@ -378,6 +384,7 @@ void Linker::DebugDump() {
     const std::filesystem::path debug(log_dir / "debugdump");
     std::filesystem::create_directory(debug);
     for (const auto& m : m_modules) {
+    EMULATOR_TRACE;
         Module* module = m.get();
         auto& elf = module->elf;
         const std::filesystem::path filepath(debug / module->file.stem());

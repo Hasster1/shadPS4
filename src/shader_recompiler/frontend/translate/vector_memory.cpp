@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "shader_recompiler/frontend/translate/translate.h"
 
@@ -215,6 +216,7 @@ void Translator::BUFFER_LOAD(u32 num_dwords, bool is_typed, const GcnInst& inst)
         return;
     }
     for (u32 i = 0; i < num_dwords; i++) {
+    EMULATOR_TRACE;
         ir.SetVectorReg(dst_reg + i, IR::U32{ir.CompositeExtract(value, i)});
     }
 }
@@ -248,6 +250,7 @@ void Translator::BUFFER_LOAD_FORMAT(u32 num_dwords, const GcnInst& inst) {
     const IR::Value value = ir.LoadBufferFormat(handle, address, buffer_info);
     const IR::VectorReg dst_reg{inst.src[1].code};
     for (u32 i = 0; i < num_dwords; i++) {
+    EMULATOR_TRACE;
         ir.SetVectorReg(dst_reg + i, IR::F32{ir.CompositeExtract(value, i)});
     }
 }
@@ -344,9 +347,11 @@ void Translator::BUFFER_STORE_FORMAT(u32 num_dwords, const GcnInst& inst) {
 
     std::array<IR::F32, 4> comps{};
     for (u32 i = 0; i < num_dwords; i++) {
+    EMULATOR_TRACE;
         comps[i] = ir.GetVectorReg<IR::F32>(src_reg + i);
     }
     for (u32 i = num_dwords; i < 4; i++) {
+    EMULATOR_TRACE;
         comps[i] = ir.Imm32(0.f);
     }
 
@@ -440,6 +445,7 @@ void Translator::IMAGE_LOAD(bool has_mip, const GcnInst& inst) {
     const IR::Value texel = ir.ImageRead(handle, body, {}, {}, info);
 
     for (u32 i = 0; i < 4; i++) {
+    EMULATOR_TRACE;
         if (((mimg.dmask >> i) & 1) == 0) {
             continue;
         }
@@ -465,6 +471,7 @@ void Translator::IMAGE_STORE(bool has_mip, const GcnInst& inst) {
 
     boost::container::static_vector<IR::F32, 4> comps;
     for (u32 i = 0; i < 4; i++) {
+    EMULATOR_TRACE;
         if (((mimg.dmask >> i) & 1) == 0) {
             comps.push_back(ir.Imm32(0.f));
             continue;
@@ -567,6 +574,7 @@ IR::Value EmitImageSample(IR::IREmitter& ir, const GcnInst& inst, const IR::Scal
     info.is_unnormalized.Assign(mimg.unrm);
 
     if (gather) {
+    EMULATOR_TRACE;
         info.gather_comp.Assign(std::bit_width(mimg.dmask) - 1);
         info.is_gather.Assign(true);
     } else {
@@ -631,6 +639,7 @@ void Translator::IMAGE_SAMPLE(const GcnInst& inst) {
 
     const IR::Value texel = EmitImageSample(ir, inst, tsharp_reg, sampler_reg, addr_reg, false);
     for (u32 i = 0; i < 4; i++) {
+    EMULATOR_TRACE;
         if (((mimg.dmask >> i) & 1) == 0) {
             continue;
         }
@@ -660,6 +669,7 @@ void Translator::IMAGE_GATHER(const GcnInst& inst) {
 
     const IR::Value texel = EmitImageSample(ir, inst, tsharp_reg, sampler_reg, addr_reg, true);
     for (u32 i = 0; i < 4; i++) {
+    EMULATOR_TRACE;
         const IR::F32 value = IR::F32{ir.CompositeExtract(texel, i)};
         ir.SetVectorReg(dest_reg++, value);
     }

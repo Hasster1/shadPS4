@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <cstring>
 #include "common/assert.h"
@@ -22,6 +23,7 @@ static constexpr PthreadCondAttr PhreadCondattrDefault = {
 };
 
 static int CondInit(PthreadCondT* cond, const PthreadCondAttrT* cond_attr, const char* name) {
+    EMULATOR_TRACE;
     auto* cvp = new PthreadCond{};
     if (cvp == nullptr) {
         return POSIX_ENOMEM;
@@ -32,6 +34,7 @@ static int CondInit(PthreadCondT* cond, const PthreadCondAttrT* cond_attr, const
     } else {
         static int CondId = 0;
         cvp->name = fmt::format("Cond{}", CondId++);
+    EMULATOR_TRACE;
     }
 
     if (cond_attr == nullptr || *cond_attr == nullptr) {
@@ -47,6 +50,7 @@ static int CondInit(PthreadCondT* cond, const PthreadCondAttrT* cond_attr, const
 }
 
 static int InitStatic(Pthread* thread, PthreadCondT* cond) {
+    EMULATOR_TRACE;
     std::scoped_lock lk{CondStaticLock};
     if (*cond == nullptr) {
         return CondInit(cond, nullptr, nullptr);
@@ -68,17 +72,20 @@ static int InitStatic(Pthread* thread, PthreadCondT* cond) {
     }
 
 int PS4_SYSV_ABI posix_pthread_cond_init(PthreadCondT* cond, const PthreadCondAttrT* cond_attr) {
+    EMULATOR_TRACE;
     *cond = nullptr;
     return CondInit(cond, cond_attr, nullptr);
 }
 
 int PS4_SYSV_ABI scePthreadCondInit(PthreadCondT* cond, const PthreadCondAttrT* cond_attr,
                                     const char* name) {
+    EMULATOR_TRACE;
     *cond = nullptr;
     return CondInit(cond, cond_attr, name);
 }
 
 int PS4_SYSV_ABI posix_pthread_cond_destroy(PthreadCondT* cond) {
+    EMULATOR_TRACE;
     PthreadCond* cvp = *cond;
     if (cvp == THR_COND_INITIALIZER) {
         return 0;
@@ -93,6 +100,8 @@ int PS4_SYSV_ABI posix_pthread_cond_destroy(PthreadCondT* cond) {
 }
 
 int PthreadCond::Wait(PthreadMutexT* mutex, const OrbisKernelTimespec* abstime, u64 usec) {
+    EMULATOR_TRACE;
+
     PthreadMutex* mp = *mutex;
     if (int error = mp->IsOwned(g_curthread); error != 0) {
         return error;
@@ -118,6 +127,7 @@ int PthreadCond::Wait(PthreadMutexT* mutex, const OrbisKernelTimespec* abstime, 
 
     int error = 0;
     for (;;) {
+    EMULATOR_TRACE;
         void(curthread->wake_sema.try_acquire());
         SleepqUnlock(this);
 
@@ -126,6 +136,8 @@ int PthreadCond::Wait(PthreadMutexT* mutex, const OrbisKernelTimespec* abstime, 
         //_thr_cancel_leave(curthread, 0);
 
         SleepqLock(this);
+
+
         if (curthread->wchan == nullptr) {
             error = 0;
             break;
@@ -142,6 +154,8 @@ int PthreadCond::Wait(PthreadMutexT* mutex, const OrbisKernelTimespec* abstime, 
             break;
         }
         UNREACHABLE();
+
+
     }
     SleepqUnlock(this);
     curthread->mutex_obj = nullptr;
@@ -153,6 +167,7 @@ int PthreadCond::Wait(PthreadMutexT* mutex, const OrbisKernelTimespec* abstime, 
 }
 
 int PS4_SYSV_ABI posix_pthread_cond_wait(PthreadCondT* cond, PthreadMutexT* mutex) {
+    EMULATOR_TRACE;
     PthreadCond* cvp{};
     CHECK_AND_INIT_COND
     return cvp->Wait(mutex, nullptr);
@@ -160,6 +175,7 @@ int PS4_SYSV_ABI posix_pthread_cond_wait(PthreadCondT* cond, PthreadMutexT* mute
 
 int PS4_SYSV_ABI posix_pthread_cond_timedwait(PthreadCondT* cond, PthreadMutexT* mutex,
                                               const OrbisKernelTimespec* abstime) {
+    EMULATOR_TRACE;
     if (abstime == nullptr || abstime->tv_sec < 0 || abstime->tv_nsec < 0 ||
         abstime->tv_nsec >= 1000000000) {
         return POSIX_EINVAL;
@@ -167,17 +183,19 @@ int PS4_SYSV_ABI posix_pthread_cond_timedwait(PthreadCondT* cond, PthreadMutexT*
 
     PthreadCond* cvp{};
     CHECK_AND_INIT_COND
-    return cvp->Wait(mutex, abstime);
+    return cvp->Wait(mutex, abstime); //freeze
 }
 
 int PS4_SYSV_ABI posix_pthread_cond_reltimedwait_np(PthreadCondT* cond, PthreadMutexT* mutex,
                                                     u64 usec) {
+    EMULATOR_TRACE;
     PthreadCond* cvp{};
     CHECK_AND_INIT_COND
     return cvp->Wait(mutex, THR_RELTIME, usec);
 }
 
 int PthreadCond::Signal(Pthread* thread) {
+    EMULATOR_TRACE;
     Pthread* curthread = g_curthread;
 
     SleepqLock(this);
@@ -217,6 +235,7 @@ struct BroadcastArg {
 };
 
 int PthreadCond::Broadcast() {
+    EMULATOR_TRACE;
     BroadcastArg ba;
     ba.curthread = g_curthread;
     ba.count = 0;
@@ -235,6 +254,7 @@ int PthreadCond::Broadcast() {
         } else {
             if (ba->count >= Pthread::MaxDeferWaiters) {
                 for (int i = 0; i < ba->count; i++) {
+    EMULATOR_TRACE;
                     ba->waddrs[i]->release();
                 }
                 ba->count = 0;
@@ -255,24 +275,29 @@ int PthreadCond::Broadcast() {
     SleepqUnlock(this);
 
     for (int i = 0; i < ba.count; i++) {
+    EMULATOR_TRACE;
         ba.waddrs[i]->release();
     }
     return 0;
 }
 
 int PS4_SYSV_ABI posix_pthread_cond_signal(PthreadCondT* cond) {
+    EMULATOR_TRACE;
     PthreadCond* cvp{};
     CHECK_AND_INIT_COND
+    LOG_TRACE(Lib_VideoOut, "POSIX PTHREAD COND SIGNAL = {}", cvp->Signal(nullptr));
     return cvp->Signal(nullptr);
 }
 
 int PS4_SYSV_ABI posix_pthread_cond_signalto_np(PthreadCondT* cond, Pthread* thread) {
+    EMULATOR_TRACE;
     PthreadCond* cvp{};
     CHECK_AND_INIT_COND
     return cvp->Signal(thread);
 }
 
 int PS4_SYSV_ABI posix_pthread_cond_broadcast(PthreadCondT* cond) {
+    EMULATOR_TRACE;
     PthreadCond* cvp{};
     CHECK_AND_INIT_COND
     cvp->Broadcast();
@@ -280,6 +305,7 @@ int PS4_SYSV_ABI posix_pthread_cond_broadcast(PthreadCondT* cond) {
 }
 
 int PS4_SYSV_ABI posix_pthread_condattr_init(PthreadCondAttrT* attr) {
+    EMULATOR_TRACE;
     PthreadCondAttr* pattr = new PthreadCondAttr{};
     if (pattr == nullptr) {
         return POSIX_ENOMEM;
@@ -290,6 +316,7 @@ int PS4_SYSV_ABI posix_pthread_condattr_init(PthreadCondAttrT* attr) {
 }
 
 int PS4_SYSV_ABI posix_pthread_condattr_destroy(PthreadCondAttrT* attr) {
+    EMULATOR_TRACE;
     if (attr == nullptr || *attr == nullptr) {
         return POSIX_EINVAL;
     }
@@ -299,6 +326,7 @@ int PS4_SYSV_ABI posix_pthread_condattr_destroy(PthreadCondAttrT* attr) {
 }
 
 int PS4_SYSV_ABI posix_pthread_condattr_getclock(const PthreadCondAttrT* attr, ClockId* clock_id) {
+    EMULATOR_TRACE;
     if (attr == nullptr || *attr == nullptr) {
         return POSIX_EINVAL;
     }
@@ -307,6 +335,7 @@ int PS4_SYSV_ABI posix_pthread_condattr_getclock(const PthreadCondAttrT* attr, C
 }
 
 int PS4_SYSV_ABI posix_pthread_condattr_setclock(PthreadCondAttrT* attr, ClockId clock_id) {
+    EMULATOR_TRACE;
     if (attr == nullptr || *attr == nullptr) {
         return POSIX_EINVAL;
     }
@@ -319,6 +348,7 @@ int PS4_SYSV_ABI posix_pthread_condattr_setclock(PthreadCondAttrT* attr, ClockId
 }
 
 int PS4_SYSV_ABI posix_pthread_condattr_getpshared(const PthreadCondAttrT* attr, int* pshared) {
+    EMULATOR_TRACE;
     if (attr == nullptr || *attr == nullptr) {
         return POSIX_EINVAL;
     }
@@ -327,6 +357,7 @@ int PS4_SYSV_ABI posix_pthread_condattr_getpshared(const PthreadCondAttrT* attr,
 }
 
 int PS4_SYSV_ABI posix_pthread_condattr_setpshared(PthreadCondAttrT* attr, int pshared) {
+    EMULATOR_TRACE;
     if (attr == nullptr || *attr == nullptr) {
         return POSIX_EINVAL;
     }

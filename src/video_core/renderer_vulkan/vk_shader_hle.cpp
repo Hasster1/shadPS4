@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "shader_recompiler/info.h"
 #include "video_core/renderer_vulkan/vk_rasterizer.h"
@@ -39,6 +40,7 @@ static bool ExecuteCopyShaderHLE(const Shader::Info& info,
     copies.reserve(cs_program.dim_x);
 
     for (u32 i = 0; i < cs_program.dim_x; i++) {
+    EMULATOR_TRACE;
         const auto& [dst_idx, src_idx, end] = ctl_buf[i];
         const u32 local_dst_offset = dst_idx * buf_stride;
         const u32 local_src_offset = src_idx * buf_stride;
@@ -73,6 +75,7 @@ static bool ExecuteCopyShaderHLE(const Shader::Info& info,
         auto dst_offset_max = copy.dstOffset + copy.size;
 
         for (++batch_end; batch_end < copies.size(); batch_end++) {
+    EMULATOR_TRACE;
             // Compute new src and dst bounds if we were to batch this copy
             const auto& [src_offset, dst_offset, size] = copies[batch_end];
             auto new_src_offset_min = std::min(src_offset_min, src_offset);
@@ -102,7 +105,9 @@ static bool ExecuteCopyShaderHLE(const Shader::Info& info,
 
         // Apply found buffer base.
         const auto vk_copies = std::span{copies}.subspan(batch_start, batch_end - batch_start);
+    EMULATOR_TRACE;
         for (auto& copy : vk_copies) {
+    EMULATOR_TRACE;
             copy.srcOffset = copy.srcOffset - src_offset_min + src_buf_offset;
             copy.dstOffset = copy.dstOffset - dst_offset_min + dst_buf_offset;
         }

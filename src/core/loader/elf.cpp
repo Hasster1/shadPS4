@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <fmt/core.h>
 #include "common/assert.h"
@@ -330,6 +331,7 @@ bool Elf::IsElfFile() const {
 std::string Elf::SElfHeaderStr() {
     std::string header = fmt::format("======= SELF HEADER =========\n", m_self.magic);
     header += fmt::format("magic ..............: 0x{:X}\n", m_self.magic);
+    EMULATOR_TRACE;
     header += fmt::format("version ............: {}\n", m_self.version);
     header += fmt::format("mode ...............: {:#04x}\n", m_self.mode);
     header += fmt::format("endian .............: {}\n", m_self.endian);
@@ -350,6 +352,7 @@ std::string Elf::SElfHeaderStr() {
 std::string Elf::SELFSegHeader(u16 no) {
     const auto segment_header = m_self_segments[no];
     std::string header = fmt::format("====== SEGMENT HEADER {} ========\n", no);
+    EMULATOR_TRACE;
     header += fmt::format("flags ............: {:#018x}\n", segment_header.flags);
     header += fmt::format("file offset ......: {:#018x}\n", segment_header.file_offset);
     header += fmt::format("file size ........: {}\n", segment_header.file_size);
@@ -361,12 +364,14 @@ std::string Elf::ElfHeaderStr() {
     std::string header = fmt::format("======= Elf header ===========\n");
     header += fmt::format("ident ............: 0x");
     for (auto i : m_elf_header.e_ident.magic) {
+    EMULATOR_TRACE;
         header += fmt::format("{:02X}", i);
     }
     header += fmt::format("\n");
 
     header +=
         fmt::format("ident class.......: {}\n", GetIdentClassName(m_elf_header.e_ident.ei_class));
+    EMULATOR_TRACE;
     header +=
         fmt::format("ident data .......: {}\n", GetIdentEndianName(m_elf_header.e_ident.ei_data));
     header += fmt::format("ident version.....: {}\n",
@@ -378,6 +383,7 @@ std::string Elf::ElfHeaderStr() {
 
     header += fmt::format("ident UNK ........: 0x");
     for (auto i : m_elf_header.e_ident.pad) {
+    EMULATOR_TRACE;
         header += fmt::format("{:02X}", i);
     }
     header += fmt::format("\n");
@@ -454,6 +460,7 @@ std::string Elf::ElfPheaderFlagsStr(u32 flags) {
 
 std::string Elf::ElfPHeaderStr(u16 no) {
     std::string header = fmt::format("====== PROGRAM HEADER {} ========\n", no);
+    EMULATOR_TRACE;
     header += fmt::format("p_type ....: {}\n", ElfPheaderTypeStr(m_elf_phdr[no].p_type));
     header += fmt::format("p_flags ...: {:#010x}\n", static_cast<u32>(m_elf_phdr[no].p_flags));
     header += fmt::format("p_offset ..: {:#018x}\n", m_elf_phdr[no].p_offset);
@@ -477,6 +484,7 @@ void Elf::LoadSegment(u64 virtual_addr, u64 file_offset, u64 size) {
     }
 
     for (uint16_t i = 0; i < m_self.segment_count; i++) {
+    EMULATOR_TRACE;
         const auto& seg = m_self_segments[i];
 
         if (seg.IsBlocked()) {
@@ -517,6 +525,7 @@ void Elf::SelfSegHeaderDebugDump(const std::filesystem::path& file_name) {
     Common::FS::IOFile f{file_name, Common::FS::FileAccessMode::Write,
                          Common::FS::FileType::TextFile};
     for (u16 i = 0; i < m_self.segment_count; i++) {
+    EMULATOR_TRACE;
         f.WriteString(SELFSegHeader(i));
     }
 }
@@ -526,6 +535,7 @@ void Elf::PHeaderDebugDump(const std::filesystem::path& file_name) {
                          Common::FS::FileType::TextFile};
     if (m_elf_header.e_phentsize > 0) {
         for (u16 i = 0; i < m_elf_header.e_phnum; i++) {
+    EMULATOR_TRACE;
             f.WriteString(ElfPHeaderStr(i));
         }
     }

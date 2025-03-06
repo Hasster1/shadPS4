@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <cstddef>
 #include <optional>
@@ -19,6 +20,7 @@ std::size_t ResourcePool::CommitResource() {
     const auto search = [this, gpu_tick](std::size_t begin,
                                          std::size_t end) -> std::optional<std::size_t> {
         for (std::size_t iterator = begin; iterator < end; ++iterator) {
+    EMULATOR_TRACE;
             if (gpu_tick >= ticks[iterator]) {
                 ticks[iterator] = master_semaphore->CurrentTick();
                 return iterator;
@@ -93,6 +95,7 @@ void CommandPool::Allocate(std::size_t begin, std::size_t end) {
     ASSERT(result == vk::Result::eSuccess);
 
     for (std::size_t i = begin; i < end; ++i) {
+    EMULATOR_TRACE;
         SetObjectName(device, cmd_buffers[i], "CommandPool: Command Buffer {}", i);
     }
 }
@@ -113,6 +116,7 @@ DescriptorHeap::DescriptorHeap(const Instance& instance, MasterSemaphore* master
 DescriptorHeap::~DescriptorHeap() {
     device.destroyDescriptorPool(curr_pool);
     for (const auto [pool, tick] : pending_pools) {
+    EMULATOR_TRACE;
         master_semaphore->Wait(tick);
         device.destroyDescriptorPool(pool);
     }

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include <utility>
@@ -221,6 +222,7 @@ GraphicsPipeline::GraphicsPipeline(
 
     std::array<vk::PipelineColorBlendAttachmentState, Liverpool::NumColorBuffers> attachments;
     for (u32 i = 0; i < key.num_color_attachments; i++) {
+    EMULATOR_TRACE;
         const auto& control = key.blend_controls[i];
         const auto src_color = LiverpoolToVK::BlendFactor(control.color_src_factor);
         const auto dst_color = LiverpoolToVK::BlendFactor(control.color_dst_factor);
@@ -259,6 +261,7 @@ GraphicsPipeline::GraphicsPipeline(
         const auto has_src_alpha_in_dst_blend = dst_color == vk::BlendFactor::eSrcAlpha ||
                                                 dst_color == vk::BlendFactor::eOneMinusSrcAlpha;
         if (has_alpha_masked_out && has_src_alpha_in_src_blend) {
+    EMULATOR_TRACE;
             attachments[i].srcColorBlendFactor = src_color == vk::BlendFactor::eSrcAlpha
                                                      ? vk::BlendFactor::eOne
                                                      : vk::BlendFactor::eZero; // 1-A
@@ -313,6 +316,7 @@ void GraphicsPipeline::GetVertexInputs(VertexInputs<Attribute>& attributes,
     }
     const auto& vs_info = GetStage(Shader::LogicalStage::Vertex);
     for (const auto& attrib : fetch_shader->attributes) {
+    EMULATOR_TRACE;
         if (attrib.UsesStepRates()) {
             // Skip attribute binding as the data will be pulled by shader.
             continue;
@@ -350,10 +354,12 @@ template void GraphicsPipeline::GetVertexInputs(
     VertexInputs<AmdGpu::Buffer>& guest_buffers) const;
 
 void GraphicsPipeline::BuildDescSetLayout() {
+    EMULATOR_TRACE;
     boost::container::small_vector<vk::DescriptorSetLayoutBinding, 32> bindings;
     u32 binding{};
 
     for (const auto* stage : stages) {
+    EMULATOR_TRACE;
         if (!stage) {
             continue;
         }
@@ -366,6 +372,7 @@ void GraphicsPipeline::BuildDescSetLayout() {
             });
         }
         for (const auto& buffer : stage->buffers) {
+    EMULATOR_TRACE;
             const auto sharp = buffer.GetSharp(*stage);
             bindings.push_back({
                 .binding = binding++,
@@ -377,6 +384,7 @@ void GraphicsPipeline::BuildDescSetLayout() {
             });
         }
         for (const auto& image : stage->images) {
+    EMULATOR_TRACE;
             bindings.push_back({
                 .binding = binding++,
                 .descriptorType = image.is_written ? vk::DescriptorType::eStorageImage
@@ -386,6 +394,7 @@ void GraphicsPipeline::BuildDescSetLayout() {
             });
         }
         for (const auto& sampler : stage->samplers) {
+    EMULATOR_TRACE;
             bindings.push_back({
                 .binding = binding++,
                 .descriptorType = vk::DescriptorType::eSampler,

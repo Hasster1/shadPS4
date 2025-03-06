@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "video_core/renderer_vulkan/vk_instance.h"
 #include "video_core/renderer_vulkan/vk_scheduler.h"
@@ -117,6 +118,7 @@ TileManager::TileManager(const Vulkan::Instance& instance, Vulkan::Scheduler& sc
     };
 
     for (int pl_id = 0; pl_id < DetilerType::Max; ++pl_id) {
+    EMULATOR_TRACE;
         auto& ctx = detilers[pl_id];
 
         const auto& module = Vulkan::Compile(
@@ -191,6 +193,9 @@ TileManager::ScratchBuffer TileManager::AllocBuffer(u32 size, bool is_storage /*
 }
 
 void TileManager::Upload(ScratchBuffer buffer, const void* data, size_t size) {
+
+    /*
+
     VmaAllocationInfo alloc_info{};
     vmaGetAllocationInfo(instance.GetAllocator(), buffer.second, &alloc_info);
     ASSERT(size <= alloc_info.size);
@@ -199,9 +204,12 @@ void TileManager::Upload(ScratchBuffer buffer, const void* data, size_t size) {
     ASSERT(result == VK_SUCCESS);
     std::memcpy(ptr, data, size);
     vmaUnmapMemory(instance.GetAllocator(), buffer.second);
+    */
+
 }
 
 void TileManager::FreeBuffer(ScratchBuffer buffer) {
+    //NOPE
     vmaDestroyBuffer(instance.GetAllocator(), buffer.first, buffer.second);
 }
 
@@ -220,6 +228,7 @@ std::pair<vk::Buffer, u32> TileManager::TryDetile(vk::Buffer in_buffer, u32 in_o
                       vk::to_string(info.pixel_format), NameOf(info.tiling_mode));
         }
         return {in_buffer, in_offset};
+    EMULATOR_TRACE;
     }
 
     const u32 image_size = info.guest_size;
@@ -279,6 +288,7 @@ std::pair<vk::Buffer, u32> TileManager::TryDetile(vk::Buffer in_buffer, u32 in_o
         ASSERT(info.resources.levels <= 14);
         std::memset(&params.sizes, 0, sizeof(params.sizes));
         for (int m = 0; m < info.resources.levels; ++m) {
+    EMULATOR_TRACE;
             params.sizes[m] = info.mips_layout[m].size * info.resources.layers +
                               (m > 0 ? params.sizes[m - 1] : 0);
         }

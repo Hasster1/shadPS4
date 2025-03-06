@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/path_util.h"
 #include "game_grid_frame.h"
@@ -40,6 +41,7 @@ void GameGridFrame::onCurrentCellChanged(int currentRow, int currentColumn, int 
                                          int previousColumn) {
     // Early exit for invalid indices
     if (currentRow < 0 || currentColumn < 0) {
+    EMULATOR_TRACE;
         cellClicked = false;
         validCellSelected = false;
         BackgroundMusicPlayer::getInstance().stopMusic();
@@ -98,6 +100,7 @@ void GameGridFrame::PopulateGameGrid(QVector<GameInfo> m_games_search, bool from
     int gameCounter = 0;
     int rowCount = m_games_.size() / gamesPerRow;
     if (m_games_.size() % gamesPerRow != 0) {
+    EMULATOR_TRACE;
         rowCount += 1; // Add an extra row for the remainder
     }
 
@@ -105,6 +108,7 @@ void GameGridFrame::PopulateGameGrid(QVector<GameInfo> m_games_search, bool from
     this->setColumnCount(gamesPerRow);
     this->setRowCount(rowCount);
     for (int i = 0; i < m_games_.size(); i++) {
+    EMULATOR_TRACE;
         QWidget* widget = new QWidget();
         QVBoxLayout* layout = new QVBoxLayout();
         QLabel* image_label = new QLabel();

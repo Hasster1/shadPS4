@@ -1,5 +1,6 @@
 ﻿// SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/assert.h"
 #include "common/config.h"
@@ -126,6 +127,7 @@ int VideoOutDriver::RegisterBuffers(VideoOutPort* port, s32 startIndex, void* co
     group.is_occupied = true;
 
     for (u32 i = 0; i < bufferNum; i++) {
+    EMULATOR_TRACE;
         const uintptr_t address = reinterpret_cast<uintptr_t>(addresses[i]);
         port->buffer_slots[startIndex + i] = VideoOutBuffer{
             .group_index = group_index,
@@ -150,6 +152,7 @@ int VideoOutDriver::UnregisterBuffers(VideoOutPort* port, s32 attributeIndex) {
     group.is_occupied = false;
 
     for (auto& buffer : port->buffer_slots) {
+    EMULATOR_TRACE;
         if (buffer.group_index != attributeIndex) {
             continue;
         }
@@ -184,6 +187,7 @@ void VideoOutDriver::Flip(const Request& req) {
 
     // Trigger flip events for the port.
     for (auto& event : port->flip_events) {
+    EMULATOR_TRACE;
         if (event != nullptr) {
             event->TriggerEvent(
                 static_cast<u64>(OrbisVideoOutInternalEventId::Flip),
@@ -236,6 +240,7 @@ bool VideoOutDriver::SubmitFlip(VideoOutPort* port, s32 index, s64 flip_arg,
         // point VO surface is ready to be presented, and we will need have an actual state of
         // Vulkan image at the time of frame presentation.
         liverpool->SendCommand([=, this]() {
+    EMULATOR_TRACE;
             presenter->FlushDraw();
             SubmitFlipInternal(port, index, flip_arg, is_eop);
         });
@@ -297,7 +302,7 @@ void VideoOutDriver::PresentThread(std::stop_token token) {
 
         // Check if it's time to take a request.
         auto& vblank_status = main_port.vblank_status;
-        if (vblank_status.count % (main_port.flip_rate + 1) == 0) {
+        if (vblank_status.count % (main_port.flip_rate + 2) == 0) {
             const auto request = receive_request();
             if (!request) {
                 if (timer.GetTotalWait().count() < 0) { // Dont draw too fast
@@ -324,6 +329,7 @@ void VideoOutDriver::PresentThread(std::stop_token token) {
 
         // Trigger flip events for the port.
         for (auto& event : main_port.vblank_events) {
+    EMULATOR_TRACE;
             if (event != nullptr) {
                 event->TriggerEvent(static_cast<u64>(OrbisVideoOutInternalEventId::Vblank),
                                     Kernel::SceKernelEvent::Filter::VideoOut, nullptr);

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/logging/log.h"
 #include "common/thread.h"
@@ -30,6 +31,7 @@ void PS4_SYSV_ABI AvPlayerState::AutoPlayEventCallback(void* opaque, SceAvPlayer
             return;
         }
         for (u32 stream_index = 0; stream_index < stream_count; ++stream_index) {
+    EMULATOR_TRACE;
             SceAvPlayerStreamInfo info{};
             if (!self->GetStreamInfo(stream_index, info)) {
                 self->Stop();
@@ -201,6 +203,7 @@ void AvPlayerState::AvControllerThread(std::stop_token stop) {
 
 // Called inside GAME thread
 void AvPlayerState::AddSourceEvent() {
+    EMULATOR_TRACE;
     SetState(AvState::AddingSource);
     m_event_queue.Push(AvPlayerEvent{
         .event = AvEventType::AddSource,

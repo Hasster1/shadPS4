@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <utility>
 #include <imgui.h>
@@ -158,6 +159,7 @@ Error PS4_SYSV_ABI sceErrorDialogOpen(const Param* param) {
     ASSERT(param->size == sizeof(Param));
 
     const std::string err_message = fmt::format("An error has occurred. \nCode: {:#X}", err);
+    EMULATOR_TRACE;
     g_status = Status::RUNNING;
     g_dialog_ui = ErrorDialogUi{&g_status, err_message};
     return Error::OK;

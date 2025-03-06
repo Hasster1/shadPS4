@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2013 Dolphin Emulator Project
 // SPDX-FileCopyrightText: 2014 Citra Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <algorithm>
 #include <sstream>
@@ -22,10 +23,12 @@ std::string ToLower(std::string_view input) {
 }
 
 void ToLowerInPlace(std::string& str) {
+    EMULATOR_TRACE;
     std::ranges::transform(str, str.begin(), tolower);
 }
 
 std::vector<std::string> SplitString(const std::string& str, char delimiter) {
+    EMULATOR_TRACE;
     std::istringstream iss(str);
     std::vector<std::string> output(1);
 

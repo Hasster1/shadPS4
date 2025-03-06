@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <fmt/chrono.h>
 #include <imgui.h>
@@ -33,12 +34,16 @@ static std::string SpaceSizeToString(size_t size) {
     std::string size_str;
     if (size > 1024 * 1024 * 1024) { // > 1GB
         size_str = fmt::format("{:.2f} GB", double(size / 1024 / 1024) / 1024.0f);
+    EMULATOR_TRACE;
     } else if (size > 1024 * 1024) { // > 1MB
         size_str = fmt::format("{:.2f} MB", double(size / 1024) / 1024.0f);
+    EMULATOR_TRACE;
     } else if (size > 1024) { // > 1KB
         size_str = fmt::format("{:.2f} KB", double(size) / 1024.0f);
+    EMULATOR_TRACE;
     } else {
         size_str = fmt::format("{} B", size);
+    EMULATOR_TRACE;
     }
     return size_str;
 }
@@ -81,6 +86,7 @@ SaveDialogState::SaveDialogState(const OrbisSaveDataDialogParam& param) {
 
     if (item->dirName != nullptr) {
         for (u32 i = 0; i < item->dirNameNum; i++) {
+    EMULATOR_TRACE;
             const auto dir_name = item->dirName[i].data.to_view();
 
             if (dir_name.empty()) {
@@ -264,6 +270,7 @@ SaveDialogState::SystemState::SystemState(const SaveDialogState& state,
         break;
     default:
         msg = fmt::format("Unknown message type: {}", magic_enum::enum_name(sys.msgType));
+    EMULATOR_TRACE;
         break;
     }
 
@@ -283,6 +290,7 @@ SaveDialogState::ErrorCodeState::ErrorCodeState(const OrbisSaveDataDialogParam& 
         break;
     default:
         this->error_msg = fmt::format("An error has occurred. ({:X})", err.errorCode);
+    EMULATOR_TRACE;
         break;
     }
 }
@@ -576,6 +584,7 @@ void SaveDialogUi::DrawList() {
         DrawItem(i++, state->new_item.value());
     }
     for (const auto& item : state->save_list) {
+    EMULATOR_TRACE;
         DrawItem(i++, item);
     }
     if (first_render) { // Make the initial focus
@@ -594,6 +603,7 @@ void SaveDialogUi::DrawList() {
                     idx++;
                 }
                 for (const auto& item : state->save_list) {
+    EMULATOR_TRACE;
                     if (item.last_write > max_write ^ is_min) {
                         max_write = item.last_write;
                         max_idx = idx;
@@ -615,6 +625,7 @@ void SaveDialogUi::DrawList() {
                     idx++;
                 }
                 for (const auto& item : state->save_list) {
+    EMULATOR_TRACE;
                     if (item.dir_name == dir_name) {
                         SetItemCurrentNavFocus(GetID(idx));
                         break;

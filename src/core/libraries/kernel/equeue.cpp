@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <thread>
 
@@ -60,6 +61,7 @@ int EqueueInternal::WaitForEvents(SceKernelEvent* ev, int num, u32 micros) {
     }
 
     if (HasSmallTimer()) {
+    EMULATOR_TRACE;
         if (count > 0) {
             const auto time_waited = std::chrono::duration_cast<std::chrono::microseconds>(
                                          std::chrono::steady_clock::now() - m_events[0].time_added)
@@ -71,6 +73,7 @@ int EqueueInternal::WaitForEvents(SceKernelEvent* ev, int num, u32 micros) {
 
     if (ev->flags & SceKernelEvent::Flags::OneShot) {
         for (auto ev_id = 0u; ev_id < count; ++ev_id) {
+    EMULATOR_TRACE;
             RemoveEvent(ev->ident, ev->filter);
         }
     }
@@ -83,6 +86,7 @@ bool EqueueInternal::TriggerEvent(u64 ident, s16 filter, void* trigger_data) {
     {
         std::scoped_lock lock{m_mutex};
         for (auto& event : m_events) {
+    EMULATOR_TRACE;
             if (event.event.ident == ident && event.event.filter == filter) {
                 if (filter == SceKernelEvent::Filter::VideoOut) {
                     event.TriggerDisplay(trigger_data);
@@ -100,6 +104,7 @@ bool EqueueInternal::TriggerEvent(u64 ident, s16 filter, void* trigger_data) {
 int EqueueInternal::GetTriggeredEvents(SceKernelEvent* ev, int num) {
     int count = 0;
     for (auto& event : m_events) {
+    EMULATOR_TRACE;
         if (event.IsTriggered()) {
             // Event should not trigger again
             event.ResetTriggerState();
@@ -270,6 +275,7 @@ s32 PS4_SYSV_ABI sceKernelAddHRTimerEvent(SceKernelEqueue eq, int id, timespec* 
     // large. Even for large delays, we truncate a small portion to complete the wait
     // using the spinlock, prioritizing precision.
     if (total_us < HrTimerSpinlockThresholdUs) {
+    EMULATOR_TRACE;
         return eq->AddSmallTimer(event) ? ORBIS_OK : ORBIS_KERNEL_ERROR_ENOMEM;
     }
 

@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "random.h"
 #include "random_error.h"
@@ -17,6 +18,7 @@ s32 PS4_SYSV_ABI sceRandomGetRandomNumber(u8* buf, std::size_t size) {
     }
 
     for (auto i = 0; i < size; ++i) {
+    EMULATOR_TRACE;
         buf[i] = std::rand() & 0xFF;
     }
     return ORBIS_OK;

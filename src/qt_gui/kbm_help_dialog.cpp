@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "kbm_help_dialog.h"
 
@@ -42,6 +43,7 @@ ExpandableSection::ExpandableSection(const QString& title, const QString& conten
 
     // Connect button click to toggle visibility
     connect(toggleButton, &QPushButton::clicked, [this]() {
+    EMULATOR_TRACE;
         contentBrowser->setVisible(!contentBrowser->isVisible());
         if (contentBrowser->isVisible()) {
             updateContentHeight(); // Update height when expanding
@@ -59,6 +61,7 @@ ExpandableSection::ExpandableSection(const QString& title, const QString& conten
 }
 
 void HelpDialog::closeEvent(QCloseEvent* event) {
+    EMULATOR_TRACE;
     *help_open_ptr = false;
     close();
 }

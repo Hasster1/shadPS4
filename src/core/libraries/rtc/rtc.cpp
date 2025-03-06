@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <chrono>
 
@@ -114,8 +115,10 @@ int PS4_SYSV_ABI sceRtcFormatRFC2822(char* pszDateTime, const OrbisRtcTick* pTic
     OrbisRtcTick formatTick;
 
     if (pTickUtc == nullptr) {
+    EMULATOR_TRACE;
         sceRtcGetCurrentTick(&formatTick);
     } else {
+    EMULATOR_TRACE;
         formatTick.tick = pTickUtc->tick;
     }
 
@@ -202,26 +205,34 @@ int PS4_SYSV_ABI sceRtcFormatRFC2822(char* pszDateTime, const OrbisRtcTick* pTic
         formattedString += std::to_string(formatTime.year) + " ";
 
         if (formatTime.hour < 10) {
+    EMULATOR_TRACE;
             formattedString += "0" + std::to_string(formatTime.hour) + ":";
         } else {
+    EMULATOR_TRACE;
             formattedString += std::to_string(formatTime.hour) + ":";
         }
 
         if (formatTime.minute < 10) {
+    EMULATOR_TRACE;
             formattedString += "0" + std::to_string(formatTime.minute) + ":";
         } else {
+    EMULATOR_TRACE;
             formattedString += std::to_string(formatTime.minute) + ":";
         }
 
         if (formatTime.second < 10) {
+    EMULATOR_TRACE;
             formattedString += "0" + std::to_string(formatTime.second) + " ";
         } else {
+    EMULATOR_TRACE;
             formattedString += std::to_string(formatTime.second) + " ";
         }
 
         if (iTimeZoneMinutes == 0) {
+    EMULATOR_TRACE;
             formattedString += "+0000";
         } else {
+    EMULATOR_TRACE;
             int timeZoneHours = iTimeZoneMinutes / 60;
             int timeZoneRemainder = iTimeZoneMinutes % 60;
 
@@ -229,18 +240,23 @@ int PS4_SYSV_ABI sceRtcFormatRFC2822(char* pszDateTime, const OrbisRtcTick* pTic
                 formattedString += "-";
                 timeZoneHours *= -1;
             } else {
+    EMULATOR_TRACE;
                 formattedString += "+";
             }
 
             if (timeZoneHours < 10) {
+    EMULATOR_TRACE;
                 formattedString += "0" + std::to_string(timeZoneHours);
             } else {
+    EMULATOR_TRACE;
                 formattedString += std::to_string(timeZoneHours);
             }
 
             if (timeZoneRemainder == 0) {
+    EMULATOR_TRACE;
                 formattedString += "00";
             } else {
+    EMULATOR_TRACE;
                 if (timeZoneRemainder < 0)
                     timeZoneRemainder *= -1;
                 formattedString += std::to_string(timeZoneRemainder);
@@ -248,6 +264,7 @@ int PS4_SYSV_ABI sceRtcFormatRFC2822(char* pszDateTime, const OrbisRtcTick* pTic
         }
 
         for (int i = 0; i < formattedString.size() + 1; ++i) {
+    EMULATOR_TRACE;
             pszDateTime[i] = formattedString.c_str()[i];
         }
     }
@@ -256,6 +273,7 @@ int PS4_SYSV_ABI sceRtcFormatRFC2822(char* pszDateTime, const OrbisRtcTick* pTic
 }
 
 int PS4_SYSV_ABI sceRtcFormatRFC2822LocalTime(char* pszDateTime, const OrbisRtcTick* pTickUtc) {
+    EMULATOR_TRACE;
     LOG_TRACE(Lib_Rtc, "called");
 
     Kernel::OrbisKernelTimezone timeZone;
@@ -291,8 +309,10 @@ int PS4_SYSV_ABI sceRtcFormatRFC3339Precise(char* pszDateTime, const OrbisRtcTic
     OrbisRtcTick formatTick;
 
     if (pTickUtc == nullptr) {
+    EMULATOR_TRACE;
         sceRtcGetCurrentTick(&formatTick);
     } else {
+    EMULATOR_TRACE;
         formatTick.tick = pTickUtc->tick;
     }
 
@@ -306,44 +326,58 @@ int PS4_SYSV_ABI sceRtcFormatRFC3339Precise(char* pszDateTime, const OrbisRtcTic
     formattedString = std::to_string(formatTime.year) + "-";
 
     if (formatTime.month < 10) {
+    EMULATOR_TRACE;
         formattedString += "0" + std::to_string(formatTime.month) + "-";
     } else {
+    EMULATOR_TRACE;
         formattedString += std::to_string(formatTime.month) + "-";
     }
 
     if (formatTime.day < 10) {
+    EMULATOR_TRACE;
         formattedString += "0" + std::to_string(formatTime.day) + "T";
     } else {
+    EMULATOR_TRACE;
         formattedString += std::to_string(formatTime.day) + "T";
     }
 
     if (formatTime.hour < 10) {
+    EMULATOR_TRACE;
         formattedString += "0" + std::to_string(formatTime.hour) + ":";
     } else {
+    EMULATOR_TRACE;
         formattedString += std::to_string(formatTime.hour) + ":";
     }
 
     if (formatTime.minute < 10) {
+    EMULATOR_TRACE;
         formattedString += "0" + std::to_string(formatTime.minute) + ":";
     } else {
+    EMULATOR_TRACE;
         formattedString += std::to_string(formatTime.minute) + ":";
     }
 
     if (formatTime.second < 10) {
+    EMULATOR_TRACE;
         formattedString += "0" + std::to_string(formatTime.second);
     } else {
+    EMULATOR_TRACE;
         formattedString += std::to_string(formatTime.second);
     }
 
     if (formatTime.microsecond != 0) {
+    EMULATOR_TRACE;
         formattedString += "." + std::to_string(formatTime.microsecond / 1000).substr(0, 2);
     } else {
+    EMULATOR_TRACE;
         formattedString += ".00";
     }
 
     if (iTimeZoneMinutes == 0) {
+    EMULATOR_TRACE;
         formattedString += "Z";
     } else {
+    EMULATOR_TRACE;
         int timeZoneHours = iTimeZoneMinutes / 60;
         int timeZoneRemainder = iTimeZoneMinutes % 60;
 
@@ -351,18 +385,23 @@ int PS4_SYSV_ABI sceRtcFormatRFC3339Precise(char* pszDateTime, const OrbisRtcTic
             formattedString += "-";
             timeZoneHours *= -1;
         } else {
+    EMULATOR_TRACE;
             formattedString += "+";
         }
 
         if (timeZoneHours < 10) {
+    EMULATOR_TRACE;
             formattedString += "0" + std::to_string(timeZoneHours);
         } else {
+    EMULATOR_TRACE;
             formattedString += std::to_string(timeZoneHours);
         }
 
         if (timeZoneRemainder == 0) {
+    EMULATOR_TRACE;
             formattedString += ":00";
         } else {
+    EMULATOR_TRACE;
             if (timeZoneRemainder < 0)
                 timeZoneRemainder *= -1;
             formattedString += ":" + std::to_string(timeZoneRemainder);
@@ -370,6 +409,7 @@ int PS4_SYSV_ABI sceRtcFormatRFC3339Precise(char* pszDateTime, const OrbisRtcTic
     }
 
     for (int i = 0; i < formattedString.size() + 1; ++i) {
+    EMULATOR_TRACE;
         pszDateTime[i] = formattedString.c_str()[i];
     }
 
@@ -378,6 +418,7 @@ int PS4_SYSV_ABI sceRtcFormatRFC3339Precise(char* pszDateTime, const OrbisRtcTic
 
 int PS4_SYSV_ABI sceRtcFormatRFC3339PreciseLocalTime(char* pszDateTime,
                                                      const OrbisRtcTick* pTickUtc) {
+    EMULATOR_TRACE;
     LOG_TRACE(Lib_Rtc, "called");
 
     Kernel::OrbisKernelTimezone timeZone;
@@ -441,6 +482,7 @@ int PS4_SYSV_ABI sceRtcGetCurrentClockLocalTime(OrbisRtcDateTime* pTime) {
         uint64_t tzOffset = -(timeZone.tz_minuteswest - (timeZone.tz_dsttime * 60));
 
         if (returnValue >= 0) {
+    EMULATOR_TRACE;
             OrbisRtcTick newTick;
             sceRtcGetCurrentTick(&newTick);
             sceRtcTickAddMinutes(&newTick, &newTick, tzOffset);
@@ -751,9 +793,11 @@ int PS4_SYSV_ABI sceRtcParseDateTime(OrbisRtcTick* pTickUtc, const char* pszDate
     OrbisRtcDateTime dateTime;
 
     if (formatKey == 'Z' || formatKey == '-' || formatKey == '+') {
+    EMULATOR_TRACE;
         // RFC3339
         sceRtcParseRFC3339(pTickUtc, pszDateTime);
     } else if (formatKey == ':') {
+    EMULATOR_TRACE;
         // RFC2822
         dateTime.day = std::stoi(dateTimeString.substr(5, 2));
         dateTime.month = GetMonthFromString(dateTimeString.substr(8, 3));

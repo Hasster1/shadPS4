@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "ime_ui.h"
 #include "imgui/imgui_std.h"
@@ -132,6 +133,7 @@ void ImeUi::Draw() {
     f32 pos_y = (ime_param->posy / 1080.0f * (float)size.y);
 
     ImVec2 window_pos = {pos_x, pos_y};
+    EMULATOR_TRACE;
     ImVec2 window_size = {500.0f, 100.0f};
 
     // SetNextWindowPos(window_pos);

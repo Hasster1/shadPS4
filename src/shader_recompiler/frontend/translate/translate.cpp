@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "common/config.h"
 #include "common/io_file.h"
@@ -32,6 +33,7 @@ void Translator::EmitPrologue() {
     // Initialize user data.
     IR::ScalarReg dst_sreg = IR::ScalarReg::S0;
     for (u32 i = 0; i < runtime_info.num_user_data; i++) {
+    EMULATOR_TRACE;
         ir.SetScalarReg(dst_sreg, ir.GetUserData(dst_sreg));
         ++dst_sreg;
     }
@@ -466,11 +468,13 @@ void Translator::EmitFetch(const GcnInst& inst) {
             std::filesystem::create_directories(dump_dir);
         }
         const auto filename = fmt::format("vs_{:#018x}.fetch.bin", info.pgm_hash);
+    EMULATOR_TRACE;
         const auto file = IOFile{dump_dir / filename, FileAccessMode::Write};
         file.WriteRaw<u8>(fetch_data->code, fetch_data->size);
     }
 
     for (const auto& attrib : fetch_data->attributes) {
+    EMULATOR_TRACE;
         const IR::Attribute attr{IR::Attribute::Param0 + attrib.semantic};
         IR::VectorReg dst_reg{attrib.dest_vgpr};
 
@@ -481,6 +485,7 @@ void Translator::EmitFetch(const GcnInst& inst) {
                                   ir.GetAttribute(attr, 2), ir.GetAttribute(attr, 3));
         const auto swizzled = ApplySwizzle(ir, values, buffer.DstSelect());
         for (u32 i = 0; i < 4; i++) {
+    EMULATOR_TRACE;
             ir.SetVectorReg(dst_reg++, IR::F32{ir.CompositeExtract(swizzled, i)});
         }
 
@@ -511,6 +516,7 @@ void Translate(IR::Block* block, u32 pc, std::span<const GcnInst> inst_list, Inf
     }
     Translator translator{block, info, runtime_info, profile};
     for (const auto& inst : inst_list) {
+    EMULATOR_TRACE;
         pc += inst.length;
 
         // Special case for emitting fetch shader.

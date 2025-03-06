@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include "shader_recompiler/frontend/copy_shader.h"
 #include "shader_recompiler/frontend/decode.h"
@@ -41,6 +42,7 @@ CopyShaderData ParseCopyShader(std::span<const u32> code) {
             const auto& exp = inst.control.exp;
             const IR::Attribute semantic = static_cast<IR::Attribute>(exp.target);
             for (int i = 0; i < inst.src_count; ++i) {
+    EMULATOR_TRACE;
                 const auto ofs = offsets[inst.src[i].code];
                 if (ofs != -1) {
                     data.attr_map[ofs] = {semantic, i};

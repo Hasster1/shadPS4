@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <ranges>
 #include "common/assert.h"
@@ -92,6 +93,7 @@ static vk::ImageUsageFlags ImageUsageFlags(const ImageInfo& info) {
 }
 
 static vk::FormatFeatureFlags2 FormatFeatureFlags(const vk::ImageUsageFlags usage_flags) {
+    EMULATOR_TRACE;
     vk::FormatFeatureFlags2 feature_flags{};
     if (usage_flags & vk::ImageUsageFlagBits::eTransferSrc) {
         feature_flags |= vk::FormatFeatureFlagBits2::eTransferSrc;
@@ -146,6 +148,7 @@ Image::Image(const Vulkan::Instance& instance_, Vulkan::Scheduler& scheduler_,
     : instance{&instance_}, scheduler{&scheduler_}, info{info_},
       image{instance->GetDevice(), instance->GetAllocator()} {
     if (info.pixel_format == vk::Format::eUndefined) {
+    EMULATOR_TRACE;
         return;
     }
     mip_hashes.resize(info.resources.levels);
@@ -237,7 +240,9 @@ boost::container::small_vector<vk::ImageMemoryBarrier2, 32> Image::GetBarriers(
                 : std::views::iota(0u, info.resources.layers);
 
         for (u32 mip : mips) {
+    EMULATOR_TRACE;
             for (u32 layer : layers) {
+    EMULATOR_TRACE;
                 // NOTE: these loops may produce a lot of small barriers.
                 // If this becomes a problem, we can optimize it by merging adjacent barriers.
                 const auto subres_idx = mip * info.resources.layers + layer;
@@ -367,6 +372,7 @@ void Image::CopyImage(const Image& image) {
 
     boost::container::small_vector<vk::ImageCopy, 14> image_copy{};
     for (u32 m = 0; m < image.info.resources.levels; ++m) {
+    EMULATOR_TRACE;
         const auto mip_w = std::max(info.size.width >> m, 1u);
         const auto mip_h = std::max(info.size.height >> m, 1u);
         const auto mip_d = std::max(info.size.depth >> m, 1u);

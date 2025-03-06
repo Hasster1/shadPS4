@@ -1,5 +1,6 @@
 // SPDX-FileCopyrightText: Copyright 2024 shadPS4 Emulator Project
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "common/debug.h"
 
 #include <array>
 #include <bit>
@@ -833,6 +834,7 @@ F64 IREmitter::PackFloat2x32(const Value& vector) {
 }
 
 U32 IREmitter::Pack2x16(const AmdGpu::NumberFormat number_format, const Value& vector) {
+    EMULATOR_TRACE;
     switch (number_format) {
     case AmdGpu::NumberFormat::Unorm:
         return Inst<U32>(Opcode::PackUnorm2x16, vector);
@@ -850,6 +852,7 @@ U32 IREmitter::Pack2x16(const AmdGpu::NumberFormat number_format, const Value& v
 }
 
 Value IREmitter::Unpack2x16(const AmdGpu::NumberFormat number_format, const U32& value) {
+    EMULATOR_TRACE;
     switch (number_format) {
     case AmdGpu::NumberFormat::Unorm:
         return Inst(Opcode::UnpackUnorm2x16, value);
@@ -867,6 +870,7 @@ Value IREmitter::Unpack2x16(const AmdGpu::NumberFormat number_format, const U32&
 }
 
 U32 IREmitter::Pack4x8(const AmdGpu::NumberFormat number_format, const Value& vector) {
+    EMULATOR_TRACE;
     switch (number_format) {
     case AmdGpu::NumberFormat::Unorm:
         return Inst<U32>(Opcode::PackUnorm4x8, vector);
@@ -882,6 +886,7 @@ U32 IREmitter::Pack4x8(const AmdGpu::NumberFormat number_format, const Value& ve
 }
 
 Value IREmitter::Unpack4x8(const AmdGpu::NumberFormat number_format, const U32& value) {
+    EMULATOR_TRACE;
     switch (number_format) {
     case AmdGpu::NumberFormat::Unorm:
         return Inst(Opcode::UnpackUnorm4x8, value);
@@ -893,10 +898,12 @@ Value IREmitter::Unpack4x8(const AmdGpu::NumberFormat number_format, const U32& 
         return Inst(Opcode::UnpackSint4x8, value);
     default:
         UNREACHABLE_MSG("Unsupported 4x8 number format: {}", number_format);
+    EMULATOR_TRACE;
     }
 }
 
 U32 IREmitter::Pack10_11_11(const AmdGpu::NumberFormat number_format, const Value& vector) {
+    EMULATOR_TRACE;
     switch (number_format) {
     case AmdGpu::NumberFormat::Float:
         return Inst<U32>(Opcode::PackUfloat10_11_11, vector);
@@ -906,6 +913,7 @@ U32 IREmitter::Pack10_11_11(const AmdGpu::NumberFormat number_format, const Valu
 }
 
 U32 IREmitter::Pack2_10_10_10(const AmdGpu::NumberFormat number_format, const Value& vector) {
+    EMULATOR_TRACE;
     switch (number_format) {
     case AmdGpu::NumberFormat::Unorm:
         return Inst<U32>(Opcode::PackUnorm2_10_10_10, vector);
@@ -921,6 +929,7 @@ U32 IREmitter::Pack2_10_10_10(const AmdGpu::NumberFormat number_format, const Va
 }
 
 Value IREmitter::Unpack2_10_10_10(const AmdGpu::NumberFormat number_format, const U32& value) {
+    EMULATOR_TRACE;
     switch (number_format) {
     case AmdGpu::NumberFormat::Unorm:
         return Inst(Opcode::UnpackUnorm2_10_10_10, value);
@@ -936,6 +945,7 @@ Value IREmitter::Unpack2_10_10_10(const AmdGpu::NumberFormat number_format, cons
 }
 
 Value IREmitter::Unpack10_11_11(const AmdGpu::NumberFormat number_format, const U32& value) {
+    EMULATOR_TRACE;
     switch (number_format) {
     case AmdGpu::NumberFormat::Float:
         return Inst(Opcode::UnpackUfloat10_11_11, value);
@@ -1933,16 +1943,19 @@ void IREmitter::ImageWrite(const Value& handle, const Value& coords, const U32& 
 //                       ir.GetVectorReg(IR::VectorReg::V1),
 //                       ir.GetVectorReg(IR::VectorReg::V2)});
 void IREmitter::DebugPrint(const char* fmt, boost::container::small_vector<Value, 5> format_args) {
+    EMULATOR_TRACE;
     std::array<Value, DEBUGPRINT_NUM_FORMAT_ARGS> args;
 
     ASSERT_MSG(format_args.size() < DEBUGPRINT_NUM_FORMAT_ARGS,
                "DebugPrint only supports up to {} format args", DEBUGPRINT_NUM_FORMAT_ARGS);
 
     for (int i = 0; i < format_args.size(); i++) {
+    EMULATOR_TRACE;
         args[i] = format_args[i];
     }
 
     for (int i = format_args.size(); i < DEBUGPRINT_NUM_FORMAT_ARGS; i++) {
+    EMULATOR_TRACE;
         args[i] = Inst(Opcode::Void);
     }
 
