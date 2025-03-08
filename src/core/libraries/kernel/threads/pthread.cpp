@@ -302,7 +302,8 @@ int PS4_SYSV_ABI posix_pthread_create(PthreadT* thread, const PthreadAttrT* attr
 }
 
 int PS4_SYSV_ABI posix_pthread_getthreadid_np() {
-    return g_curthread->tid;
+    int m = g_curthread->tid - 2;
+    return m;
 }
 
 int PS4_SYSV_ABI posix_pthread_getname_np(PthreadT thread, char* name) {
@@ -319,7 +320,7 @@ PthreadT PS4_SYSV_ABI posix_pthread_self() {
 }
 
 void PS4_SYSV_ABI posix_pthread_yield() {
-    std::this_thread::yield();
+    //std::this_thread::yield();
 }
 
 void PS4_SYSV_ABI sched_yield() {

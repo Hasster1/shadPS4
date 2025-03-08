@@ -52,6 +52,7 @@ u64 PS4_SYSV_ABI sceKernelReadTsc() {
 
 int PS4_SYSV_ABI sceKernelUsleep(u32 microseconds) {
 #ifdef _WIN64
+    microseconds = microseconds / 2;
     const auto start_time = std::chrono::high_resolution_clock::now();
     auto total_wait_time = std::chrono::microseconds(microseconds);
 
