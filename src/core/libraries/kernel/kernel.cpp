@@ -136,6 +136,7 @@ void PS4_SYSV_ABI sceLibcHeapGetTraceInfo(HeapInfoInfo* info) {
 
 s64 PS4_SYSV_ABI ps4__write(int d, const char* buf, std::size_t nbytes) {
     return sceKernelWrite(d, buf, nbytes);
+   
 }
 
 s64 PS4_SYSV_ABI ps4__read(int d, void* buf, u64 nbytes) {

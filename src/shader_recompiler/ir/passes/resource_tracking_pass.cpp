@@ -340,7 +340,7 @@ void PatchImageSharp(IR::Block& block, IR::Inst& inst, Info& info, Descriptors& 
         case IR::Opcode::ImageSampleRaw: {
             IR::F32 fmaskx = ir.BitCast<IR::F32>(ir.Imm32(0x76543210));
             IR::F32 fmasky = ir.BitCast<IR::F32>(ir.Imm32(0xfedcba98));
-            inst.ReplaceUsesWith(ir.CompositeConstruct(fmaskx, fmasky));
+           // inst.ReplaceUsesWith(ir.CompositeConstruct(fmaskx, fmasky));
             return;
         }
         case IR::Opcode::ImageQueryLod:
@@ -379,15 +379,19 @@ void PatchImageSharp(IR::Block& block, IR::Inst& inst, Info& info, Descriptors& 
             ASSERT(producer->GetOpcode() == IR::Opcode::CompositeConstructU32x2);
             const IR::Value& handle = producer->Arg(1);
             // Inline sampler resource.
+            
             if (handle.IsImmediate()) {
                 LOG_WARNING(Render_Vulkan, "Inline sampler detected");
-                const auto inline_sampler = AmdGpu::Sampler{.raw0 = handle.U32()};
+                const auto inline_sampler = AmdGpu::Sampler{};
+                //const auto inline_sampler = AmdGpu::Sampler{.raw0 = handle.U32()};
                 const auto binding = descriptors.Add(SamplerResource{
-                    .sharp_idx = std::numeric_limits<u32>::max(),
-                    .inline_sampler = inline_sampler,
+                    //.sharp_idx = std::numeric_limits<u32>::max(),
+                    //.inline_sampler = inline_sampler,
                 });
+              
                 return {binding, inline_sampler};
             }
+
             // Normal sampler resource.
             const auto ssharp_handle = handle.InstRecursive();
             const auto& [ssharp_ud, disable_aniso] = TryDisableAnisoLod0(ssharp_handle);

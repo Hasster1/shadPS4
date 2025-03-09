@@ -307,7 +307,7 @@ int PS4_SYSV_ABI posix_pthread_create(PthreadT* thread, const PthreadAttrT* attr
 int PS4_SYSV_ABI posix_pthread_getthreadid_np() {
     int m = g_curthread->tid;
     LOG_TRACE(Lib_VideoOut, "posix_pthread_getthreadid_np = {}", m);
-    m = g_curthread->tid + 2;
+    m = g_curthread->tid;
     return m;
 
 }
@@ -318,8 +318,8 @@ int PS4_SYSV_ABI posix_pthread_getname_np(PthreadT thread, char* name) {
 }
 
 int PS4_SYSV_ABI posix_pthread_equal(PthreadT thread1, PthreadT thread2) {
-    //return (thread1 == thread2 ? 1 : 0);
-    return 0;
+    return (thread1 == thread2 ? 1 : 0);
+    //return 0;
 }
 
 PthreadT PS4_SYSV_ABI posix_pthread_self() {

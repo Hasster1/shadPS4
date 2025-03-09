@@ -188,7 +188,7 @@ void MntPoints::IterateDirectory(std::string_view guest_directory,
 }
 
 int HandleTable::CreateHandle() {
-    std::scoped_lock lock{m_mutex};
+   std::scoped_lock lock{m_mutex};
 
     auto* file = new File{};
     file->is_opened = false;

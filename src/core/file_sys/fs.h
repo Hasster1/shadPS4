@@ -43,7 +43,7 @@ public:
                           const IterateDirectoryCallback& callback);
 
     const MntPair* GetMountFromHostPath(const std::string& host_path) {
-        std::scoped_lock lock{m_mutex};
+        //std::scoped_lock lock{m_mutex};
         const auto it = std::ranges::find_if(m_mnt_pairs, [&](const MntPair& mount) {
             return host_path.starts_with(std::string{fmt::UTF(mount.host_path.u8string()).data});
         });
@@ -51,7 +51,7 @@ public:
     }
 
     const MntPair* GetMount(const std::string& guest_path) {
-        std::scoped_lock lock{m_mutex};
+        //std::scoped_lock lock{m_mutex};
         const auto it = std::ranges::find_if(m_mnt_pairs, [&](const auto& mount) {
             // When doing starts-with check, add a trailing slash to make sure we don't match
             // against only part of the mount path.
