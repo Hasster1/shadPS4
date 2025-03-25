@@ -549,6 +549,22 @@
         <source>Cannot bind axis values more than once</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">Save</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">Apply</translation>
+    </message>
+    <message>
+        <source>Restore Defaults</source>
+        <translation type="unfinished">Restore Defaults</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Cancel</translation>
+    </message>
 </context>
 <context>
     <name>EditorDialog</name>
@@ -1175,6 +1191,22 @@
         <source>Mousewheel cannot be mapped to stick outputs</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished">Save</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">Apply</translation>
+    </message>
+    <message>
+        <source>Restore Defaults</source>
+        <translation type="unfinished">Restore Defaults</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Cancel</translation>
+    </message>
 </context>
 <context>
     <name>MainWindow</name>
@@ -1273,6 +1305,14 @@
     <message>
         <source>Dump Game List</source>
         <translation>Dump Game List</translation>
+    </message>
+    <message>
+        <source>Trophy Viewer</source>
+        <translation>Trophy Viewer</translation>
+    </message>
+    <message>
+        <source>No games found. Please add your games to your library first.</source>
+        <translation>No games found. Please add your games to your library first.</translation>
     </message>
     <message>
         <source>PKG Viewer</source>
@@ -2158,6 +2198,10 @@
     <message>
         <source>Trophy Viewer</source>
         <translation>Trophy Viewer</translation>
+    </message>
+    <message>
+        <source>Select Game:</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Progress</source>
