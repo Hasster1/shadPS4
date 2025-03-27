@@ -29,7 +29,8 @@ void TimedMutex::lock() {
         }
     }
 #else
-    mtx.lock();
+    //mtx.lock();
+    return;
 #endif
 }
 
