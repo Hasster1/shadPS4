@@ -9,7 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 if(APPLE)
     list(APPEND ADDITIONAL_LANGUAGES OBJC)
-    set(CMAKE_OSX_DEPLOYMENT_TARGET 14)
+    # Starting with 15.4, Rosetta 2 has support for all the necessary instruction sets.
+    set(CMAKE_OSX_DEPLOYMENT_TARGET 15.4)
 endif()
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -53,8 +54,9 @@ else()
 endif()
 
 if (ARCHITECTURE STREQUAL "x86_64")
-    # Set x86_64 target level to Sandy Bridge to generally match what is supported for PS4 guest code with CPU patches.
-    add_compile_options(-march=sandybridge)
+    # Target Sandy Bridge as a reasonable subset of instructions supported by PS4 and host CPUs.
+    # Note that the native PS4 architecture 'btver2' has been attempted but causes issues with M1 CPUs.
+    add_compile_options(-march=sandybridge -mtune=generic)
 endif()
 
 if (APPLE AND ARCHITECTURE STREQUAL "x86_64" AND CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64")
@@ -201,6 +203,8 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+set(APP_VERSION "0.7.1 WIP")
+set(APP_IS_RELEASE false)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/common/scm_rev.cpp.in" "${CMAKE_CURRENT_BINARY_DIR}/src/common/scm_rev.cpp" @ONLY)
 
 message("end git things, remote: ${GIT_REMOTE_NAME}, branch: ${GIT_BRANCH}")
@@ -217,17 +221,14 @@ find_package(SDL3 3.1.2 CONFIG)
 find_package(stb MODULE)
 find_package(toml11 4.2.0 CONFIG)
 find_package(tsl-robin-map 1.3.0 CONFIG)
-find_package(VulkanHeaders 1.4.305 CONFIG)
+find_package(VulkanHeaders 1.4.309 CONFIG)
 find_package(VulkanMemoryAllocator 3.1.0 CONFIG)
 find_package(xbyak 7.07 CONFIG)
 find_package(xxHash 0.8.2 MODULE)
 find_package(ZLIB 1.3 MODULE)
 find_package(Zydis 5.0.0 CONFIG)
 find_package(pugixml 1.14 CONFIG)
-
-if (NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR NOT MSVC)
-    find_package(cryptopp 8.9.0 MODULE)
-endif()
+find_package(libusb 1.0.27 MODULE)
 
 if (APPLE)
     find_package(date 3.0.1 CONFIG)
@@ -581,6 +582,8 @@ set(MISC_LIBS  src/core/libraries/screenshot/screenshot.cpp
                src/core/libraries/screenshot/screenshot.h
                src/core/libraries/move/move.cpp
                src/core/libraries/move/move.h
+               src/core/libraries/ulobjmgr/ulobjmgr.cpp
+               src/core/libraries/ulobjmgr/ulobjmgr.h
 )
 
 set(DEV_TOOLS src/core/devtools/layer.cpp
@@ -671,7 +674,6 @@ set(COMMON src/common/logging/backend.cpp
            src/common/uint128.h
            src/common/unique_function.h
            src/common/va_ctx.h
-           src/common/version.h
            src/common/ntapi.h
            src/common/ntapi.cpp
            src/common/number_utils.h
@@ -1061,7 +1063,7 @@ endif()
 create_target_directory_groups(shadps4)
 
 target_link_libraries(shadps4 PRIVATE magic_enum::magic_enum fmt::fmt toml11::toml11 tsl::robin_map xbyak::xbyak Tracy::TracyClient RenderDoc::API FFmpeg::ffmpeg Dear_ImGui gcn half::half ZLIB::ZLIB PNG::PNG)
-target_link_libraries(shadps4 PRIVATE Boost::headers GPUOpen::VulkanMemoryAllocator LibAtrac9 sirit Vulkan::Headers xxHash::xxhash Zydis::Zydis glslang::glslang SDL3::SDL3 pugixml::pugixml stb::headers)
+target_link_libraries(shadps4 PRIVATE Boost::headers GPUOpen::VulkanMemoryAllocator LibAtrac9 sirit Vulkan::Headers xxHash::xxhash Zydis::Zydis glslang::glslang SDL3::SDL3 pugixml::pugixml stb::headers libusb::usb)
 
 target_compile_definitions(shadps4 PRIVATE IMGUI_USER_CONFIG="imgui/imgui_config.h")
 target_compile_definitions(Dear_ImGui PRIVATE IMGUI_USER_CONFIG="${PROJECT_SOURCE_DIR}/src/imgui/imgui_config.h")
@@ -1193,8 +1195,8 @@ if (ENABLE_QT_GUI)
         MACOSX_BUNDLE ON
         MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/dist/MacOSBundleInfo.plist.in"
         MACOSX_BUNDLE_ICON_FILE "shadPS4.icns"
-        MACOSX_BUNDLE_SHORT_VERSION_STRING "0.4.1"
-        )
+        MACOSX_BUNDLE_SHORT_VERSION_STRING "${APP_VERSION}"
+    )
 
     set_source_files_properties(src/images/shadPS4.icns PROPERTIES
         MACOSX_PACKAGE_LOCATION Resources)
